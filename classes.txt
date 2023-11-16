@@ -1,0 +1,29 @@
+classes:
+	something_to_watch
+		->movie
+		->short
+		->series (look at database to add more)
+			-episodes
+	person
+		->actor
+		->writer
+		->producer(same here)
+	ratings
+
+	principals??
+	akas??
+
+connections:
+	people_that_contributed_to_this_film:
+				between person and something_to_watch
+	corresponds to
+				between something_to_watch and ratings
+
+functions to add:
+	addreview() to ratings
+
+	
+
+
+check slides 
+	
