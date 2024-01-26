@@ -18,20 +18,58 @@ db_config = {
     "collation": "utf8mb4_general_ci"
 }
 
-# Connect to the database
-db = mysql.connector.connect(**db_config)
+try:
+    db = mysql.connector.connect(**db_config)
+except mysql.connector.Error as err:
+    db = None
+    print("Database connection failed:", err)
+
 
 @app.route('/admin/healthcheck', methods=['GET'])
 def healthcheck():
-    # Here you would add your logic to check database or API connectivity.
-    # I'm using a mock response for demonstration purposes.
-
-    # Check if database or API is connected (mock example)
-    is_connected = True
+    # Check if the database connection is successful
+    is_connected = db.is_connected() if db else False
 
     if is_connected:
-        response = {"status": "OK", "dataconnection": db}
+        response = {"status": "OK", "dataconnection": "Connected"}
     else:
-        response = {"status": "failed", "dataconnection": db}
+        response = {"status": "Failed", "dataconnection": "Not Connected"}
 
     return jsonify(response)
+
+@app.route('/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+
+        try:
+            # Extract username and password from form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+
+            if username is None or password is None:
+                return jsonify({"error": "Request that doesn't return data"}), 204
+            else:
+                cursor = db.cursor()
+                # Execute a query to check if the username and password exist in the same row
+                query = "SELECT * FROM users WHERE Username = %s AND password = %s"
+                cursor.execute(query, (username, password))
+
+                # Fetch the result
+                result = cursor.fetchone()
+
+                if result:
+                    return jsonify({"token": result }), 200
+                else:
+                    return jsonify({"error": "Not authorised"}), 401
+
+        except Exception as e:
+            # Log the exception for debugging
+            print(str(e))
+            # Internal server error
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+        
+
+if __name__ == "__main__":
+    app.run(debug=True)
