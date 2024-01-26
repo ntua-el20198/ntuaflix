@@ -31,9 +31,9 @@ def healthcheck():
     is_connected = db.is_connected() if db else False
 
     if is_connected:
-        response = {"status": "OK", "dataconnection": "Connected"}
+        response = {"status": "OK", "dataconnection": db}
     else:
-        response = {"status": "Failed", "dataconnection": "Not Connected"}
+        response = {"status": "Failed", "dataconnection": db}
 
     return jsonify(response)
 
