@@ -126,6 +126,8 @@ def title(titleID):
     
     else:
         return jsonify({"error": "Method Not Allowed"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
 
 
 @app.route('/name/<int:nameID>', methods=['GET'])
