@@ -99,7 +99,7 @@ def title(titleID):
                 title_akas = cursor.fetchall()
 
                 if title_akas:
-                     title['titleAkas'] = list(title_akas)
+                     title['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
                 
                 query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
                 cursor.execute(query_principals, (titleID,))
@@ -107,14 +107,14 @@ def title(titleID):
                 
 
                 if title_principals:
-                    title['principals'] = list(title_principals)
+                    title['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
 
                 query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
                 cursor.execute(query_rating,(titleID,))
                 title_rating = cursor.fetchone()
 
                 if title_rating:
-                    title['rating'] = title_rating
+                    title['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
 
                 return jsonify(title), 200
             except Exception as e:
@@ -162,6 +162,67 @@ def name(nameID):
     
     else:
         return jsonify({"error": "Method Not Allowed"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        data = request.get_json()  # take the data from the body
+        titlePart = data.get('titlePart')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas for each title
+                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+                cursor.execute(query_akas, (title_info[0],))
+                title_akas = cursor.fetchall()
+
+                if title_akas:
+                    title_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+
+                # Fetch title_principals for each title
+                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+                cursor.execute(query_principals, (title_info[0],))
+                title_principals = cursor.fetchall()
+
+                if title_principals:
+                    title_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+
+                # Fetch title_rating for each title
+                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+                cursor.execute(query_rating, (title_info[0],))
+                title_rating = cursor.fetchone()
+
+                if title_rating:
+                    title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+
+                title_list.append(title_dict)
+
+            return jsonify(title_list), 200
+
+    # Return an empty list if no titles are found or if titlePart is not provided
+    return jsonify({'titles': []}), 200
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
