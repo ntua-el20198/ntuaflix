@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="#" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="index.html">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="searchText">
+        <p>Search By Genre</p>
+    </div>
+
+    <form action="{{ url_for('search_genre') }}" method="GET" class="searchBar">
+        <input type="text" id="genre" placeholder="Genre" class="middle-search-input" name="genre">
+        <input type="text" id="minRating" placeholder="Minimum Rating" class="middle-search-input" name="minRating">
+        <input type="text" id="yearFrom" placeholder="Year From" class="middle-search-input" name="yearFrom">
+        <input type="text" id="yearTo" placeholder="Year To" class="middle-search-input" name="yearTo">
+        <button type="submit" class="middle-search-button">Search</button>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const genreInput = document.querySelector('input[name="genre"]');
+            const minRatingInput = document.querySelector('input[name="minRating"]');
+            const yearFromInput = document.querySelector('input[name="yearFrom"]');
+            const yearToInput = document.querySelector('input[name="yearTo"]');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                // Get values from form inputs
+                const genre = genreInput.value.trim();
+                const minRating = minRatingInput.value.trim();
+                // Check if mandatory fields are filled
+                if (!genre || !minRating) {
+                    alert('Please fill in Genre and Minimum Rating fields.');
+                    return;
+                }
+                const yearFrom = yearFromInput.value.trim();
+                const yearTo = yearToInput.value.trim();
+
+                // Create a URL with the form parameters
+                const url = new URL('/bygenre', window.location.origin);
+                url.searchParams.append('qgenre', genre);
+                url.searchParams.append('minrating', minRating);
+                url.searchParams.append('yrFrom', yearFrom);
+                url.searchParams.append('yrTo', yearTo);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc;
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const movieInfoElement = document.createElement('div');
+                    movieInfoElement.classList.add('movieInfo');
+
+                    // Add various details about the movie
+                    const titleElement = document.createElement('p');
+                    titleElement.textContent = `Title: ${result.originalTitle}`;
+                    movieInfoElement.appendChild(titleElement);
+
+                    const typeElement = document.createElement('p');
+                    typeElement.textContent = `Type: ${result.type}`;
+                    movieInfoElement.appendChild(typeElement);
+
+                    const startYearElement = document.createElement('p');
+                    startYearElement.textContent = `Start Year: ${result.startYear}`;
+                    movieInfoElement.appendChild(startYearElement);
+
+                    const genresElement = document.createElement('p');
+                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                    movieInfoElement.appendChild(genresElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                    movieInfoElement.appendChild(ratingElement);
+
+                    // Append movieInfoElement to resultElement
+                    resultElement.appendChild(movieInfoElement);
+
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement);
+                });
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        // Rest of your script remains the same
+    </script>
+
+</body>
+
+</html>

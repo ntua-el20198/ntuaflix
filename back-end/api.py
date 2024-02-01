@@ -1,11 +1,16 @@
-from flask import Flask, request, jsonify, json, session
+from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for
 import mysql.connector
 from numpy import double
 from passlib.hash import bcrypt  # Import the bcrypt hashing library
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import os
+import secrets
 
-app = Flask(__name__)
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
+app.secret_key = secrets.token_hex(16)
 CORS(app)
 
 # Database configuration
@@ -25,6 +30,63 @@ except mysql.connector.Error as err:
     db = None
     print("Database connection failed:", err)
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/signin.html')
+def signin():
+    return render_template('signin.html')
+
+@app.route('/signup.html')
+def signup():
+    return render_template('signup.html')
+
+@app.route('/search_title.html')
+def search_title():
+    return render_template('search_title.html')
+
+@app.route('/search_genre.html')
+def search_genre():
+    return render_template('search_genre.html')
+
+@app.route('/signupform', methods=['POST'])
+def signupform():
+    if request.method == 'POST':
+        try:
+            # Extract form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+
+            print(username)
+            print(password)
+
+            # Check if passwords match
+            if password != confirm_password:
+                return jsonify({"error": "Passwords do not match"}), 400
+
+            # Hash the password (you should use a secure method for password hashing)
+
+            # Execute the query to insert data into the 'users' table
+            cursor = db.cursor()
+            query = "INSERT INTO users (Username, password, is_admin) VALUES (%s, %s, 0)"
+            cursor.execute(query, (username, password))
+            db.commit()
+
+            return redirect(url_for('signup_success'))
+
+        except Exception as e:
+            # Handle errors
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+
+    return jsonify({"error": "Invalid request"}), 400
+
+
+@app.route('/signup_success')
+def signup_success():
+    return render_template('homepage.html')
 
 @app.route('/admin/healthcheck', methods=['GET'])
 def healthcheck():
@@ -45,7 +107,6 @@ def healthcheck():
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-
         try:
             # Extract username and password from form data
             username = request.form.get('username')
@@ -61,9 +122,15 @@ def login():
 
                 # Fetch the result
                 result = cursor.fetchone()
+                user_id = result[0]
+                print(result)
 
                 if result:
-                    return jsonify({"token": result }), 200
+                    # Store user ID in the session
+                    session['user_id'] = user_id
+
+                    # Redirect to homepage
+                    return render_template('homepage.html')
                 else:
                     return jsonify({"error": "Not authorised"}), 401
 
@@ -74,6 +141,7 @@ def login():
             return jsonify({"error": "Internal server error"}), 500
     else:
         return jsonify({"error": "Not Available"}), 404
+
     
     return jsonify({"error" : "Internal server error"}), 500
 
@@ -135,8 +203,8 @@ def searchTitle():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        data = request.get_json()  # take the data from the body
-        titlePart = data.get('titlePart')
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
 
         if titlePart:
             query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
@@ -192,11 +260,16 @@ def bygenre():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        data = request.get_json()  # take the data from the body
-        qgenre = data.get('qgenre')
-        minrating = float(data.get('minrating'))
-        yrFrom = data.get('yrFrom')
-        yrTo = data.get('yrTo')
+        #data = request.get_json()  # take the data from the body
+        #qgenre = data.get('qgenre')
+        #minrating = float(data.get('minrating'))
+        #yrFrom = data.get('yrFrom')
+        #yrTo = data.get('yrTo')
+
+        qgenre = request.args.get('qgenre')
+        minrating = float(request.args.get('minrating'))
+        yrFrom = request.args.get('yrFrom')
+        yrTo = request.args.get('yrTo')
 
         query = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN title_ratings r ON t.tconst = r.tconst WHERE t.genres LIKE %s AND r.averageRating >= %s "
         parameters = [f"%{qgenre}%",minrating]
@@ -329,7 +402,6 @@ def searchnamename():
         return jsonify({"error": "Method Not Allowed"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
-
 
 
 
