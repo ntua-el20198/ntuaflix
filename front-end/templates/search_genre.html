@@ -15,6 +15,7 @@
             <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
             <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
             <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
         </div>
 
         <div class="nav2_avatar_search">
@@ -53,7 +54,7 @@
             const resultsContainer = document.getElementById('resultsContainer');
 
             searchButton.addEventListener('click', function (event) {
-                event.preventDefault();
+                event.preventDefault(); // display the results in the same page
 
                 // Get values from form inputs
                 const genre = genreInput.value.trim();
@@ -102,9 +103,9 @@
                     const resultElement = document.createElement('div');
                     resultElement.classList.add('searchResult'); // Add a class for styling
 
-                    const posterSrc = result.titlePoster ? result.titlePoster : '/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static/images/default.jpg';
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
                     const posterElement = document.createElement('img');
-                    posterElement.src = posterSrc;
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
                     posterElement.classList.add('row__poster');
                     resultElement.appendChild(posterElement);
 

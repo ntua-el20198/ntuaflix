@@ -50,6 +50,10 @@ def search_title():
 def search_genre():
     return render_template('search_genre.html')
 
+@app.route('/search_name.html')
+def search_name():
+    return render_template('search_name.html')
+
 @app.route('/signupform', methods=['POST'])
 def signupform():
     if request.method == 'POST':
@@ -346,12 +350,12 @@ def name(nameID):
                 column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
                 name = dict(zip(column_names, name_data))
                 
-                query_principals = "SELECT  tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
+                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
                 cursor.execute(query_principals, (nameID,))
                 name_principals = cursor.fetchall()
 
                 if name_principals:
-                    name['nameTitles'] = list(name_principals)
+                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
 
                 return jsonify(name), 200
             except Exception as e:
@@ -371,8 +375,9 @@ def searchnamename():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        data = request.get_json()  # take the data from the body
-        namePart = data.get('namePart')
+        #data = request.get_json()  # take the data from the body
+        #namePart = data.get('namePart')
+        namePart = request.args.get('namePart')
 
         query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE primaryName LIKE %s"
         cursor.execute(query_basics,(f"%{namePart}%",))
@@ -384,13 +389,16 @@ def searchnamename():
             for name_data in names:
                 column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
                 name = dict(zip(column_names, name_data))
+                cursor.fetchall()
                 
                 query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
                 cursor.execute(query_principals, (name_data[0],))
                 name_principals = cursor.fetchall()
+                # Fetch results of query_principals before proceeding
+                cursor.fetchall()
 
                 if name_principals:
-                    name['nameTitles'] = list(name_principals)
+                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
                 name_list.append(name)
 
             return jsonify(name_list), 200

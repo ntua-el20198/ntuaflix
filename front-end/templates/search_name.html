@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="#" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+
+
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="index.html">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="searchText">
+        <p>Search Principals</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Name..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="nameResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const namePart = searchInput.value.trim();
+
+                const url = new URL('/searchname', window.location.origin);
+                url.searchParams.append('namePart', namePart);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+        });
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.namePoster ? result.namePoster : '/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const nameInfoElement = document.createElement('div');
+                    nameInfoElement.classList.add('nameInfo');
+
+                    // Add various details about the movie
+                    const nameElement = document.createElement('p');
+                    nameElement.textContent = `Name: ${result.name}`;
+                    nameInfoElement.appendChild(nameElement);
+
+                    const birthYearElement = document.createElement('p');
+                    birthYearElement.textContent = `Birth Year: ${result.birthYr}`;
+                    nameInfoElement.appendChild(birthYearElement);
+
+                    const deathYearElement = document.createElement('p');
+                    deathYearElement.textContent = `Death Year: ${result.deathYr ? result.deathYr : 'N/A'}`;
+                    nameInfoElement.appendChild(deathYearElement);
+
+                    const professionElement = document.createElement('p');
+                    professionElement.textContent = `Profession: ${result.profession}`;
+                    nameInfoElement.appendChild(professionElement);
+
+                    // Check if there are nameTitles
+                    if (result.nameTitles && result.nameTitles.length > 0) {
+                        const titleListElement = document.createElement('ul');
+
+                        result.nameTitles.forEach(title => {
+                            const titleListItem = document.createElement('li');
+                            titleListItem.textContent = `Title ID: ${title.titleID}, Category: ${title.category}`;
+                            titleListElement.appendChild(titleListItem);
+                        });
+
+                        nameInfoElement.appendChild(titleListElement);
+                    }
+
+                    // Append nameInfoElement to resultElement
+                    resultElement.appendChild(nameInfoElement);
+
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement);
+                });
+
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+    </script>
+
+</body>
+
+</html>
