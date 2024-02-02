@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,37 +11,38 @@
             const searchBar = document.getElementById('searchBar');
             searchBar.style.transform = (searchBar.style.transform === 'scaleX(0)' || searchBar.style.transform === '') ? 'scaleX(1)' : 'scaleX(0)';
         }
-    
+
         function closeSearchBar() {
             const searchBar = document.getElementById('searchBar');
             searchBar.style.transform = 'scaleX(0)';
         }
     </script>
 
-    
+
 </head>
+
 <body>
 
-<div class="nav2" id="nav2">
-    <div class="nav2_logo_options">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
-        <a href="#" class="nav2_option">My List</a>
-        <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
-        <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
-        <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
-        <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
-    </div>
-    <div class="nav2_avatar_search">
-
-        <div class="dropdown">
-            <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
-            <div class="dropdown_content">
-                <a href="{{ url_for('index') }}" class="nav2_option">Log Out</a>
-            </div>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="#" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
         </div>
+        <div class="nav2_avatar_search">
 
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('index') }}" class="nav2_option">Log Out</a>
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
 
     <div class="banner">
         <div class="banner_contents">
@@ -50,50 +52,45 @@
             </div>
             <div class="banner_description">
                 The incredible tale about the fantastical evolution of Bella Baxter,
-                 a young woman brought back to life by the brilliant and unorthodox scientist Dr. Godwin Baxter.
+                a young woman brought back to life by the brilliant and unorthodox scientist Dr. Godwin Baxter.
             </div>
         </div>
         <div class="banner_fadeBottom">
-            
-        </div>
-    </div>
-    <div class="row">
-        <h2> TOP RATED</h2>
-        <div class="_row__posters">
-            <img src="{{ url_for('static', filename='images/large-movie1.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie2.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie3.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie4.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie5.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie6.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie7.jpg') }}" alt="" class="row__poster row__posterLarge">
-            <img src="{{ url_for('static', filename='images/large-movie8.jpg') }}" alt="" class="row__poster row__posterLarge">
-        </div>
 
+        </div>
     </div>
 
+    <h2> TOP 10 </h2>
     <div class="row">
-        <h2> TOP 10 NOW</h2>
-        <div class="_row__posters">
-            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
-            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
-        </div>
-        
+        <div id="topRatedContainer" class="_row__posters"></div>
     </div>
+    <!-- Include jQuery library -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <!-- Add this script to your homepage.html -->
+    <script>
+        $(document).ready(function () {
+            // Fetch top-rated movies data from your endpoint
+            $.get("/topRated", function (data) {
+                // Check if data is available
+                if (data.length > 0) {
+                    // Iterate through the data and append images to a container
+                    var container = $("#topRatedContainer");  // Assuming you have a container with this ID
+
+                    data.forEach(function (movie) {
+                        // Create an image element and set its attributes
+                        var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster");
+
+                        // Append the image to the container
+                        container.append(img);
+                    });
+                } else {
+                    // Handle the case when no movies are found
+                    console.log("No movies found");
+                }
+            });
+        });
+    </script>
 
     <div class="row">
         <h2> ACTION </h2>
@@ -115,7 +112,7 @@
             <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
             <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
         </div>
-        
+
     </div>
 
     <div class="row">
@@ -138,7 +135,7 @@
             <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
             <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
         </div>
-        
+
     </div>
 
     <div class="row">
@@ -161,7 +158,7 @@
             <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
             <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
         </div>
-        
+
     </div>
 
     <div class="row">
@@ -184,7 +181,7 @@
             <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
             <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
         </div>
-        
+
     </div>
 
     <div class="row">
@@ -207,7 +204,7 @@
             <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
             <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
         </div>
-        
+
     </div>
 
     <script>
@@ -219,10 +216,11 @@
                 nav2.classList.remove('nav2_black');
             }
         });
-    
+
 
     </script>
-    
+
 
 </body>
+
 </html>

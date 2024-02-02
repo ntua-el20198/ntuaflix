@@ -89,7 +89,7 @@
                     const resultElement = document.createElement('div');
                     resultElement.classList.add('searchResult'); // Add a class for styling
 
-                    const posterSrc = result.namePoster ? result.namePoster : '/static/images/default.jpg';
+                    const posterSrc = result.namePoster ? result.namePoster : '/static/images/default_image_for_names.jpeg';
                     const posterElement = document.createElement('img');
                     posterElement.src = posterSrc.replace('{width_variable}', 'w500');
                     posterElement.classList.add('row__poster');

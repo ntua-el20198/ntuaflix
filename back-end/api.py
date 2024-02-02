@@ -34,6 +34,11 @@ except mysql.connector.Error as err:
 def index():
     return render_template('index.html')
 
+@app.route('/homepage.html')
+def homepage():
+    top_rated_movies = topRated()  
+    return render_template('homepage.html', top_rated=top_rated_movies)
+
 @app.route('/signin.html')
 def signin():
     return render_template('signin.html')
@@ -410,6 +415,30 @@ def searchnamename():
         return jsonify({"error": "Method Not Allowed"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/topRated', methods=['GET'])
+def topRated():
+    if request.method == 'GET':
+        cursor = db.cursor()
+        query_top10 = "SELECT tp.img_url_asset, tr.averageRating FROM title_basics tp INNER JOIN title_ratings tr ON tp.tconst = tr.tconst WHERE tp.img_url_asset IS NOT NULL ORDER BY tr.averageRating DESC LIMIT 10"
+        cursor.execute(query_top10)
+        top_rated = cursor.fetchall()
+
+        top_rated_with_width = []
+
+        for result in top_rated:
+            img_url = result[0]
+            width_variable = 'w200'  # Replace 'w500' with your desired width value
+            poster_url = img_url.replace('{width_variable}', width_variable) if img_url else '/static/images/default_image_for_titles.jpeg'
+            top_rated_with_width.append({'poster_url': poster_url, 'averageRating': result[1]})
+
+        if top_rated_with_width:
+            return jsonify(top_rated_with_width), 200
+        else:
+            return jsonify({"error": "No movies found"}), 204
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 404
+
 
 
 
