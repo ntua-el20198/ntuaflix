@@ -1,16 +1,10 @@
-from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for
+from flask import Flask, request, jsonify, json, session
 import mysql.connector
-from numpy import double
 from passlib.hash import bcrypt  # Import the bcrypt hashing library
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import os
-import secrets
 
-template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17/front-end/static'
-app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
-app.secret_key = secrets.token_hex(16)
+app = Flask(__name__)
 CORS(app)
 
 # Database configuration
@@ -18,7 +12,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "2255",  
+    "password": "",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
@@ -30,87 +24,23 @@ except mysql.connector.Error as err:
     db = None
     print("Database connection failed:", err)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/signin.html')
-def signin():
-    return render_template('signin.html')
-
-@app.route('/signup.html')
-def signup():
-    return render_template('signup.html')
-
-@app.route('/search_title.html')
-def search_title():
-    return render_template('search_title.html')
-
-@app.route('/search_genre.html')
-def search_genre():
-    return render_template('search_genre.html')
-
-@app.route('/search_name.html')
-def search_name():
-    return render_template('search_name.html')
-
-@app.route('/signupform', methods=['POST'])
-def signupform():
-    if request.method == 'POST':
-        try:
-            # Extract form data
-            username = request.form.get('username')
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
-
-            print(username)
-            print(password)
-
-            # Check if passwords match
-            if password != confirm_password:
-                return jsonify({"error": "Passwords do not match"}), 400
-
-            # Hash the password (you should use a secure method for password hashing)
-
-            # Execute the query to insert data into the 'users' table
-            cursor = db.cursor()
-            query = "INSERT INTO users (Username, password, is_admin) VALUES (%s, %s, 0)"
-            cursor.execute(query, (username, password))
-            db.commit()
-
-            return redirect(url_for('signup_success'))
-
-        except Exception as e:
-            # Handle errors
-            print(str(e))
-            return jsonify({"error": "Internal server error"}), 500
-
-    return jsonify({"error": "Invalid request"}), 400
-
-
-@app.route('/signup_success')
-def signup_success():
-    return render_template('homepage.html')
 
 @app.route('/admin/healthcheck', methods=['GET'])
 def healthcheck():
-    if request.method == 'GET':
-        # Check if the database connection is successful
-        is_connected = db.is_connected() if db else False
+    # Check if the database connection is successful
+    is_connected = db.is_connected() if db else False
 
-        if is_connected:
-            response = {"status": "OK", "dataconnection": db}, 200
-        else:
-            response = {"status": "Failed", "dataconnection": db}, 204
-
-        return jsonify(response)
+    if is_connected:
+        response = {"status": "OK", "dataconnection": db}
     else:
-        return jsonify({"error": "Method Not Allowed"}), 404
+        response = {"status": "Failed", "dataconnection": db}
 
+    return jsonify(response)
 
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
+
         try:
             # Extract username and password from form data
             username = request.form.get('username')
@@ -126,15 +56,9 @@ def login():
 
                 # Fetch the result
                 result = cursor.fetchone()
-                user_id = result[0]
-                print(result)
 
                 if result:
-                    # Store user ID in the session
-                    session['user_id'] = user_id
-
-                    # Redirect to homepage
-                    return render_template('homepage.html')
+                    return jsonify({"token": result }), 200
                 else:
                     return jsonify({"error": "Not authorised"}), 401
 
@@ -145,274 +69,7 @@ def login():
             return jsonify({"error": "Internal server error"}), 500
     else:
         return jsonify({"error": "Not Available"}), 404
-
-    
-    return jsonify({"error" : "Internal server error"}), 500
-
-@app.route('/title/<int:titleID>', methods=['GET'])
-def title(titleID):
-    if request.method == 'GET':
-        cursor = db.cursor()
-
-        query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
-        cursor.execute(query_basics,(titleID,))
-
-        title_data = cursor.fetchone()
-
-        if title_data:
-            try:
-                column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
-                title = dict(zip(column_names, title_data))
-                title['genres'] = title['genres'].split(',')
-                title['startYear'] = str(title['startYear'])
-                title['titleID'] = str(title['titleID'])
-
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (titleID,))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                     title['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-                
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (titleID,))
-                title_principals = cursor.fetchall()
-                
-
-                if title_principals:
-                    title['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating,(titleID,))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    title['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
-
-                return jsonify(title), 200
-            except Exception as e:
-                print("Error in query_akas execution:", str(e))
-                return jsonify({"error": "Internal server error"}), 500
-
-        else:
-            return jsonify({"error": "Title not found"}), 204
-    
-    else:
-        return jsonify({"error": "Method Not Allowed"}), 404
-    
-    return jsonify({"error" : "Internal server error"}), 500
-
-@app.route('/searchTitle', methods=['GET'])
-def searchTitle():
-    if request.method == 'GET':
-        cursor = db.cursor()
-
-        #data = request.get_json()   take the data from the body
-        titlePart = request.args.get('titlePart')
-
-        if titlePart:
-            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
-            cursor.execute(query_basics, (f"%{titlePart}%",))
-            titles = cursor.fetchall()
-
-            title_list = []
-
-            for title_info in titles:
-                title_dict = {
-                    'titleID': str(title_info[0]),
-                    'type': title_info[1],
-                    'originalTitle': title_info[2],
-                    'titlePoster': title_info[3],
-                    'startYear': str(title_info[4]),
-                    'endYear': str(title_info[5]),
-                    'genres': title_info[6].split(',') if title_info[6] else []
-                }
-
-                # Fetch title_akas for each title
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (title_info[0],))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                    title_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-                # Fetch title_principals for each title
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (title_info[0],))
-                title_principals = cursor.fetchall()
-
-                if title_principals:
-                    title_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                # Fetch title_rating for each title
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating, (title_info[0],))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
-
-                title_list.append(title_dict)
-
-            return jsonify(title_list), 200
-
-    # Return an empty list if no titles are found or if titlePart is not provided
-    return jsonify({'titles': []}), 200
-
-@app.route('/bygenre', methods=['GET'])
-def bygenre():
-    if request.method == 'GET':
-        cursor = db.cursor()
-
-        #data = request.get_json()  # take the data from the body
-        #qgenre = data.get('qgenre')
-        #minrating = float(data.get('minrating'))
-        #yrFrom = data.get('yrFrom')
-        #yrTo = data.get('yrTo')
-
-        qgenre = request.args.get('qgenre')
-        minrating = float(request.args.get('minrating'))
-        yrFrom = request.args.get('yrFrom')
-        yrTo = request.args.get('yrTo')
-
-        query = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN title_ratings r ON t.tconst = r.tconst WHERE t.genres LIKE %s AND r.averageRating >= %s "
-        parameters = [f"%{qgenre}%",minrating]
-
-        if yrFrom and yrTo:
-            query += "AND t.startYear >= %s AND t.startYear <= %s"
-            parameters.append(int(yrFrom))
-            parameters.append(int(yrTo))
-
-        query += " GROUP BY t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres"
-
-        cursor.execute(query,parameters)
-        titles = cursor.fetchall()
-
-        title_list = []
-
-        for title_info in titles:
-                title_dict = {
-                    'titleID': str(title_info[0]),
-                    'type': title_info[1],
-                    'originalTitle': title_info[2],
-                    'titlePoster': title_info[3],
-                    'startYear': str(title_info[4]),
-                    'endYear': str(title_info[5]),
-                    'genres': title_info[6].split(',') if title_info[6] else []
-                }
-
-                # Fetch title_akas for each title
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (title_info[0],))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                    title_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-                # Fetch title_principals for each title
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (title_info[0],))
-                title_principals = cursor.fetchall()
-
-                if title_principals:
-                    title_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                # Fetch title_rating for each title
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating, (title_info[0],))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
-
-                title_list.append(title_dict)
-
-        return jsonify(title_list), 200
-
-    # Return an empty list if no titles are found or if titlePart is not provided
-    else:
-        return jsonify({"error": "Method Not Allowed"}), 404
-    
-
-
-@app.route('/name/<int:nameID>', methods=['GET'])
-def name(nameID):
-    if request.method == 'GET':
-        cursor = db.cursor()
-
-        query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE nconst = %s"
-        cursor.execute(query_basics,(nameID,))
-
-        name_data = cursor.fetchone()
-
-        if name_data:
-            try:
-                column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
-                name = dict(zip(column_names, name_data))
-                
-                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
-                cursor.execute(query_principals, (nameID,))
-                name_principals = cursor.fetchall()
-
-                if name_principals:
-                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
-
-                return jsonify(name), 200
-            except Exception as e:
-                print("Error in query_akas execution:", str(e))
-                return jsonify({"error": "Internal server error"}), 500
-
-        else:
-            return jsonify({"error": "Title not found"}), 204
-    
-    else:
-        return jsonify({"error": "Method Not Allowed"}), 404
-    
-    return jsonify({"error" : "Internal server error"}), 500
-
-@app.route('/searchname', methods=['GET'])
-def searchnamename():
-    if request.method == 'GET':
-        cursor = db.cursor()
-
-        #data = request.get_json()  # take the data from the body
-        #namePart = data.get('namePart')
-        namePart = request.args.get('namePart')
-
-        query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE primaryName LIKE %s"
-        cursor.execute(query_basics,(f"%{namePart}%",))
-
-        names = cursor.fetchall()
-        name_list = []
-
-        if names:
-            for name_data in names:
-                column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
-                name = dict(zip(column_names, name_data))
-                cursor.fetchall()
-                
-                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
-                cursor.execute(query_principals, (name_data[0],))
-                name_principals = cursor.fetchall()
-                # Fetch results of query_principals before proceeding
-                cursor.fetchall()
-
-                if name_principals:
-                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
-                name_list.append(name)
-
-            return jsonify(name_list), 200
         
-        else:
-            return jsonify({"error": "No name found"}), 204
-    
-    else:
-        return jsonify({"error": "Method Not Allowed"}), 404
-    
-    return jsonify({"error" : "Internal server error"}), 500
-
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)
