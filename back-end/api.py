@@ -439,6 +439,36 @@ def topRated():
     else:
         return jsonify({"error": "Method Not Allowed"}), 404
 
+@app.route('/my_list/<int::titleID>/int::userID', methods=['POST'])
+def my_list(titleID, userID):
+    if request.method == 'POST':
+        cursor = db.cursor()
+        query_check = "select * from ListForWatchingLater where usersid = %s and tilebasictconst = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if movie:
+            query_remove = "delete from ListForWatchingLater where usersid = %s and tilebasictconst = %s"
+            cursor.execute(query_remove, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie removed succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+        
+        else:
+
+            query_add = "insert into ListForWatchingLater(usersid, titlebasictconst) values(%s, %s)"
+            cursor.execute(query_add, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie added succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+    return jsonify({"error" : "Internal server error"}), 500
+
 
 
 
