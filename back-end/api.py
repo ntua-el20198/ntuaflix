@@ -7,8 +7,8 @@ from werkzeug.utils import secure_filename
 import os
 import secrets
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17/front-end/static'
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
 CORS(app)
@@ -410,6 +410,7 @@ def searchnamename():
         return jsonify({"error": "Method Not Allowed"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
+
 
 
 
