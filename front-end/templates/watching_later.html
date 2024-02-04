@@ -109,7 +109,7 @@
                     addButton.style.fontWeight = 'bold'; // Make the text bold
                     addButton.style.fontSize = '20px';
                     addButton.addEventListener('click', function () {
-                        add_removeToMyList(result.titleID);
+                        removeFromMyList(result.titleID);
                     });
 
                     resultElement.appendChild(addButton);
@@ -126,7 +126,7 @@
             }
         }
 
-        function add_removeToMyList(titleID) {
+        function removeFromMyList(titleID) {
             fetch('/get_user_id')
                 .then(response => response.json())
                 .then(data => {
