@@ -26,6 +26,7 @@
             <div class="dropdown">
                 <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
                 <div class="dropdown_content">
+                    <a href="{{ url_for('my_likes') }}" class="nav2_option">Likes</a>
                     <a href="{{ url_for('index') }}">Log Out</a>
                 </div>
             </div>
@@ -140,6 +141,23 @@
                     // Add a horizontal line between results
                     const hrElement = document.createElement('hr');
                     resultsContainer.appendChild(hrElement);
+                    
+                    const likeButton = document.createElement('button');
+                    likeButton.textContent = '<3';
+                    likeButton.classList.add('likeButton');
+                    likeButton.style.fontWeight = 'bold';
+                    likeButton.style.fontSize = '20px';
+                    likeButton.addEventListener('click', function () {
+                        addLike(result.titleID);
+                    });
+
+                    resultElement.appendChild(likeButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement2 = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement2);
                 });
             } else {
                 // Display a message for no results
@@ -177,8 +195,42 @@
                 .catch(error => {
                     console.error('Error:', error);
                 });
+        }
+
+        function addLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/add_to_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
 
         }
+
+        
     </script>
 
 </body>
