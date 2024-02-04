@@ -478,7 +478,21 @@ form .form-help :where(label,a){
 }
 
 .likeButton {
-    font-size: 1em;  /* Set the font size to make it bigger */
-    border-radius: 20%; /* Set border-radius to make it round */
-    padding: 10px 20px; /* Adjust padding for more space around the text */
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.likeButton.empty::before {
+    content: '\2661'; /* Unicode character for an empty heart */
+    color: white; /* Set the color of an empty heart */
+}
+
+.likeButton.full::before {
+    content: '\2665'; /* Unicode character for a full heart */
+    color: red; /* Set the color of a full heart */
 }
