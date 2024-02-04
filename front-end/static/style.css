@@ -475,6 +475,5 @@ form .form-help :where(label,a){
     font-size: 1em;  /* Set the font size to make it bigger */
     border-radius: 20%; /* Set border-radius to make it round */
     padding: 10px 20px; /* Adjust padding for more space around the text */
-
 }
 
