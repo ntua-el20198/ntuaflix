@@ -5,19 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    
+
 </head>
 
 <body>
     <div class="nav2" id="nav2">
         <div class="nav2_logo_options">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
-            <a href="#" class="nav2_option">My List</a>
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
             <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
             <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
             <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
             <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
-            
+
 
         </div>
 
@@ -26,7 +26,7 @@
             <div class="dropdown">
                 <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
                 <div class="dropdown_content">
-                    <a href="index.html">Log Out</a>
+                    <a href="{{ url_for('index') }}">Log Out</a>
                 </div>
             </div>
 
@@ -123,6 +123,17 @@
                     // Append movieInfoElement to resultElement
                     resultElement.appendChild(movieInfoElement);
 
+                    // Create a button to add the movie to the list
+                    const addButton = document.createElement('button');
+                    addButton.textContent = '+';
+                    addButton.classList.add('addButton');
+                    addButton.style.fontWeight = 'bold'; // Make the text bold
+                    addButton.style.fontSize = '20px';
+                    addButton.addEventListener('click', function () {
+                        add_removeToMyList(result.titleID);
+                    });
+
+                    resultElement.appendChild(addButton);
                     // Append resultElement to resultsContainer
                     resultsContainer.appendChild(resultElement);
 
@@ -134,6 +145,39 @@
                 // Display a message for no results
                 resultsContainer.innerHTML = '<p>No results found.</p>';
             }
+        }
+
+        function add_removeToMyList(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to add movies to your list.');
+                        return;
+                    }
+
+                    fetch(`/add_to_list/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
         }
     </script>
 

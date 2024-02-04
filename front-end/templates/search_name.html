@@ -12,7 +12,7 @@
     <div class="nav2" id="nav2">
         <div class="nav2_logo_options">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
-            <a href="#" class="nav2_option">My List</a>
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
             <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
             <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
             <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
@@ -26,7 +26,7 @@
             <div class="dropdown">
                 <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
                 <div class="dropdown_content">
-                    <a href="index.html">Log Out</a>
+                    <a href="{{ url_for('index') }}">Log Out</a>
                 </div>
             </div>
 
@@ -37,7 +37,7 @@
         <p>Search Principals</p>
     </div>
 
-    <form action="{{ url_for('searchTitle') }}" method="GET">
+    <form action="{{ url_for('search_name') }}" method="GET">
         <div class="searchBar">
             <input type="text" placeholder="Name..." class="middle-search-input" name="titlePart">
             <button type="submit" class="middle-search-button">Search</button>

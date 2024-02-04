@@ -7,10 +7,11 @@ from werkzeug.utils import secure_filename
 import os
 import secrets
 
-template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
+app.config['SESSION_TYPE'] = 'filesystem'
 CORS(app)
 
 # Database configuration
@@ -58,6 +59,10 @@ def search_genre():
 @app.route('/search_name.html')
 def search_name():
     return render_template('search_name.html')
+
+@app.route('/my-list.html')
+def my_list():
+    return render_template('watching_later.html')
 
 @app.route('/signupform', methods=['POST'])
 def signupform():
@@ -153,6 +158,15 @@ def login():
 
     
     return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/get_user_id', methods = ['GET'])
+def get_user_id():
+    user_id = session.get('user_id')
+
+    if user_id:
+        return jsonify(user_id), 200
+    else:
+        return jsonify({"error": "User not authenticated"}), 401
 
 @app.route('/title/<int:titleID>', methods=['GET'])
 def title(titleID):
@@ -439,16 +453,50 @@ def topRated():
     else:
         return jsonify({"error": "Method Not Allowed"}), 404
 
-@app.route('/my_list/<int::titleID>/int::userID', methods=['POST'])
-def my_list(titleID, userID):
+@app.route('/add_to_list/<int:titleID>', methods=['POST'])
+def add_to_list(titleID):
     if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
         cursor = db.cursor()
-        query_check = "select * from ListForWatchingLater where usersid = %s and tilebasictconst = %s"
+        query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
         cursor.execute(query_check, (userID, titleID))
         movie = cursor.fetchone()
         
         if movie:
-            query_remove = "delete from ListForWatchingLater where usersid = %s and tilebasictconst = %s"
+           return jsonify({"message": "Movie already in list"}), 201
+        
+        else:
+            query_add = "INSERT INTO ListForWatchingLater(usersid, title_basicstconst ) VALUES(%s, %s)"
+            cursor.execute(query_add, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie added succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/remove_from_list/<int:titleID>', methods=['POST'])
+def remove_from_list(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if movie:
+            query_remove = "DELETE FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
             cursor.execute(query_remove, (userID, titleID))
             db.commit()
 
@@ -458,15 +506,72 @@ def my_list(titleID, userID):
                 return jsonify({"error": "Something went wrong"}), 204
         
         else:
+            return jsonify({"error" : "Not in list"}), 201
+    return jsonify({"error" : "Internal server error"}), 500
 
-            query_add = "insert into ListForWatchingLater(usersid, titlebasictconst) values(%s, %s)"
-            cursor.execute(query_add, (userID, titleID))
-            db.commit()
+@app.route('/list_for_watching_later', methods=['GET'])
+def list_for_watching_later():
+    if request.method == 'GET':
+        userID = session.get('user_id')
 
-            if cursor.rowcount > 0 :
-                return jsonify({"message": "Movie added succesfully"}), 200
-            else:
-                return jsonify({"error": "Something went wrong"}), 204
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query1 = "SELECT * FROM ListForWatchingLater WHERE usersid = %s"
+        cursor.execute(query1, (userID,))
+        movies = cursor.fetchall()
+
+        movie_list = []
+
+        if movies:
+            for movie in movies:
+                query2 = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN ListForWatchingLater l ON t.tconst = l.title_basicstconst WHERE t.tconst = %s"
+                cursor.execute(query2,(movie[1],))
+                movie_info = cursor.fetchone()
+                movie_dict = {
+                    'titleID': str(movie_info[0]),
+                    'type': movie_info[1],
+                    'originalTitle': movie_info[2],
+                    'titlePoster': movie_info[3],
+                    'startYear': str(movie_info[4]),
+                    'endYear': str(movie_info[5]),
+                    'genres': movie_info[6].split(',') if movie_info[6] else []
+                }
+
+                # Fetch title_akas for each title
+                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+                cursor.execute(query_akas, (movie_info[0],))
+                title_akas = cursor.fetchall()
+
+                if title_akas:
+                    movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+
+                # Fetch title_principals for each title
+                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+                cursor.execute(query_principals, (movie_info[0],))
+                title_principals = cursor.fetchall()
+
+                if title_principals:
+                    movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+
+                # Fetch title_rating for each title
+                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+                cursor.execute(query_rating, (movie_info[0],))
+                title_rating = cursor.fetchone()
+
+                if title_rating:
+                    movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+
+                movie_list.append(movie_dict)
+
+            return jsonify(movie_list), 200
+        else:
+            return jsonify({'list': []}), 200
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 405
+        
     return jsonify({"error" : "Internal server error"}), 500
 
 

@@ -26,7 +26,7 @@
     <div class="nav2" id="nav2">
         <div class="nav2_logo_options">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
-            <a href="#" class="nav2_option">My List</a>
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
             <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
             <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
             <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>

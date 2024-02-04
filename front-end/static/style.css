@@ -398,6 +398,7 @@ form .form-help :where(label,a){
     display: flex;
     align-items: center;
     margin-left: auto;
+    margin-bottom: 20px;
 }
 
 .nav2_avatar_search:hover{
@@ -445,7 +446,8 @@ form .form-help :where(label,a){
 
 #resultsContainer {
     margin: 0 auto; /* This will center the container horizontally */
-    max-width: 50%; /* Adjust the max-width to your preference */
+    max-width: 50%; 
+    margin-top: 80px;
 }
 
 .searchResult {
@@ -467,5 +469,12 @@ form .form-help :where(label,a){
 .movieInfo {
     color: white;
     text-align: center;
+}
+
+.addButton {
+    font-size: 1em;  /* Set the font size to make it bigger */
+    border-radius: 20%; /* Set border-radius to make it round */
+    padding: 10px 20px; /* Adjust padding for more space around the text */
+
 }
 
