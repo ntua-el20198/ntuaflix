@@ -156,7 +156,7 @@
 
                     // Add a horizontal line between results
                     const hrElement2 = document.createElement('hr');
-                    resultsContainer.appendChild(hrElement2);
+                    resultsContainer.appendChild(hrElement2);x
                 });
             } else {
                 // Display a message for no results
@@ -242,7 +242,12 @@
                 .catch(error => {
                     console.error('Error:', error);
                 });    
-
+            const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+            const index = likedMovies.indexOf(titleID);
+            if (index !== -1) {
+                likedMovies.splice(index, 1);
+                sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+            }
         }
         
         function removeLike(titleID) {
@@ -274,9 +279,20 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                });    
-
+                });
+            const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+            const index = likedMovies.indexOf(titleID);
+            if (index !== -1) {
+                likedMovies.splice(index, 1);
+                sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+            }
         }
+
+    document.addEventListener('DOMContentLoaded', function () {
+    // Call the function to fetch and display movies when the page loads
+    fetchMovies();
+    updateLikedButtons();
+    });
         
     </script>
 
