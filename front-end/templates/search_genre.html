@@ -95,203 +95,78 @@
         const resultsContainer = document.getElementById('resultsContainer');
 
         function displaySearchResults(results) {
-            // Clear previous results
-            resultsContainer.innerHTML = '';
+        // Clear previous results
+        resultsContainer.innerHTML = '';
 
-            if (results && results.length > 0) {
-                // Loop through the results and create HTML elements to display them
+        if (results && results.length > 0) {
+            // Loop through the results and create HTML elements to display them
                 results.forEach(result => {
-                    const resultElement = document.createElement('div');
-                    resultElement.classList.add('searchResult'); // Add a class for styling
+                const resultElement = document.createElement('div');
+                resultElement.classList.add('searchResult'); // Add a class for styling
 
-                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
-                    const posterElement = document.createElement('img');
-                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
-                    posterElement.classList.add('row__poster');
-                    resultElement.appendChild(posterElement);
+                const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+                const posterElement = document.createElement('img');
+                posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                posterElement.classList.add('row__poster');
+                resultElement.appendChild(posterElement);
 
-                    // Create a div for movie information
-                    const movieInfoElement = document.createElement('div');
-                    movieInfoElement.classList.add('movieInfo');
+                // Create a div for movie information
+                const movieInfoElement = document.createElement('div');
+                movieInfoElement.classList.add('movieInfo');
 
-                    // Add various details about the movie
-                    const titleElement = document.createElement('p');
-                    titleElement.textContent = `Title: ${result.originalTitle}`;
-                    movieInfoElement.appendChild(titleElement);
+                // Add various details about the movie
+                const titleElement = document.createElement('p');
+                titleElement.textContent = `Title: ${result.originalTitle}`;
+                movieInfoElement.appendChild(titleElement);
 
-                    const typeElement = document.createElement('p');
-                    typeElement.textContent = `Type: ${result.type}`;
-                    movieInfoElement.appendChild(typeElement);
+                const typeElement = document.createElement('p');
+                typeElement.textContent = `Type: ${result.type}`;
+                movieInfoElement.appendChild(typeElement);
 
-                    const startYearElement = document.createElement('p');
-                    startYearElement.textContent = `Start Year: ${result.startYear}`;
-                    movieInfoElement.appendChild(startYearElement);
+                const startYearElement = document.createElement('p');
+                startYearElement.textContent = `Start Year: ${result.startYear}`;
+                movieInfoElement.appendChild(startYearElement);
 
-                    const genresElement = document.createElement('p');
-                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
-                    movieInfoElement.appendChild(genresElement);
+                const genresElement = document.createElement('p');
+                genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                movieInfoElement.appendChild(genresElement);
 
-                    const ratingElement = document.createElement('p');
-                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
-                    movieInfoElement.appendChild(ratingElement);
+                const ratingElement = document.createElement('p');
+                ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                movieInfoElement.appendChild(ratingElement);
 
-                    resultElement.appendChild(movieInfoElement);
+                resultElement.appendChild(movieInfoElement);
+                
+            // Ensure createListButton is defined
+            const listButton = createListButton(result);
+            console.log('createListButton type:', typeof listButton, listButton);
+            resultElement.appendChild(listButton);
+            
+            
+            // Ensure createLikeButton is defined
+            const likeButton = createLikeButton(result);
+            resultElement.appendChild(likeButton);
+            
+            // Append resultElement to resultsContainer
+            resultsContainer.appendChild(resultElement);
+            
+            // Create and append a horizontal line between results
+            const hrElement = document.createElement('hr');
+            resultsContainer.appendChild(hrElement);
 
-                    // Create a button to add the movie to the list
-                    const addButton = document.createElement('button');
-                    addButton.textContent = '+';
-                    addButton.classList.add('addButton');
-                    addButton.style.fontWeight = 'bold'; // Make the text bold
-                    addButton.style.fontSize = '20px';
-                    addButton.addEventListener('click', function () {
-                        add_removeToMyList(result.titleID);
-                    });
-
-                    resultElement.appendChild(addButton);
-                    // Append resultElement to resultsContainer
-                    resultsContainer.appendChild(resultElement);
-
-                    // Add a horizontal line between results
-                    const hrElement = document.createElement('hr');
-                    resultsContainer.appendChild(hrElement);
-
-                    const likeButton = document.createElement('button');
-                    likeButton.innerHTML = '&hearts;';
-                    likeButton.classList.add('likeButton');
-                    likeButton.classList.add('likeButton', 'empty');
-                    likeButton.addEventListener('click', function () {
-                        toggleLike(result.titleID, likeButton);
-                    });
-
-                    resultElement.appendChild(likeButton);
-                    // Append resultElement to resultsContainer
-                    resultsContainer.appendChild(resultElement);
-
-                    // Add a horizontal line between results
-                    const hrElement2 = document.createElement('hr');
-                    resultsContainer.appendChild(hrElement2);
-                });
-            } else {
-                // Display a message for no results
-                resultsContainer.innerHTML = '<p>No results found.</p>';
-            }
-        }
-
-        function add_removeToMyList(titleID) {
-            fetch('/get_user_id')
-                .then(response => response.json())
-                .then(data => {
-                    const userID = data;
-                    console.log('User ID:', userID);
-
-                    if (!userID) {
-                        alert('Please log in to add movies to your list.');
-                        return;
-                    }
-
-                    fetch(`/add_to_list/${titleID}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ userID: userID }),
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            }
-
-        function toggleLike(titleID, button) {
-        // Toggle the like status and update the button appearance
-        if (button.classList.contains('empty')) {
-            // If not liked, make it liked (full heart)
-            button.classList.remove('empty');
-            button.classList.add('full');
-            // Call the function to handle the like operation
-            addLike(titleID);
+            console.log('listButton type:', typeof listButton, listButton);
+            console.log('likeButton type:', typeof likeButton, likeButton);
+            console.log('hrElement type:', typeof hrElement, hrElement);
+            });
         } else {
-            // If already liked, make it not liked (empty heart)
-            button.classList.remove('full');
-            button.classList.add('empty');
-            // Call the function to handle the unlike operation
-            removeLike(titleID);
+            // Display a message for no results
+            resultsContainer.innerHTML = '<p>No results found.</p>';
         }
     }
-        function addLike(titleID) {
-            fetch('/get_user_id')
-                .then(response => response.json())
-                .then(data => {
-                    const userID = data;
-                    console.log('User ID:', userID);
 
-                    if (!userID) {
-                        alert('Please log in to like movies');
-                        return;
-                    }
-
-                    fetch(`/add_to_likes/${titleID}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ userID: userID }),
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });    
-
-        }
-        
-        function removeLike(titleID) {
-            fetch('/get_user_id')
-                .then(response => response.json())
-                .then(data => {
-                    const userID = data;
-                    console.log('User ID:', userID);
-
-                    if (!userID) {
-                        alert('Please log in to like movies');
-                        return;
-                    }
-
-                    fetch(`/remove_from_likes/${titleID}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ userID: userID }),
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });    
-
-        }
     </script>
-
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
 </body>
 
 </html>

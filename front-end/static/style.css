@@ -471,15 +471,9 @@ form .form-help :where(label,a){
     text-align: center;
 }
 
-.addButton {
-    font-size: 1em;  /* Set the font size to make it bigger */
-    border-radius: 20%; /* Set border-radius to make it round */
-    padding: 10px 20px; /* Adjust padding for more space around the text */
-}
-
 .likeButton {
     font-weight: bold;
-    font-size: 20px;
+    font-size: 25px;
     cursor: pointer;
     transition: color 0.3s;
     background: none;
@@ -495,4 +489,31 @@ form .form-help :where(label,a){
 .likeButton.full::before {
     content: '\2665'; /* Unicode character for a full heart */
     color: red; /* Set the color of a full heart */
+}
+
+.addToListButton {
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s, background-color 0.3s, border 0.3s;
+    background: none;
+    border: 2px solid #666;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.addToListButton.empty {
+    color: #fff; /* Set the color of the plus icon when not added */
+    content: '+'; /* Plus icon when not added */
+}
+
+.addToListButton.added {
+    color: #e50914; /* Set the color of the checkmark when added */
+    border-color: #e50914; /* Set the border color when added */
+    content: '\2713'; /* Unicode character for a checkmark when added */
 }
