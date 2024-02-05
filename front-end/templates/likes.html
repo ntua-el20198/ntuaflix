@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('my_likes') }}" class="nav2_option">Likes</a>
+                    <a href="{{ url_for('index') }}">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Call the function to fetch and display movies when the page loads
+            fetchMovies();
+        });
+
+        function fetchMovies() {
+            // Fetch movies from the /list_for_watching_later endpoint
+            fetch('/likes', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    displaySearchResults(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const movieInfoElement = document.createElement('div');
+                    movieInfoElement.classList.add('movieInfo');
+
+                    // Add various details about the movie
+                    const titleElement = document.createElement('p');
+                    titleElement.textContent = `Title: ${result.originalTitle}`;
+                    movieInfoElement.appendChild(titleElement);
+
+                    const typeElement = document.createElement('p');
+                    typeElement.textContent = `Type: ${result.type}`;
+                    movieInfoElement.appendChild(typeElement);
+
+                    const startYearElement = document.createElement('p');
+                    startYearElement.textContent = `Start Year: ${result.startYear}`;
+                    movieInfoElement.appendChild(startYearElement);
+
+                    const genresElement = document.createElement('p');
+                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                    movieInfoElement.appendChild(genresElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                    movieInfoElement.appendChild(ratingElement);
+
+                    // Append movieInfoElement to resultElement
+                    resultElement.appendChild(movieInfoElement);
+
+                    const likeButton = document.createElement('button');
+                    likeButton.innerHTML = '&hearts;';
+                    likeButton.classList.add('likeButton');
+                    likeButton.classList.add('likeButton', 'empty');
+                    likeButton.addEventListener('click', function () {
+                        toggleLike(result.titleID, likeButton);
+                    });
+
+                    resultElement.appendChild(likeButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement2 = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement2);
+                });
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        function toggleLike(titleID, button) {
+        // Toggle the like status and update the button appearance
+        if (button.classList.contains('empty')) {
+            // If not liked, make it liked (full heart)
+            button.classList.remove('empty');
+            button.classList.add('full');
+            // Call the function to handle the like operation
+            addLike(titleID);
+        } else {
+            // If already liked, make it not liked (empty heart)
+            button.classList.remove('full');
+            button.classList.add('empty');
+            // Call the function to handle the unlike operation
+            removeLike(titleID);
+        }
+    }
+        function addLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/add_to_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+        
+        function removeLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/remove_from_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+    </script>
+
+</body>
+
+</html>
+
+</body>
+
+</html>

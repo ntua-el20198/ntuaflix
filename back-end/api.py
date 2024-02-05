@@ -64,6 +64,10 @@ def search_name():
 def my_list():
     return render_template('watching_later.html')
 
+@app.route('/my-likes.html')
+def my_likes():
+    return render_template('likes.html')
+
 @app.route('/signupform', methods=['POST'])
 def signupform():
     if request.method == 'POST':
@@ -491,12 +495,12 @@ def remove_from_list(titleID):
             return jsonify({"error": "User not authenticated"}), 401
 
         cursor = db.cursor()
-        query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
+        query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst = %s"
         cursor.execute(query_check, (userID, titleID))
         movie = cursor.fetchone()
         
         if movie:
-            query_remove = "DELETE FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
+            query_remove = "DELETE FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst = %s"
             cursor.execute(query_remove, (userID, titleID))
             db.commit()
 
@@ -576,8 +580,119 @@ def list_for_watching_later():
         return jsonify({"error": "Method Not Allowed"}), 405
 
 
+@app.route('/add_to_likes/<int:titleID>', methods=['POST'])
+def add_to_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
 
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
 
+        cursor = db.cursor()
+        query_check = "SELECT * FROM likes WHERE usersid = %s and title_basicstconst  = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if movie:
+           return jsonify({"message": "Movie already liked"}), 201
+        
+        else:
+            query_add = "INSERT INTO Likes(usersid, title_basicstconst) VALUES(%s, %s)"
+            cursor.execute(query_add, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie added succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/remove_from_likes/<int:titleID>', methods=['POST'])
+def remove_from_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_rem = "DELETE FROM Likes where title_basicstconst = %s"
+        cursor.execute(query_rem, (titleID,))
+        db.commit()
+
+        if cursor.rowcount > 0 :
+            return jsonify({"message": "Movie unliked succesfully"}), 200
+        else:
+            return jsonify({"error": "Movie already unliked"}), titleID
+        
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/likes', methods=['GET'])
+def likes():
+    if request.method == 'GET':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query1 = "SELECT * FROM Likes WHERE usersid = %s"
+        cursor.execute(query1, (userID,))
+        movies = cursor.fetchall()
+
+        movie_list = []
+
+        if movies:
+            for movie in movies:
+                query2 = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN Likes l ON t.tconst = l.title_basicstconst WHERE t.tconst = %s"
+                cursor.execute(query2,(movie[1],))
+                movie_info = cursor.fetchone()
+                movie_dict = {
+                    'titleID': str(movie_info[0]),
+                    'type': movie_info[1],
+                    'originalTitle': movie_info[2],
+                    'titlePoster': movie_info[3],
+                    'startYear': str(movie_info[4]),
+                    'endYear': str(movie_info[5]),
+                    'genres': movie_info[6].split(',') if movie_info[6] else []
+                }
+
+                # Fetch title_akas for each title
+                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+                cursor.execute(query_akas, (movie_info[0],))
+                title_akas = cursor.fetchall()
+
+                if title_akas:
+                    movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+
+                # Fetch title_principals for each title
+                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+                cursor.execute(query_principals, (movie_info[0],))
+                title_principals = cursor.fetchall()
+
+                if title_principals:
+                    movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+
+                # Fetch title_rating for each title
+                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+                cursor.execute(query_rating, (movie_info[0],))
+                title_rating = cursor.fetchone()
+
+                if title_rating:
+                    movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+
+                movie_list.append(movie_dict)
+
+            return jsonify(movie_list), 200
+        else:
+            return jsonify({'list': []}), 200
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 405
+        
+    return jsonify({"error" : "Internal server error"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
