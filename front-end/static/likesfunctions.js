@@ -1,8 +1,27 @@
-function createLikeButton(result) {
+async function likelist(titleID) {
+    try {
+        const response = await fetch(`/check_likelist/${titleID}`);
+        const data = await response.json();
+        console.log("AAAA", data.inLikelist);
+        return data.inLikelist;
+    } catch (error) {
+        console.error("Error checking Likelist:", error);
+        return 0;
+    }
+}
+
+async function createLikeButton(result) {
     const likeButton = document.createElement('button');
+    movieInLikes = await likelist(result.titleID);
     likeButton.innerHTML = '&hearts;';
     likeButton.classList.add('likeButton');
-    likeButton.classList.add('likeButton', 'empty');
+    //console.log("AAAA", movieInLikes);
+    if (movieInLikes > 0){
+        likeButton.classList.add('likeButton', 'full');
+    }
+    else{
+        likeButton.classList.add('likeButton', 'empty');
+    }
     likeButton.addEventListener('click', function () {
         toggleLike(result.titleID, likeButton);
     });

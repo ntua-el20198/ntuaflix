@@ -1,7 +1,25 @@
-function createListButton(result) {
+async function watchlist(titleID) {
+    try {
+        const response = await fetch(`/check_watchlist/${titleID}`);
+        const data = await response.json();
+        return data.inWatchlist;
+    } catch (error) {
+        console.error("Error checking watchlist:", error);
+        return 0;
+    }
+}
+
+async function createListButton(result) {
     const addToListButton = document.createElement('button');
+    movieInList = await watchlist(result.titleID);
+    if (movieInList > 0){
+        addToListButton.innerHTML = '<div class="icon">&#10003;</div>';
+        addToListButton.classList.add('addToListButton', 'added');
+    }
+    else{
     addToListButton.innerHTML = '<div class="icon">+</div>';
     addToListButton.classList.add('addToListButton', 'empty');
+    }
     addToListButton.addEventListener('click', function () {
         toggleAddToList(result.titleID, addToListButton);
     });

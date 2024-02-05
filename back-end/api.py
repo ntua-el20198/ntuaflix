@@ -629,7 +629,7 @@ def remove_from_likes(titleID):
     return jsonify({"error" : "Internal server error"}), 500
 
 
-'''@app.route('/check_watchlist/<int:titleID>', methods=['GET'])
+@app.route('/check_watchlist/<int:titleID>', methods=['GET'])
 def check_watchlist(titleID):
         userID = session.get('user_id')
 
@@ -648,11 +648,37 @@ def check_watchlist(titleID):
         result = cursor.fetchone()
 
         # Check if fetchone() returned a result
-        in_watchlist_count = result[0] if result is not None else 0
-        print(in_watchlist_count)
+        in_watchlist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
 
         # Return a JSON response indicating whether the movie is in the watchlist or not
-        return jsonify({'inWatchlist': in_watchlist_count})'''
+        return jsonify({'inWatchlist': in_watchlist_count}), 200, {'Content-Type': 'application/json'}
+
+@app.route('/check_likelist/<int:titleID>', methods=['GET'])
+def check_likelist(titleID):
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst = %s"
+        cursor.execute(query, (userID, titleID))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_likelist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inLikelist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
+
 
 @app.route('/likes', methods=['GET'])
 def likes():
