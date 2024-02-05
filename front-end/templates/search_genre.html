@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-dsd
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -295,29 +295,8 @@ dsd
             console.error('Error:', error);
         });
     }
-
-    function updateSessionLikedMovies(titleID) {
-        const likedMovies = sessionStorage.getItem('likedMovies') || [];
-        if (!likedMovies.includes(titleID)) {
-            likedMovies.push(titleID);
-            sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
-        }
-    }
-
-    function updateLikedButtons() {
-    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
-    const likeButtons = document.querySelectorAll('.likeButton');
     
-    likeButtons.forEach(button => {
-        const titleID = button.dataset.titleId;
-        if (likedMovies.includes(titleID)) {
-            button.classList.add('full');
-        } else {
-            button.classList.remove('full');
-        }
-    });
-}
-
+ff
     </script>
 
 </body>
