@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Information</title>
+</head>
+<body>
+    <div id="resultsContainer" class="movieResults"></div>
+</body>
+<script>
+    const resultsContainer = document.getElementById('resultsContainer');
+    const titleID = {{ title_ID }};
+    console.log('titleID:', titleID);
+
+    fetch(`/movie_info/${titleID}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            displaymovieinfo(data, resultsContainer);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+</script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displaymovieinfo.js') }}"></script>
+</html>
