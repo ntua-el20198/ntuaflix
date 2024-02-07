@@ -3,8 +3,6 @@ async function displaySearchResults(movie, resultsContainer) {
     // Clear previous movie
     resultsContainer.innerHTML = '';
 
-    if (movie) {
-    // Loop through the movie and create HTML elements to display them
         const resultElement = document.createElement('div');
         resultElement.classList.add('searchResult'); // Add a class for styling
 
@@ -60,8 +58,4 @@ async function displaySearchResults(movie, resultsContainer) {
         console.log('listButton type:', typeof listButton, listButton);
         console.log('likeButton type:', typeof likeButton, likeButton);
         console.log('hrElement type:', typeof hrElement, hrElement);
-    } else {
-        // Display a message for no movie
-        resultsContainer.innerHTML = '<p>No movie found.</p>';
-    }
 }

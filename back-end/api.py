@@ -219,6 +219,7 @@ def title(titleID):
                     title['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
 
                 return jsonify(title), 200
+            
             except Exception as e:
                 print("Error in query_akas execution:", str(e))
                 return jsonify({"error": "Internal server error"}), 500
@@ -761,53 +762,7 @@ def likes():
         
     return jsonify({"error" : "Internal server error"}), 500
 
-@app.route('/movie_info/<int:titleID>', methods=['GET'])
-def movie_info(titleID):
-    if request.method == 'GET':
-        cursor = db.cursor()
-
-        query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
-        cursor.execute(query_basics, (titleID,))
-        movie = cursor.fetchone()
-
-        movie_dict = {
-            'titleID': str(movie[0]),
-            'type': movie[1],
-            'originalTitle': movie[2],
-            'titlePoster': movie[3],
-            'startYear': str(movie[4]),
-            'endYear': str(movie[5]),
-            'genres': movie[6].split(',') if movie[6] else []
-        }
-
-        query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-        cursor.execute(query_akas, (movie[0],))
-        title_akas = cursor.fetchall()
-
-        if title_akas:
-            movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-        # Fetch title_principals for movie
-        query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-        cursor.execute(query_principals, (movie[0],))
-        title_principals = cursor.fetchall()
-
-        if title_principals:
-            movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-        # Fetch title_rating for movie
-        query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-        cursor.execute(query_rating, (movie[0],))
-        title_rating = cursor.fetchone()
-
-        if title_rating:
-            movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
-
-        return jsonify(movie_dict), 200
-
-    # Return an empty list if no titles are found or if titlePart is not provided
-    return jsonify({'titles': []}), 200
-
+  
 @app.route('/rating/<int:titleID>', methods = ['POST'])
 def rating(titleID):
     if request.method == 'POST':

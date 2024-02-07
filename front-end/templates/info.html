@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Movie Information</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div id="resultsContainer" class="movieResults" data-titleID="{{ title_ID }}"></div>
 </body>
@@ -11,22 +14,34 @@
     const titleID = resultsContainer.getAttribute('data-titleID');
     console.log('titleID:', titleID);
 
-    fetch(`/movie_info/${titleID}`, {
+    fetch(`/title/${titleID}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
     })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Received response:', response);
+            return response.json();
+        })
         .then(data => {
-            console.log(data);
-            displaymovieinfo(data[0], resultsContainer);
+            console.log('Received data:', data);
+
+            if (data) {
+                console.log('Movie details:', data);
+                displaySearchResults(data, resultsContainer);
+            } else {
+                console.log('No movie found.');
+                resultsContainer.innerHTML = '<p>No movie found.</p>';
+            }
+
         })
         .catch(error => {
             console.error('Error:', error);
         });
 </script>
-    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
-    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
-    <script src="{{ url_for('static', filename='displaymovieinfo.js') }}"></script>
+<script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+<script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+<script src="{{ url_for('static', filename='displaymovieinfo.js') }}"></script>
+
 </html>
