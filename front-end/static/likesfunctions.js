@@ -2,7 +2,6 @@ async function likelist(titleID) {
     try {
         const response = await fetch(`/check_likelist/${titleID}`);
         const data = await response.json();
-        console.log("AAAA", data.inLikelist);
         return data.inLikelist;
     } catch (error) {
         console.error("Error checking Likelist:", error);
