@@ -4,11 +4,11 @@
     <title>Movie Information</title>
 </head>
 <body>
-    <div id="resultsContainer" class="movieResults"></div>
+    <div id="resultsContainer" class="movieResults" data-titleID="{{ title_ID }}"></div>
 </body>
 <script>
     const resultsContainer = document.getElementById('resultsContainer');
-    const titleID = {{ title_ID }};
+    const titleID = resultsContainer.getAttribute('data-titleID');
     console.log('titleID:', titleID);
 
     fetch(`/movie_info/${titleID}`, {
@@ -20,7 +20,7 @@
         .then(response => response.json())
         .then(data => {
             console.log(data);
-            displaymovieinfo(data, resultsContainer);
+            displaymovieinfo(data[0], resultsContainer);
         })
         .catch(error => {
             console.error('Error:', error);

@@ -14,6 +14,11 @@ async function displaySearchResults(results, resultsContainer) {
             posterElement.classList.add('row__poster');
             resultElement.appendChild(posterElement);
 
+            posterElement.addEventListener('click', () => {
+                console.log(`Clicked poster for movie: ${result.originalTitle}`);
+                window.location.href = `/info/${result.titleID}`;
+            });
+
             // Create a div for movie information
             const movieInfoElement = document.createElement('div');
             movieInfoElement.classList.add('movieInfo');

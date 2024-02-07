@@ -537,8 +537,10 @@ def list_for_watching_later():
 
         cursor = db.cursor()
         query1 = "SELECT * FROM ListForWatchingLater WHERE usersid = %s"
-        cursor.execute(query1, (userID,))
-        movies = cursor.fetchall()
+
+        with db.cursor() as cursor:
+            cursor.execute(query1, (userID,))
+            movies = cursor.fetchall()
 
         movie_list = []
 
@@ -546,41 +548,41 @@ def list_for_watching_later():
             try:
                 for movie in movies:
                     query2 = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN ListForWatchingLater l ON t.tconst = l.title_basicstconst WHERE t.tconst = %s"
-                    cursor.execute(query2,(movie[1],))
-                    movie_info = cursor.fetchone()
-                    movie_dict = {
-                        'titleID': str(movie_info[0]),
-                        'type': movie_info[1],
-                        'originalTitle': movie_info[2],
-                        'titlePoster': movie_info[3],
-                        'startYear': str(movie_info[4]),
-                        'endYear': str(movie_info[5]),
-                        'genres': movie_info[6].split(',') if movie_info[6] else []
-                    }
+                    with db.cursor() as cursor:
+                        cursor.execute(query2,(movie[1],))
+                        movie_info = cursor.fetchone()
+                        movie_dict = {
+                            'titleID': str(movie_info[0]),
+                            'type': movie_info[1],
+                            'originalTitle': movie_info[2],
+                            'titlePoster': movie_info[3],
+                            'startYear': str(movie_info[4]),
+                            'endYear': str(movie_info[5]),
+                            'genres': movie_info[6].split(',') if movie_info[6] else []
+                        }
 
-                    query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                    cursor.execute(query_akas, (movie_info[0],))
-                    title_akas = cursor.fetchall()
+                        query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+                        cursor.execute(query_akas, (movie_info[0],))
+                        title_akas = cursor.fetchall()
 
-                    if title_akas:
-                        movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+                        if title_akas:
+                            movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
 
-                    query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                    cursor.execute(query_principals, (movie_info[0],))
-                    title_principals = cursor.fetchall()
+                        query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+                        cursor.execute(query_principals, (movie_info[0],))
+                        title_principals = cursor.fetchall()
 
-                    if title_principals:
-                        movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+                        if title_principals:
+                            movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
 
-                    query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                    cursor.execute(query_rating, (movie_info[0],))
-                    title_rating = cursor.fetchone()
+                        query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+                        cursor.execute(query_rating, (movie_info[0],))
+                        title_rating = cursor.fetchone()
 
-                    if title_rating:
-                        movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+                        if title_rating:
+                            movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
 
-                    movie_list.append(movie_dict)
-
+                        movie_list.append(movie_dict)
 
             except Exception as e:
                 print(f"An exception occurred: {e}")
@@ -764,10 +766,9 @@ def movie_info(titleID):
     if request.method == 'GET':
         cursor = db.cursor()
 
-        movie_list = []
         query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
         cursor.execute(query_basics, (titleID,))
-        movie = cursor.fetchall()
+        movie = cursor.fetchone()
 
         movie_dict = {
             'titleID': str(movie[0]),
@@ -802,13 +803,10 @@ def movie_info(titleID):
         if title_rating:
             movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
 
-        movie_list.append(movie_dict)
-
-        return jsonify(movie_list), 200
+        return jsonify(movie_dict), 200
 
     # Return an empty list if no titles are found or if titlePart is not provided
     return jsonify({'titles': []}), 200
-
 
 @app.route('/rating/<int:titleID>', methods = ['POST'])
 def rating(titleID):
@@ -822,17 +820,15 @@ def rating(titleID):
             # If user ID is not in the session, handle it accordingly
                 return jsonify({"error": "User not authenticated"}), 401
             if rating is None:
-                return jsonify({"message": "Rating field is required"}), 400
+                return jsonify({"message": "Bad request"}), 400
             else:
                 cursor = db.cursor()
                 query_user_rating = "INSERT INTO user_ratings(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
-                db.commit()
 
                 if cursor.rowcount > 0:
-                    query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = ROUND(averageRating*numVotes + %s)/(numVotes + 1), 3) WHERE tconst = %s"
+                    query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating + %s)/(numVotes + 1) WHERE tconst = %s"
                     cursor.execute(query_movie_ratings,(rating,titleID))
-                    db.commit()
 
                     if cursor.rowcount > 0:
                         return jsonify({"message": "Rating added succesfully"}), 200

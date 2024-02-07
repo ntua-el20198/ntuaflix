@@ -1,6 +1,5 @@
 async function displaySearchResults(movie, resultsContainer) {
 
-
     // Clear previous movie
     resultsContainer.innerHTML = '';
 
@@ -13,11 +12,6 @@ async function displaySearchResults(movie, resultsContainer) {
         const posterElement = document.createElement('img');
         posterElement.src = posterSrc.replace('{width_variable}', 'w500');
         posterElement.classList.add('row__poster');
-
-        posterElement.addEventListener('click', () => {
-            console.log(`Clicked poster for movie: ${movie.originalTitle}`);
-            window.location.href = `/info/${movie.titleID}`;
-        });
 
         resultElement.appendChild(posterElement);
 
