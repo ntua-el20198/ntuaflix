@@ -776,7 +776,7 @@ def rating(titleID):
                 db.commit()
 
                 if cursor.rowcount > 0:
-                    query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating*numVotes + %s)/(numVotes + 1) WHERE tconst = %s"
+                    query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = ROUND(averageRating*numVotes + %s)/(numVotes + 1), 3) WHERE tconst = %s"
                     cursor.execute(query_movie_ratings,(rating,titleID))
                     db.commit()
 
