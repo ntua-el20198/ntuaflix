@@ -14,7 +14,6 @@ async function createLikeButton(result) {
     movieInLikes = await likelist(result.titleID);
     likeButton.innerHTML = '&hearts;';
     likeButton.classList.add('likeButton');
-    //console.log("AAAA", movieInLikes);
     if (movieInLikes > 0){
         likeButton.classList.add('likeButton', 'full');
     }

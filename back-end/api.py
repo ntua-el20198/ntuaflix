@@ -7,8 +7,8 @@ from werkzeug.utils import secure_filename
 import os
 import secrets
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
+static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -67,6 +67,10 @@ def my_list():
 @app.route('/my-likes.html')
 def my_likes():
     return render_template('likes.html')
+
+@app.route('/my-history.html')
+def my_history():
+    return render_template('history.html')
 
 @app.route('/signupform', methods=['POST'])
 def signupform():
@@ -752,6 +756,8 @@ def likes():
         return jsonify({"error": "Method Not Allowed"}), 405
         
     return jsonify({"error" : "Internal server error"}), 500
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
