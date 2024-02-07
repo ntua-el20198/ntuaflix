@@ -4,9 +4,16 @@ class CLI:
         nothing = 'nothing'
     def search_movie(self, movie_name):
         print("I have not connected to the database yet.")
+    def add_title(self):
+        nothing = '2'
+    def add_principle(self):
+        nothing = '3'
+    def is_admin(self):
+        nothing = '4'
+        
     def run(self):
         while True:
-            command = input("what do you want to do ?  \n  some suggestions : (search_movie, search_actor, exit): ").strip()
+            command = input("what do you want to do ?\nSome suggestions : search_movie, search_actor, exit): ").strip()
             if command == 'exit':
                 print("Exiting")
                 break
