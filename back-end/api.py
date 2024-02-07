@@ -106,20 +106,6 @@ def signupform():
 def signup_success():
     return render_template('homepage.html')
 
-@app.route('/admin/healthcheck', methods=['GET'])
-def healthcheck():
-    if request.method == 'GET':
-        # Check if the database connection is successful
-        is_connected = db.is_connected() if db else False
-
-        if is_connected:
-            response = {"status": "OK", "dataconnection": db}, 200
-        else:
-            response = {"status": "Failed", "dataconnection": db}, 204
-
-        return jsonify(response)
-    else:
-        return jsonify({"error": "Method Not Allowed"}), 404
 
 
 @app.route('/login', methods=['POST'])
@@ -159,8 +145,23 @@ def login():
     else:
         return jsonify({"error": "Not Available"}), 404
 
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    if request.method == 'POST':
+        try:
+            if 'user_id' in session:
+                session.pop('user_id', None)
+                return jsonify({"message": "Logout successful"}), 200
+            else:
+                return jsonify({"error": "Not logged in"}), 401
+        
+        except Exception as e:
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
     
-    return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/get_user_id', methods = ['GET'])
 def get_user_id():
@@ -220,7 +221,7 @@ def title(titleID):
             return jsonify({"error": "Title not found"}), 204
     
     else:
-        return jsonify({"error": "Method Not Allowed"}), 404
+        return jsonify({"error": "Not Available"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
 
@@ -273,13 +274,15 @@ def searchTitle():
 
                 if title_rating:
                     title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
-
+                
                 title_list.append(title_dict)
 
-            return jsonify(title_list), 200
+            if title_list:
+                return jsonify(title_list), 200
+            else:
+                return jsonify({"error": "Movies not found"}), 204
 
-    # Return an empty list if no titles are found or if titlePart is not provided
-    return jsonify({'titles': []}), 200
+    return jsonify({"error": "Not Available"}), 404
 
 @app.route('/bygenre', methods=['GET'])
 def bygenre():
@@ -348,14 +351,16 @@ def bygenre():
                     title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
 
                 title_list.append(title_dict)
-
-        return jsonify(title_list), 200
+        
+        if title_list:
+            return jsonify(title_list), 200
+        else:
+            return jsonify({"error": "Movies not found"}), 204
 
     # Return an empty list if no titles are found or if titlePart is not provided
     else:
-        return jsonify({"error": "Method Not Allowed"}), 404
+        return jsonify({"error": "Not Available"}), 404
     
-
 
 @app.route('/name/<int:nameID>', methods=['GET'])
 def name(nameID):
@@ -388,7 +393,7 @@ def name(nameID):
             return jsonify({"error": "Title not found"}), 204
     
     else:
-        return jsonify({"error": "Method Not Allowed"}), 404
+        return jsonify({"error": "Not Available"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
 
@@ -429,7 +434,7 @@ def searchnamename():
             return jsonify({"error": "No name found"}), 204
     
     else:
-        return jsonify({"error": "Method Not Allowed"}), 404
+        return jsonify({"error": "Not Available"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
 
@@ -463,7 +468,7 @@ def add_to_list(titleID):
 
         if not userID:
             # If user ID is not in the session, handle it accordingly
-            return jsonify({"error": "User not authenticated"}), 401
+            return jsonify({"error": "Not authenticated"}), 401
 
         cursor = db.cursor()
         query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
@@ -482,6 +487,9 @@ def add_to_list(titleID):
                 return jsonify({"message": "Movie added succesfully"}), 200
             else:
                 return jsonify({"error": "Something went wrong"}), 204
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
     return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/remove_from_list/<int:titleID>', methods=['POST'])
