@@ -1,4 +1,4 @@
-async function displaySearchResults(movie, resultsContainer) {
+async function displayMovieResults(movie, resultsContainer) {
 
     // Clear previous movie
     resultsContainer.innerHTML = '';
