@@ -14,7 +14,7 @@
     const titleID = resultsContainer.getAttribute('data-titleID');
     console.log('titleID:', titleID);
 
-    fetch(`/movie_info/${titleID}`, {
+    fetch(`/ntuaflix_api/movie_info/${titleID}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

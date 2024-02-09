@@ -44,7 +44,7 @@
                 const yearTo = yearToInput.value.trim();
 
                 // Create a URL with the form parameters
-                const url = new URL('/bygenre', window.location.origin);
+                const url = new URL('/ntuaflix_api/bygenre', window.location.origin);
                 url.searchParams.append('qgenre', genre);
                 url.searchParams.append('minrating', minRating);
                 url.searchParams.append('yrFrom', yearFrom);

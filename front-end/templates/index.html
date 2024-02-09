@@ -11,7 +11,7 @@
 <div class="header">
     <nav>
         <img src = "images/logo.png" class = "logo">
-        <form class="signin_index" action="signin.html">
+        <form class="signin_index" action="{{ url_for('signin') }}" method="get">
             <button type="submit">Sign In</button>
         </form>
     </nav>

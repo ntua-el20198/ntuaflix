@@ -44,7 +44,7 @@ if (button.classList.contains('empty')) {
 }
 }
 function addLike(titleID) {
-    fetch('/get_user_id')
+    fetch('/ntuaflix_api/get_user_id')
         .then(response => response.json())
         .then(data => {
             const userID = data;
@@ -55,7 +55,7 @@ function addLike(titleID) {
                 return;
             }
 
-            fetch(`/add_to_likes/${titleID}`, {
+            fetch(`/ntuaflix_api/add_to_likes/${titleID}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ function addLike(titleID) {
 }
 
 function removeLike(titleID) {
-    fetch('/get_user_id')
+    fetch('/ntuaflix_api/get_user_id')
         .then(response => response.json())
         .then(data => {
             const userID = data;
@@ -88,7 +88,7 @@ function removeLike(titleID) {
                 return;
             }
 
-            fetch(`/remove_from_likes/${titleID}`, {
+            fetch(`/ntuaflix_api/remove_from_likes/${titleID}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

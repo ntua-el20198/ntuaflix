@@ -30,7 +30,7 @@
                 function performLogin(event) {
                     event.preventDefault(); // Prevent the default form submission behavior
                     
-                    fetch('/login', {
+                    fetch('/ntuaflix_api/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
@@ -49,7 +49,7 @@
                     console.error('Error:', error));
                 }
             </script>
-            <p>New to NTUAflix? <a href="signup.html">Sign Up now</a></p>
+            <p>New to NTUAflix? <a href="{{ url_for('signup') }}">Sign Up now</a></p>
         </div>
     </div>
 </body>
