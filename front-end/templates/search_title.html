@@ -19,13 +19,14 @@
 
     <div id="resultsContainer" class="movieResults"></div>
 
-    <!-- Button to trigger CSV download -->
-    <button id="downloadCSV">Download CSV</button>
+    <!-- Button to trigger CSV download (initially hidden) -->
+    <button id="downloadCSV" style="display: none;">Download CSV</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchButton = document.querySelector('.middle-search-button');
             const searchInput = document.querySelector('.middle-search-input');
+            const downloadButton = document.getElementById('downloadCSV');
             const resultsContainer = document.getElementById('resultsContainer');
 
             searchButton.addEventListener('click', function () {
@@ -35,7 +36,6 @@
                 const url = new URL('/ntuaflix_api/searchTitle', window.location.origin);
                 url.searchParams.append('titlePart', titlePart);
                 
-                const resultsContainer = document.getElementById('resultsContainer');
                 fetch(url, {
                     method: 'GET',
                     headers: {
@@ -46,6 +46,8 @@
                     .then(data => {
                         console.log(data);
                         displaySearchResults(data, resultsContainer);
+                        // Show the download button
+                        downloadButton.style.display = 'inline-block';
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -54,11 +56,34 @@
             });
 
             // Function to trigger CSV download
-            document.getElementById('downloadCSV').addEventListener('click', function () {
+            downloadButton.addEventListener('click', function () {
                 const titlePart = searchInput.value.trim();
-                const csvURL = `ntuaflix/searchTitle?titlePart=${titlePart}&format=csv`;
-                window.location.href = csvURL;
+                const url = `/ntuaflix_api/searchTitle?titlePart=${titlePart}&format=csv`;
+                
+                fetch(url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        // Create a temporary URL for the blob
+                        const blobURL = window.URL.createObjectURL(blob);
+                        
+                        // Create a link element
+                        const a = document.createElement('a');
+                        a.href = blobURL;
+                        a.download = 'titles.csv';
+                        
+                        // Append the link to the body and trigger the click event
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Clean up by removing the link and revoking the object URL
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(blobURL);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
             });
+
         });
     </script>
     <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>

@@ -379,14 +379,11 @@ def name(nameID):
         return jsonify({"error": "Not Available"}), 404
     
 
-
 @app.route('/ntuaflix_api/searchname', methods=['GET'])
 def searchnamename():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        #data = request.get_json()  # take the data from the body
-        #namePart = data.get('namePart')
         namePart = request.args.get('namePart')
 
         query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE primaryName LIKE %s"
@@ -605,7 +602,6 @@ def remove_from_likes(titleID):
         
     return jsonify({"error" : "Internal server error"}), 500
 
-
 @app.route('/ntuaflix_api/check_watchlist/<int:titleID>', methods=['GET'])
 def check_watchlist(titleID):
         userID = session.get('user_id')
@@ -794,60 +790,47 @@ def convert_to_csv(json_data):
     # Initialize a StringIO object to write CSV data
     csv_buffer = StringIO()
     
-    # Define fieldnames for CSV headers
-    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
-
     # Create a CSV writer object
-    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    writer = csv.writer(csv_buffer)
     
-    # Write the header row
-    writer.writeheader()
-
-    # Write data rows
-    writer.writerow({
-        'titleID': json_data['titleID'],
-        'type': json_data['type'],
-        'originalTitle': json_data['originalTitle'],
-        'titlePoster': json_data['titlePoster'],
-        'startYear': json_data['startYear'],
-        'endYear': json_data['endYear'],
-        'genres': ','.join(json_data['genres']) if json_data['genres'] else ''
-    })
-
-    # Write titleAkas
-    for akas in json_data['titleAkas']:
-        writer.writerow({
-            'titleID': json_data['titleID'],
-            'type': '',
-            'originalTitle': akas['titleAkas'],
-            'titlePoster': '',
-            'startYear': '',
-            'endYear': '',
-            'genres': akas['regionAbbrev']
-        })
-
-    # Write principals
-    for principal in json_data['principals']:
-        writer.writerow({
-            'titleID': json_data['titleID'],
-            'type': '',
-            'originalTitle': principal['name'],
-            'titlePoster': '',
-            'startYear': '',
-            'endYear': '',
-            'genres': principal['category']
-        })
-
-    # Write rating
-    writer.writerow({
-        'titleID': json_data['titleID'],
-        'type': '',
-        'originalTitle': 'Rating',
-        'titlePoster': '',
-        'startYear': '',
-        'endYear': '',
-        'genres': f"Average Rating: {json_data['rating']['avRating']}, Number of Votes: {json_data['rating']['numVotes']}"
-    })
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleAkas', 'regionAbbrev']
+    
+    # Write the header row for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    
+    # Write data rows for title basics
+    for movie in json_data:
+        writer.writerow([
+            movie['titleID'],
+            movie['type'],
+            movie['originalTitle'],
+            movie['titlePoster'],
+            movie['startYear'],
+            movie['endYear'],
+            ','.join(movie['genres']) if movie['genres'] else ''
+        ])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row for title akas
+    writer.writerow(['title_akas'])
+    writer.writerow(title_akas_fields)
+    
+    # Write data rows for title akas
+    for movie in json_data:
+        title_akas = movie.get('titleAkas')  # Get title akas for the current movie
+        if title_akas:
+            for akas_info in title_akas:
+                writer.writerow([
+                    akas_info['titleAkas'],
+                    akas_info['regionAbbrev']
+                ])
+        else:
+            writer.writerow(['N/A', 'N/A'])  # Write placeholder values if no title akas are available
     
     # Get the CSV data as a string
     csv_data = csv_buffer.getvalue()
@@ -858,5 +841,43 @@ def convert_to_csv(json_data):
     return csv_data
 
 
+'''# Write titleAkas
+for akas in json_data['titleAkas']:
+    writer.writerow({
+    'titleID': movie['titleID'],
+    'type': '',
+    'originalTitle': akas['titleAkas'],
+    'titlePoster': '',
+    'startYear': '',
+    'endYear': '',
+    'genres': akas['regionAbbrev']
+})'''
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+'''
+
+# Write principals
+for principal in json_data['principals']:
+    writer.writerow({
+        'titleID': movie['titleID'],
+        'type': '',
+        'originalTitle': principal['name'],
+        'titlePoster': '',
+        'startYear': '',
+        'endYear': '',
+        'genres': principal['category']
+    })
+
+# Write rating
+writer.writerow({
+    'titleID': movie['titleID'],
+    'type': '',
+    'originalTitle': 'Rating',
+    'titlePoster': '',
+    'startYear': '',
+    'endYear': '',
+    'genres': f"Average Rating: {movie['rating']['avRating']}, Number of Votes: {movie['rating']['numVotes']}"
+})'''
