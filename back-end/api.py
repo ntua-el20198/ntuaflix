@@ -177,6 +177,35 @@ def get_user_id():
         return jsonify(user_id), 200
     else:
         return jsonify({"error": "User not authenticated"}), 401
+    
+
+def fetch_title_akas(cursor, title_id):
+    # Fetch title_akas for a given title
+    query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+    cursor.execute(query_akas, (title_id,))
+    title_akas = cursor.fetchall()
+    if title_akas:
+        return [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+    else: 
+        return None
+
+def fetch_title_principals(cursor, title_id):
+    # Fetch title_principals for a given title
+    query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+    cursor.execute(query_principals, (title_id,))
+    title_principals = cursor.fetchall()
+    if title_principals:
+        return [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+    else:
+        return None
+
+def fetch_title_rating(cursor, title_id):
+    # Fetch title_rating for a given title
+    query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+    cursor.execute(query_rating, (title_id,))
+    title_rating = cursor.fetchone()
+    return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
+
 
 @app.route('/title/<int:titleID>', methods=['GET'])
 def title(titleID):
@@ -192,31 +221,14 @@ def title(titleID):
             try:
                 column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
                 title = dict(zip(column_names, title_data))
-                title['genres'] = title['genres'].split(',')
+                title['genres'] = title['genres'].split(',') if title['genres'] else [] 
                 title['startYear'] = str(title['startYear'])
                 title['titleID'] = str(title['titleID'])
 
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (titleID,))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                     title['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-                
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (titleID,))
-                title_principals = cursor.fetchall()
-                
-
-                if title_principals:
-                    title['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating,(titleID,))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    title['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title['titleAkas'] = fetch_title_akas(cursor, title_data[0])
+                title['principals'] = fetch_title_principals(cursor, title_data[0])
+                title['rating'] = fetch_title_rating(cursor, title_data[0])
 
                 return jsonify(title), 200
             
@@ -231,6 +243,8 @@ def title(titleID):
         return jsonify({"error": "Not Available"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
+
+
 
 @app.route('/searchTitle', methods=['GET'])
 def searchTitle():
@@ -258,29 +272,10 @@ def searchTitle():
                     'genres': title_info[6].split(',') if title_info[6] else []
                 }
 
-                # Fetch title_akas for each title
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (title_info[0],))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                    title_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-                # Fetch title_principals for each title
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (title_info[0],))
-                title_principals = cursor.fetchall()
-
-                if title_principals:
-                    title_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                # Fetch title_rating for each title
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating, (title_info[0],))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
                 
                 title_list.append(title_dict)
 
@@ -334,28 +329,9 @@ def bygenre():
                 }
 
                 # Fetch title_akas for each title
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (title_info[0],))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                    title_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-                # Fetch title_principals for each title
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (title_info[0],))
-                title_principals = cursor.fetchall()
-
-                if title_principals:
-                    title_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                # Fetch title_rating for each title
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating, (title_info[0],))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    title_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
 
                 title_list.append(title_dict)
         
@@ -561,27 +537,10 @@ def list_for_watching_later():
                             'endYear': str(movie_info[5]),
                             'genres': movie_info[6].split(',') if movie_info[6] else []
                         }
-
-                        query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                        cursor.execute(query_akas, (movie_info[0],))
-                        title_akas = cursor.fetchall()
-
-                        if title_akas:
-                            movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-                        query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                        cursor.execute(query_principals, (movie_info[0],))
-                        title_principals = cursor.fetchall()
-
-                        if title_principals:
-                            movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                        query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                        cursor.execute(query_rating, (movie_info[0],))
-                        title_rating = cursor.fetchone()
-
-                        if title_rating:
-                            movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+                        # Fetch title_akas, title_principals, and title_rating for each title
+                        movie_dict['titleAkas'] = fetch_title_akas(cursor, movie_info[0])
+                        movie_dict['principals'] = fetch_title_principals(cursor, movie_info[0])
+                        movie_dict['rating'] = fetch_title_rating(cursor, movie_info[0])
 
                         movie_list.append(movie_dict)
 
@@ -728,31 +687,13 @@ def likes():
                     'genres': movie_info[6].split(',') if movie_info[6] else []
                 }
 
-                # Fetch title_akas for each title
-                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
-                cursor.execute(query_akas, (movie_info[0],))
-                title_akas = cursor.fetchall()
-
-                if title_akas:
-                    movie_dict['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
-
-                # Fetch title_principals for each title
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
-                cursor.execute(query_principals, (movie_info[0],))
-                title_principals = cursor.fetchall()
-
-                if title_principals:
-                    movie_dict['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
-
-                # Fetch title_rating for each title
-                query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
-                cursor.execute(query_rating, (movie_info[0],))
-                title_rating = cursor.fetchone()
-
-                if title_rating:
-                    movie_dict['rating'] = {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])}
+                # Fetch title_akas, title_principals, and title_rating for each title
+                movie_dict['titleAkas'] = fetch_title_akas(cursor, movie_info[0])
+                movie_dict['principals'] = fetch_title_principals(cursor, movie_info[0])
+                movie_dict['rating'] = fetch_title_rating(cursor, movie_info[0])
 
                 movie_list.append(movie_dict)
+
             if movie_list:
                 return jsonify(movie_list), 200
             else:
@@ -798,6 +739,54 @@ def rating(titleID):
     else:
         return jsonify({"error": "Not Available"}), 404
 
+@app.route('/movie_info/<int:titleID>', methods=['GET'])
+def movie_info(titleID):
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
+        cursor.execute(query_basics,(titleID,))
+
+        title_data = cursor.fetchone()
+
+        if title_data:
+            try:
+                column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
+                title = dict(zip(column_names, title_data))
+                title['genres'] = title['genres'].split(',') if title['genres'] else [] 
+                title['startYear'] = str(title['startYear'])
+                title['titleID'] = str(title['titleID'])
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+                cursor.execute(query_akas, (titleID,))
+                title_akas = cursor.fetchall()
+
+                if title_akas:
+                     title['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+                
+                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+                cursor.execute(query_principals, (titleID,))
+                title_principals = cursor.fetchall()
+                
+                if title_principals:
+                    title['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]    
+
+                title['rating'] = fetch_title_rating(cursor, title_data[0])
+
+                return jsonify(title), 200
+            
+            except Exception as e:
+                print("Error in query_akas execution:", str(e))
+                return jsonify({"error": "Internal server error"}), 500
+
+        else:
+            return jsonify({"error": "Title not found"}), 204
+    
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
         
 
 

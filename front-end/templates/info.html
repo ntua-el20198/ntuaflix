@@ -14,7 +14,7 @@
     const titleID = resultsContainer.getAttribute('data-titleID');
     console.log('titleID:', titleID);
 
-    fetch(`/title/${titleID}`, {
+    fetch(`/movie_info/${titleID}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -29,7 +29,7 @@
 
             if (data) {
                 console.log('Movie details:', data);
-                displaySearchResults(data, resultsContainer);
+                displayMovieResults(data, resultsContainer);
             } else {
                 console.log('No movie found.');
                 resultsContainer.innerHTML = '<p>No movie found.</p>';
