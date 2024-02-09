@@ -56,7 +56,7 @@
             // Function to trigger CSV download
             document.getElementById('downloadCSV').addEventListener('click', function () {
                 const titlePart = searchInput.value.trim();
-                const csvURL = `/searchTitle?titlePart=${titlePart}&format=csv`;
+                const csvURL = `ntuaflix/searchTitle?titlePart=${titlePart}&format=csv`;
                 window.location.href = csvURL;
             });
         });
