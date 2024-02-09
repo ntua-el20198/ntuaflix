@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for
+from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for, Response
 import mysql.connector
 from numpy import double
 from passlib.hash import bcrypt  # Import the bcrypt hashing library
@@ -6,6 +6,8 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 import secrets
+import csv
+from io import StringIO
 
 template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
 static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
@@ -76,6 +78,10 @@ def my_likes():
 def my_history():
     return render_template('history.html')
 
+@app.route('/signup_success')
+def signup_success():
+    return render_template('homepage.html')
+
 @app.route('/signupform', methods=['POST'])
 def signupform():
     if request.method == 'POST':
@@ -109,10 +115,6 @@ def signupform():
 
     return jsonify({"error": "Invalid request"}), 400
 
-
-@app.route('/signup_success')
-def signup_success():
-    return render_template('homepage.html')
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -178,7 +180,6 @@ def get_user_id():
     else:
         return jsonify({"error": "User not authenticated"}), 401
     
-
 def fetch_title_akas(cursor, title_id):
     # Fetch title_akas for a given title
     query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
@@ -245,7 +246,6 @@ def title(titleID):
     return jsonify({"error" : "Internal server error"}), 500
 
 
-
 @app.route('/searchTitle', methods=['GET'])
 def searchTitle():
     if request.method == 'GET':
@@ -253,6 +253,7 @@ def searchTitle():
 
         #data = request.get_json()   take the data from the body
         titlePart = request.args.get('titlePart')
+        output_format = request.args.get('format', 'json')
 
         if titlePart:
             query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
@@ -279,23 +280,25 @@ def searchTitle():
                 
                 title_list.append(title_dict)
 
-            if title_list:
-                return jsonify(title_list), 200
+            if output_format == 'csv':
+                csv_data = convert_to_csv(title_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if title_list:
+                    return jsonify(title_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
             else:
-                return jsonify({"error": "Movies not found"}), 204
+                return jsonify({"error": "Invalid format specified"}), 400
 
     return jsonify({"error": "Not Available"}), 404
+
 
 @app.route('/bygenre', methods=['GET'])
 def bygenre():
     if request.method == 'GET':
         cursor = db.cursor()
-
-        #data = request.get_json()  # take the data from the body
-        #qgenre = data.get('qgenre')
-        #minrating = float(data.get('minrating'))
-        #yrFrom = data.get('yrFrom')
-        #yrTo = data.get('yrTo')
 
         qgenre = request.args.get('qgenre')
         minrating = float(request.args.get('minrating'))
@@ -380,6 +383,7 @@ def name(nameID):
     
     return jsonify({"error" : "Internal server error"}), 500
 
+
 @app.route('/searchname', methods=['GET'])
 def searchnamename():
     if request.method == 'GET':
@@ -420,6 +424,7 @@ def searchnamename():
         return jsonify({"error": "Not Available"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
+
 
 @app.route('/topRated', methods=['GET'])
 def topRated():
@@ -475,6 +480,7 @@ def add_to_list(titleID):
     
     return jsonify({"error" : "Internal server error"}), 500
 
+
 @app.route('/remove_from_list/<int:titleID>', methods=['POST'])
 def remove_from_list(titleID):
     if request.method == 'POST':
@@ -502,6 +508,7 @@ def remove_from_list(titleID):
         else:
             return jsonify({"error" : "Not in list"}), 201
     return jsonify({"error" : "Internal server error"}), 500
+
 
 @app.route('/list_for_watching_later', methods=['GET'])
 def list_for_watching_later():
@@ -788,6 +795,72 @@ def movie_info(titleID):
     
     return jsonify({"error" : "Internal server error"}), 500
         
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+
+    # Write data rows
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': json_data['type'],
+        'originalTitle': json_data['originalTitle'],
+        'titlePoster': json_data['titlePoster'],
+        'startYear': json_data['startYear'],
+        'endYear': json_data['endYear'],
+        'genres': ','.join(json_data['genres']) if json_data['genres'] else ''
+    })
+
+    # Write titleAkas
+    for akas in json_data['titleAkas']:
+        writer.writerow({
+            'titleID': json_data['titleID'],
+            'type': '',
+            'originalTitle': akas['titleAkas'],
+            'titlePoster': '',
+            'startYear': '',
+            'endYear': '',
+            'genres': akas['regionAbbrev']
+        })
+
+    # Write principals
+    for principal in json_data['principals']:
+        writer.writerow({
+            'titleID': json_data['titleID'],
+            'type': '',
+            'originalTitle': principal['name'],
+            'titlePoster': '',
+            'startYear': '',
+            'endYear': '',
+            'genres': principal['category']
+        })
+
+    # Write rating
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': '',
+        'originalTitle': 'Rating',
+        'titlePoster': '',
+        'startYear': '',
+        'endYear': '',
+        'genres': f"Average Rating: {json_data['rating']['avRating']}, Number of Votes: {json_data['rating']['numVotes']}"
+    })
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
 
 
 if __name__ == "__main__":
