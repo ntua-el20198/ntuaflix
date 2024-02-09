@@ -19,6 +19,9 @@
 
     <div id="resultsContainer" class="movieResults"></div>
 
+    <!-- Button to trigger CSV download -->
+    <button id="downloadCSV">Download CSV</button>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchButton = document.querySelector('.middle-search-button');
@@ -49,8 +52,14 @@
                     });
 
             });
+
+            // Function to trigger CSV download
+            document.getElementById('downloadCSV').addEventListener('click', function () {
+                const titlePart = searchInput.value.trim();
+                const csvURL = `/searchTitle?titlePart=${titlePart}&format=csv`;
+                window.location.href = csvURL;
+            });
         });
-        
     </script>
     <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
     <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
