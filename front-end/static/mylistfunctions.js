@@ -1,6 +1,6 @@
 async function watchlist(titleID) {
     try {
-        const response = await fetch(`/check_watchlist/${titleID}`);
+        const response = await fetch(`/ntuaflix_api/check_watchlist/${titleID}`);
         const data = await response.json();
         return data.inWatchlist;
     } catch (error) {
@@ -46,7 +46,7 @@ function toggleAddToList(titleID, button) {
 }
 
 function addToWatchlist(titleID) {
-    fetch('/get_user_id')
+    fetch('/ntuaflix_api/get_user_id')
         .then(response => response.json())
         .then(data => {
             const userID = data;
@@ -57,7 +57,7 @@ function addToWatchlist(titleID) {
                 return;
             }
 
-            fetch(`/add_to_list/${titleID}`, {
+            fetch(`/ntuaflix_api/add_to_list/${titleID}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ function addToWatchlist(titleID) {
 }
 
 function removeFromWatchlist(titleID) {
-    fetch('/get_user_id')
+    fetch('/ntuaflix_api/get_user_id')
         .then(response => response.json())
         .then(data => {
             const userID = data;
@@ -89,7 +89,7 @@ function removeFromWatchlist(titleID) {
                 return;
             }
 
-            fetch(`/remove_from_list/${titleID}`, {
+            fetch(`/ntuaflix_api/remove_from_list/${titleID}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

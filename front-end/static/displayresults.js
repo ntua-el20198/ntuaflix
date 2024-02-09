@@ -16,7 +16,7 @@ async function displaySearchResults(results, resultsContainer) {
 
             posterElement.addEventListener('click', () => {
                 console.log(`Clicked poster for movie: ${result.originalTitle}`);
-                window.location.href = `/info/${result.titleID}`;
+                window.location.href = `/ntuaflix_api/info/${result.titleID}`;
             });
 
             // Create a div for movie information

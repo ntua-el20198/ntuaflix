@@ -29,7 +29,7 @@
                 event.preventDefault();
                 const titlePart = searchInput.value.trim();
                 
-                const url = new URL('/searchTitle', window.location.origin);
+                const url = new URL('/ntuaflix_api/searchTitle', window.location.origin);
                 url.searchParams.append('titlePart', titlePart);
                 
                 const resultsContainer = document.getElementById('resultsContainer');
