@@ -784,10 +784,7 @@ def movie_info(titleID):
     
     else:
         return jsonify({"error": "Not Available"}), 404
-    
-    return jsonify({"error" : "Internal server error"}), 500
+
         
-
-
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')

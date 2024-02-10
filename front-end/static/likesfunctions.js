@@ -1,6 +1,6 @@
 async function likelist(titleID) {
     try {
-        const response = await fetch(`/check_likelist/${titleID}`);
+        const response = await fetch(`/ntuaflix_api/check_likelist/${titleID}`);
         const data = await response.json();
         return data.inLikelist;
     } catch (error) {
