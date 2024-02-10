@@ -16,7 +16,6 @@ app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
 CORS(app)
 
-
 # Database configuration
 db_config = {
     "host": "127.0.0.1",
@@ -795,42 +794,41 @@ def convert_to_csv(json_data):
     
     # Define fieldnames for CSV headers
     title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
-    title_akas_fields = ['titleAkas', 'regionAbbrev']
+    title_principals_fields = ['titleID', 'nameID', 'name', 'category']
+    title_rating_fields = ['titleID', 'averageRating', 'numVotes']
     
-    # Write the header row for title basics
+    # Write the header row and data rows for title basics
     writer.writerow(['title_basics'])
     writer.writerow(title_basics_fields)
-    
-    # Write data rows for title basics
     for movie in json_data:
-        writer.writerow([
-            movie['titleID'],
-            movie['type'],
-            movie['originalTitle'],
-            movie['titlePoster'],
-            movie['startYear'],
-            movie['endYear'],
-            ','.join(movie['genres']) if movie['genres'] else ''
-        ])
+        writer.writerow([movie[field] for field in title_basics_fields])
     
     # Write a blank row to separate the umbrella titles
     writer.writerow([])
     
-    # Write the header row for title akas
-    writer.writerow(['title_akas'])
-    writer.writerow(title_akas_fields)
-    
-    # Write data rows for title akas
+    # Write the header row and data rows for title principals
+    writer.writerow(['title_principals'])
+    writer.writerow(title_principals_fields)
     for movie in json_data:
-        title_akas = movie.get('titleAkas')  # Get title akas for the current movie
-        if title_akas:
-            for akas_info in title_akas:
-                writer.writerow([
-                    akas_info['titleAkas'],
-                    akas_info['regionAbbrev']
-                ])
+        title_principals = movie.get('principals')
+        if title_principals:
+            for principal_info in title_principals:
+                writer.writerow([movie['titleID'], principal_info['nameID'], principal_info['name'], principal_info['category']])
         else:
-            writer.writerow(['N/A', 'N/A'])  # Write placeholder values if no title akas are available
+            writer.writerow(['N/A'] * len(title_principals_fields))  # Write placeholder values if no title principals are available
+
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row and data rows for title rating
+    writer.writerow(['title_rating'])
+    writer.writerow(title_rating_fields)
+    for movie in json_data:
+        title_rating = movie.get('rating')
+        if title_rating:
+            writer.writerow([movie['titleID'], title_rating['avRating'], title_rating['numVotes']])
+        else:
+            writer.writerow(['N/A'] * len(title_rating_fields))  # Write placeholder values if no title rating is available
     
     # Get the CSV data as a string
     csv_data = csv_buffer.getvalue()
@@ -839,6 +837,9 @@ def convert_to_csv(json_data):
     csv_buffer.close()
     
     return csv_data
+
+
+
 
 
 '''# Write titleAkas
