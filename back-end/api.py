@@ -33,6 +33,10 @@ except mysql.connector.Error as err:
     db = None
     print("Database connection failed:", err)
 
+@app.route('/')
+def default():
+    return redirect(url_for('index'))
+
 @app.route('/ntuaflix_api/')
 def index():
     return render_template('index.html')
