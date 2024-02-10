@@ -796,7 +796,7 @@ def convert_to_csv(json_data):
     title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
     title_principals_fields = ['titleID', 'nameID', 'name', 'category']
     title_rating_fields = ['titleID', 'averageRating', 'numVotes']
-    
+
     # Write the header row and data rows for title basics
     writer.writerow(['title_basics'])
     writer.writerow(title_basics_fields)
@@ -839,46 +839,5 @@ def convert_to_csv(json_data):
     return csv_data
 
 
-
-
-
-'''# Write titleAkas
-for akas in json_data['titleAkas']:
-    writer.writerow({
-    'titleID': movie['titleID'],
-    'type': '',
-    'originalTitle': akas['titleAkas'],
-    'titlePoster': '',
-    'startYear': '',
-    'endYear': '',
-    'genres': akas['regionAbbrev']
-})'''
-
-
 if __name__ == "__main__":
     app.run(debug=True)
-
-'''
-
-# Write principals
-for principal in json_data['principals']:
-    writer.writerow({
-        'titleID': movie['titleID'],
-        'type': '',
-        'originalTitle': principal['name'],
-        'titlePoster': '',
-        'startYear': '',
-        'endYear': '',
-        'genres': principal['category']
-    })
-
-# Write rating
-writer.writerow({
-    'titleID': movie['titleID'],
-    'type': '',
-    'originalTitle': 'Rating',
-    'titlePoster': '',
-    'startYear': '',
-    'endYear': '',
-    'genres': f"Average Rating: {movie['rating']['avRating']}, Number of Votes: {movie['rating']['numVotes']}"
-})'''
