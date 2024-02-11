@@ -9,8 +9,14 @@ import secrets
 import csv
 from io import StringIO
 
+<<<<<<< HEAD
 template_folder_path = r'C:/Users/vivia\Desktop/ntuaflix\softeng23-17/front-end/templates'
 static_path = r'C:/Users/vivia\Desktop/ntuaflix\softeng23-17/front-end/static'
+=======
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+
+>>>>>>> c95afc732a199d30dfb0e91ff40236b20be840d3
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -142,9 +148,11 @@ def login():
                 print(result)
 
                 if result:
-                    user_id, username = result[0], result[1]
+                    user_id, username, is_admin = result[0], result[1], result[3]
                     # Store user ID in the session
                     session['user_id'] = user_id
+                    session['is_admin'] = is_admin
+                    
                     return jsonify({"user_id": user_id, "username": username}), 200
                 else:
                     return jsonify({"error": "Not authorized"}), 401
@@ -787,9 +795,8 @@ def movie_info(titleID):
     
     else:
         return jsonify({"error": "Not Available"}), 404
-    
-    return jsonify({"error" : "Internal server error"}), 500
-        
+
+
 def convert_to_csv(json_data):
     # Initialize a StringIO object to write CSV data
     csv_buffer = StringIO()
@@ -844,5 +851,78 @@ def convert_to_csv(json_data):
     return csv_data
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/ntuaflix_api/admin/upload/titlebasics', methods=['POST'])
+def upload_title_basics():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+            
+            for line in iter_content:
+                values = line.split('\t')
+                tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset = values
+                
+                endYear = 'NULL' if endYear == '\\N' else endYear
+                runtimeMinutes = 'NULL' if runtimeMinutes == '\\N' else runtimeMinutes                
+                genres = 'NULL' if genres == '\\N' else genres
+                img_url_asset = 'NULL' if img_url_asset == '\\N' else img_url_asset  
+
+                tconst = int(tconst[2:])
+                query_insert = f"INSERT INTO title_basics (tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset) VALUES ({tconst}, '{titleType}', '{primaryTitle}', '{originalTitle}', {isAdult}, {startYear}, {endYear}, {runtimeMinutes}, '{genres}', '{img_url_asset}')"
+                cursor.execute(query_insert)
+
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+@app.route('/ntuaflix_api/admin/upload/titleakas', methods=['POST'])
+def upload_title_akas():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+            
+            for line in iter_content:
+                values = line.split('\t')
+                titleId, ordering, title, region, language, types, attributes, isOriginalTitle = values
+                
+                region = 'NULL' if region == '\\N' else region
+                language = 'NULL' if language == '\\N' else language                
+                types = 'NULL' if types == '\\N' else types
+                attributes = 'NULL' if attributes == '\\N' else attributes  
+
+                titleId = int(titleId[2:])
+                query_insert = f"INSERT INTO title_akas (titleId, ordering, title, region, language, types, attributes, isOriginalTitle) VALUES ({title}, '{ordering}', '{title}', '{region}', {language}, {types}, {attributes}, {isOriginalTitle}')"
+                cursor.execute(query_insert)
+
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+
+    
+if __name__ == '__main__':
+    app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
+
+
