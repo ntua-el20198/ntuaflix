@@ -466,9 +466,148 @@ form .form-help :where(label,a){
     margin-right: 10px;
 }
 
-.movieInfo {
+
+.movieTitleContainer {
+    text-align: flex-start;
+    margin-bottom: 20px;
     color: white;
+    font-size: 2em; 
+}
+.movieTitleContainer h2 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; /* or another appropriate weight */
+}
+
+.bigContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start; /* Align items to the right */
+}
+
+.mediumContainer {
+    display: flex;
+    flex-direction: column;
+    /* align-items: start; */
+    height: 390px;
+    width: 450px;
+    justify-content: space-between;
+}
+
+.smallContainer {
+    display: flex;
+    /* align-items: flex-start; Align items to the start */
+    justify-content: space-between; 
+    /* margin-bottom: 20px;
+    height: calc(100% - 40px);  */
+}
+
+.row__poster2 {
+    width: 35%; /* Larger poster */
+    object-fit: contain;
+    max-height: 100%;
+    margin-right: 20px;
+    flex-grow: 0;
+}
+
+.movieInfo {
+    flex-grow: 1; /* Ensure it takes the remaining space */
+    color: white;
+    text-align: left;
+    overflow-y: auto; /* Add scroll for overflow */
+    padding-right: 20px; /* Padding for scrollbar */
+}
+
+.movieInfo2 {
+    flex-grow: 1; /* Ensure it takes the remaining space */
+    color: white;
+    text-align: left;
+    font-size: 20px;
+    overflow-y: auto; /* Add scroll for overflow */
+    padding-right: 20px; /* Padding for scrollbar */
+    flex-grow: 2;
+}
+
+.buttonsContainer {
+    display: flex;
+    justify-content: center; /* Center the buttons horizontally */
+    gap: 10px; /* Add some space between the buttons */
+}
+
+.yourRatingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ratingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Align items to the right */
+    flex-grow: 1;
+}
+
+.ratingContainer h3 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700; /* or another appropriate weight */
+}
+
+.star-rating {
+    unicode-bidi: bidi-override;
+    direction: rtl;
     text-align: center;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    color: #ccc; /* Default star color */
+    font-size: 2em;
+    cursor: pointer;
+}
+
+.star-rating input:checked ~ label {
+    color: gold; /* Color for selected stars */
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: gold; /* Color when hovering over a star */
+}
+
+
+.comment-box {
+    margin-top: 20px;
+    width: 270px;
+}
+
+#commentInput {
+    width: 100%;
+    height: 100px; /* Adjust height as needed */
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: vertical; /* Allow vertical resizing */
+}
+
+#commentInput:focus {
+    outline: none;
+}
+
+#commentForm button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#commentForm button:hover {
+    background-color: #0056b3;
 }
 
 .likeButton {

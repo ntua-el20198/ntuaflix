@@ -1,61 +1,148 @@
-async function displayMovieResults(movie, resultsContainer) {
+async function displayMovieResults(movie, movieContainer) {
 
     // Clear previous movie
-    resultsContainer.innerHTML = '';
+    movieContainer.innerHTML = '';
 
-        const resultElement = document.createElement('div');
-        resultElement.classList.add('searchResult'); // Add a class for styling
+    const titleContainer = document.createElement('div');
+    titleContainer.classList.add('movieTitleContainer');
+    const titleElement = document.createElement('h2'); // Using h2 for title
+    titleElement.textContent = movie.originalTitle;
+    titleContainer.appendChild(titleElement);
 
-        const posterSrc = movie.titlePoster ? movie.titlePoster : '/static/images/default.jpg';
-        const posterElement = document.createElement('img');
-        posterElement.src = posterSrc.replace('{width_variable}', 'w500');
-        posterElement.classList.add('row__poster');
+    const bigContainerElement = document.createElement('div');
+    bigContainerElement.classList.add('bigContainer');
 
-        resultElement.appendChild(posterElement);
+    const containerElement = document.createElement('div');
+    containerElement.classList.add('mediumContainer');
 
-        // Create a div for movie information
-        const movieInfoElement = document.createElement('div');
-        movieInfoElement.classList.add('movieInfo');
+    const posterSrc = movie.titlePoster ? movie.titlePoster : '/static/images/default.jpg';
+    const posterElement = document.createElement('img');
+    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+    posterElement.classList.add('row__poster2');
 
-        // Add various details about the movie
-        const titleElement = document.createElement('p');
-        titleElement.textContent = `Title: ${movie.originalTitle}`;
-        movieInfoElement.appendChild(titleElement);
+    bigContainerElement.appendChild(posterElement);
 
-        const typeElement = document.createElement('p');
-        typeElement.textContent = `Type: ${movie.type}`;
-        movieInfoElement.appendChild(typeElement);
 
-        const startYearElement = document.createElement('p');
-        startYearElement.textContent = `Start Year: ${movie.startYear}`;
-        movieInfoElement.appendChild(startYearElement);
+    const smallContainerElement = document.createElement('div');
+    smallContainerElement.classList.add('smallContainer');
+    // Create a div for movie information
+    const movieInfoElement = document.createElement('div');
+    movieInfoElement.classList.add('movieInfo2');
 
-        const genresElement = document.createElement('p');
-        genresElement.textContent = `Genres: ${movie.genres.join(', ')}`;
-        movieInfoElement.appendChild(genresElement);
+    const typeElement = document.createElement('p');
+    typeElement.textContent = `Type: ${movie.type}`;
+    movieInfoElement.appendChild(typeElement);
 
-        const ratingElement = document.createElement('p');
-        ratingElement.textContent = `Rating: ${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
-        movieInfoElement.appendChild(ratingElement);
+    const startYearElement = document.createElement('p');
+    startYearElement.textContent = `Start Year: ${movie.startYear}`;
+    movieInfoElement.appendChild(startYearElement);
 
-        resultElement.appendChild(movieInfoElement);
+    const genresElement = document.createElement('p');
+    genresElement.textContent = `Genres: ${movie.genres.join(', ')}`;
+    movieInfoElement.appendChild(genresElement);
 
-        // Ensure createListButton is defined
-        const listButton = await createListButton(movie);
-        resultElement.appendChild(listButton);
+    smallContainerElement.appendChild(movieInfoElement);
 
-        // Ensure createLikeButton is defined
-        const likeButton = await createLikeButton(movie);
-        resultElement.appendChild(likeButton);
+    // Ensure createListButton is defined
+    const ratingContainer = document.createElement('div');
+    ratingContainer.classList.add('ratingContainer');
 
-        // Append resultElement to resultsContainer
-        resultsContainer.appendChild(resultElement);
+   // ratingButtonContainer.insertBefore(starRating, ratingButtonContainer.firstChild);
+    const ratingElement = document.createElement('h3');
+    ratingElement.textContent = `${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
+   
+    // Create a container for the buttons
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('buttonsContainer');
 
-        // Create and append a horizontal line between movie
-        const hrElement = document.createElement('hr');
-        resultsContainer.appendChild(hrElement);
+    // Assuming createListButton and createLikeButton are defined
+    const likeButton = await createLikeButton(movie);
+    const listButton = await createListButton(movie);
+    
+    buttonsContainer.appendChild(listButton);
+    buttonsContainer.appendChild(likeButton);
 
-        console.log('listButton type:', typeof listButton, listButton);
-        console.log('likeButton type:', typeof likeButton, likeButton);
-        console.log('hrElement type:', typeof hrElement, hrElement);
+    const yourRatingContainer = document.createElement('div');
+    yourRatingContainer.classList.add('yourRatingContainer')
+    const starRating = createStarRating();
+    yourRatingContainer.appendChild(starRating)
+    const commentBox = createCommentBox();
+    yourRatingContainer.appendChild(commentBox);
+
+    ratingContainer.appendChild(ratingElement);
+
+    ratingContainer.appendChild(buttonsContainer);
+    
+    smallContainerElement.appendChild(ratingContainer);
+
+    containerElement.appendChild(smallContainerElement);
+
+    containerElement.appendChild(yourRatingContainer);
+
+    bigContainerElement.appendChild(containerElement);
+    
+
+    movieContainer.appendChild(titleContainer);
+    //movieContainer.appendChild(containerElement);
+    movieContainer.appendChild(bigContainerElement);
+
+
+    console.log('listButton type:', typeof listButton, listButton);
+    console.log('likeButton type:', typeof likeButton, likeButton);
+
+    function createStarRating() {
+        const starRatingContainer = document.createElement('div');
+        starRatingContainer.className = 'star-rating';
+    
+        for (let i = 10; i >= 1; i--) {
+            const starInput = document.createElement('input');
+            starInput.type = 'radio';
+            starInput.id = `star${i}`;
+            starInput.name = 'rating';
+            starInput.value = i;
+    
+            const starLabel = document.createElement('label');
+            starLabel.htmlFor = `star${i}`;
+            starLabel.title = `${i} stars`;
+            starLabel.textContent = '★';
+    
+            starRatingContainer.appendChild(starInput);
+            starRatingContainer.appendChild(starLabel);
+        }
+    
+        return starRatingContainer;
+    }
+
+    function createCommentBox() {
+        // Create the container for the comment box
+        const commentBoxContainer = document.createElement('div');
+        commentBoxContainer.classList.add('comment-box');
+    
+        // Create the form element
+        const formElement = document.createElement('form');
+        formElement.id = 'commentForm';
+    
+        // Create the textarea element
+        const textareaElement = document.createElement('textarea');
+        textareaElement.id = 'commentInput';
+        textareaElement.placeholder = 'Add your comment here...';
+    
+        // Create the submit button
+        const submitButton = document.createElement('button');
+        submitButton.type = 'submit';
+        submitButton.textContent = 'Submit';
+    
+        // Append textarea and submit button to the form
+        formElement.appendChild(textareaElement);
+        formElement.appendChild(submitButton);
+    
+        // Append the form to the comment box container
+        commentBoxContainer.appendChild(formElement);
+    
+        // Return the created comment box container
+        return commentBoxContainer;
+    }
+    
+    // Example usage:
+    
 }
