@@ -450,6 +450,20 @@ form .form-help :where(label,a){
     margin-top: 80px;
 }
 
+/* Style for the "Download CSV" button */
+#downloadCSV {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#downloadCSV:hover {
+    background-color: darkred;
+}
+
 .searchResult {
     margin-bottom: 20px;
     background: rgba(0, 0, 0, 0.7);

@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for
+from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for, Response
 import mysql.connector
 from numpy import double
 from passlib.hash import bcrypt  # Import the bcrypt hashing library
@@ -6,9 +6,17 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 import secrets
+import csv
+from io import StringIO
 
+<<<<<<< HEAD
 template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
 static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
+=======
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+
+>>>>>>> origin/new
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -31,52 +39,57 @@ except mysql.connector.Error as err:
     db = None
     print("Database connection failed:", err)
 
+
 @app.route('/')
+def redirect_to_index():
+    return redirect('/ntuaflix_api/')
+
+@app.route('/ntuaflix_api/')
 def index():
     return render_template('index.html')
 
-@app.route('/homepage.html')
+@app.route('/ntuaflix_api/homepage.html')
 def homepage():
     top_rated_movies = topRated()  
     return render_template('homepage.html', top_rated=top_rated_movies)
 
-@app.route('/signin.html')
+@app.route('/ntuaflix_api/signin.html')
 def signin():
     return render_template('signin.html')
 
-@app.route('/signup.html')
+@app.route('/ntuaflix_api/signup.html')
 def signup():
     return render_template('signup.html')
 
-@app.route('/search_title.html')
+@app.route('/ntuaflix_api/search_title.html')
 def search_title():
     return render_template('search_title.html')
 
-@app.route('/search_genre.html')
+@app.route('/ntuaflix_api/search_genre.html')
 def search_genre():
     return render_template('search_genre.html')
 
-@app.route('/info/<int:title_ID>')
+@app.route('/ntuaflix_api/info/<int:title_ID>')
 def info(title_ID):
-    return render_template('/info.html', title_ID = title_ID)
+    return render_template('info.html', title_ID = title_ID)
 
-@app.route('/search_name.html')
+@app.route('/ntuaflix_api/search_name.html')
 def search_name():
     return render_template('search_name.html')
 
-@app.route('/my-list.html')
+@app.route('/ntuaflix_api/my-list.html')
 def my_list():
     return render_template('watching_later.html')
 
-@app.route('/my-likes.html')
+@app.route('/ntuaflix_api/my-likes.html')
 def my_likes():
     return render_template('likes.html')
 
-@app.route('/my-history.html')
+@app.route('/ntuaflix_api/my-history.html')
 def my_history():
     return render_template('history.html')
 
-@app.route('/signupform', methods=['POST'])
+@app.route('/ntuaflix_api/signupform', methods=['POST'])
 def signupform():
     if request.method == 'POST':
         try:
@@ -109,12 +122,11 @@ def signupform():
 
     return jsonify({"error": "Invalid request"}), 400
 
-
-@app.route('/signup_success')
+@app.route('/ntuaflix_api/signup_success')
 def signup_success():
     return render_template('homepage.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/ntuaflix_api/login', methods=['POST'])
 def login():
     if request.method == 'POST':
         try:
@@ -136,9 +148,11 @@ def login():
                 print(result)
 
                 if result:
-                    user_id, username = result[0], result[1]
+                    user_id, username, is_admin = result[0], result[1], result[3]
                     # Store user ID in the session
                     session['user_id'] = user_id
+                    session['is_admin'] = is_admin
+                    
                     return jsonify({"user_id": user_id, "username": username}), 200
                 else:
                     return jsonify({"error": "Not authorized"}), 401
@@ -152,7 +166,7 @@ def login():
         return jsonify({"error": "Not Available"}), 404
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/ntuaflix_api/logout', methods=['POST'])
 def logout():
     if request.method == 'POST':
         try:
@@ -169,7 +183,7 @@ def logout():
         return jsonify({"error": "Not Available"}), 404
     
 
-@app.route('/get_user_id', methods = ['GET'])
+@app.route('/ntuaflix_api/get_user_id', methods = ['GET'])
 def get_user_id():
     user_id = session.get('user_id')
 
@@ -178,7 +192,6 @@ def get_user_id():
     else:
         return jsonify({"error": "User not authenticated"}), 401
     
-
 def fetch_title_akas(cursor, title_id):
     # Fetch title_akas for a given title
     query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
@@ -207,7 +220,7 @@ def fetch_title_rating(cursor, title_id):
     return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
 
 
-@app.route('/title/<int:titleID>', methods=['GET'])
+@app.route('/ntuaflix_api/title/<int:titleID>', methods=['GET'])
 def title(titleID):
     if request.method == 'GET':
         cursor = db.cursor()
@@ -242,17 +255,15 @@ def title(titleID):
     else:
         return jsonify({"error": "Not Available"}), 404
     
-    return jsonify({"error" : "Internal server error"}), 500
 
-
-
-@app.route('/searchTitle', methods=['GET'])
+@app.route('/ntuaflix_api/searchTitle', methods=['GET'])
 def searchTitle():
     if request.method == 'GET':
         cursor = db.cursor()
 
         #data = request.get_json()   take the data from the body
         titlePart = request.args.get('titlePart')
+        output_format = request.args.get('format', 'json')
 
         if titlePart:
             query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
@@ -279,23 +290,24 @@ def searchTitle():
                 
                 title_list.append(title_dict)
 
-            if title_list:
-                return jsonify(title_list), 200
+            if output_format == 'csv':
+                csv_data = convert_to_csv(title_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if title_list:
+                    return jsonify(title_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
             else:
-                return jsonify({"error": "Movies not found"}), 204
+                return jsonify({"error": "Invalid format specified"}), 400
 
     return jsonify({"error": "Not Available"}), 404
 
-@app.route('/bygenre', methods=['GET'])
+@app.route('/ntuaflix_api/bygenre', methods=['GET'])
 def bygenre():
     if request.method == 'GET':
         cursor = db.cursor()
-
-        #data = request.get_json()  # take the data from the body
-        #qgenre = data.get('qgenre')
-        #minrating = float(data.get('minrating'))
-        #yrFrom = data.get('yrFrom')
-        #yrTo = data.get('yrTo')
 
         qgenre = request.args.get('qgenre')
         minrating = float(request.args.get('minrating'))
@@ -345,7 +357,7 @@ def bygenre():
         return jsonify({"error": "Not Available"}), 404
     
 
-@app.route('/name/<int:nameID>', methods=['GET'])
+@app.route('/ntuaflix_api/name/<int:nameID>', methods=['GET'])
 def name(nameID):
     if request.method == 'GET':
         cursor = db.cursor()
@@ -378,15 +390,12 @@ def name(nameID):
     else:
         return jsonify({"error": "Not Available"}), 404
     
-    return jsonify({"error" : "Internal server error"}), 500
 
-@app.route('/searchname', methods=['GET'])
+@app.route('/ntuaflix_api/searchname', methods=['GET'])
 def searchnamename():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        #data = request.get_json()  # take the data from the body
-        #namePart = data.get('namePart')
         namePart = request.args.get('namePart')
 
         query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE primaryName LIKE %s"
@@ -421,7 +430,7 @@ def searchnamename():
     
     return jsonify({"error" : "Internal server error"}), 500
 
-@app.route('/topRated', methods=['GET'])
+@app.route('/ntuaflix_api/topRated', methods=['GET'])
 def topRated():
     if request.method == 'GET':
         cursor = db.cursor()
@@ -444,7 +453,7 @@ def topRated():
     else:
         return jsonify({"error": "Method Not Allowed"}), 405
 
-@app.route('/add_to_list/<int:titleID>', methods=['POST'])
+@app.route('/ntuaflix_api/add_to_list/<int:titleID>', methods=['POST'])
 def add_to_list(titleID):
     if request.method == 'POST':
         userID = session.get('user_id')
@@ -475,7 +484,7 @@ def add_to_list(titleID):
     
     return jsonify({"error" : "Internal server error"}), 500
 
-@app.route('/remove_from_list/<int:titleID>', methods=['POST'])
+@app.route('/ntuaflix_api/remove_from_list/<int:titleID>', methods=['POST'])
 def remove_from_list(titleID):
     if request.method == 'POST':
         userID = session.get('user_id')
@@ -503,7 +512,7 @@ def remove_from_list(titleID):
             return jsonify({"error" : "Not in list"}), 201
     return jsonify({"error" : "Internal server error"}), 500
 
-@app.route('/list_for_watching_later', methods=['GET'])
+@app.route('/ntuaflix_api/list_for_watching_later', methods=['GET'])
 def list_for_watching_later():
     if request.method == 'GET':
         userID = session.get('user_id')
@@ -555,7 +564,7 @@ def list_for_watching_later():
         return jsonify({"error": "Method Not Allowed"}), 405
 
 
-@app.route('/add_to_likes/<int:titleID>', methods=['POST'])
+@app.route('/ntuaflix_api/add_to_likes/<int:titleID>', methods=['POST'])
 def add_to_likes(titleID):
     if request.method == 'POST':
         userID = session.get('user_id')
@@ -583,7 +592,8 @@ def add_to_likes(titleID):
                 return jsonify({"error": "Something went wrong"}), 204
     return jsonify({"error" : "Internal server error"}), 500
 
-@app.route('/remove_from_likes/<int:titleID>', methods=['POST'])
+
+@app.route('/ntuaflix_api/remove_from_likes/<int:titleID>', methods=['POST'])
 def remove_from_likes(titleID):
     if request.method == 'POST':
         userID = session.get('user_id')
@@ -604,8 +614,7 @@ def remove_from_likes(titleID):
         
     return jsonify({"error" : "Internal server error"}), 500
 
-
-@app.route('/check_watchlist/<int:titleID>', methods=['GET'])
+@app.route('/ntuaflix_api/check_watchlist/<int:titleID>', methods=['GET'])
 def check_watchlist(titleID):
         userID = session.get('user_id')
 
@@ -630,7 +639,7 @@ def check_watchlist(titleID):
         # Return a JSON response indicating whether the movie is in the watchlist or not
         return jsonify({'inWatchlist': in_watchlist_count}), 200, {'Content-Type': 'application/json'}
 
-@app.route('/check_likelist/<int:titleID>', methods=['GET'])
+@app.route('/ntuaflix_api/check_likelist/<int:titleID>', methods=['GET'])
 def check_likelist(titleID):
         userID = session.get('user_id')
 
@@ -656,7 +665,7 @@ def check_likelist(titleID):
         return jsonify({'inLikelist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
 
 
-@app.route('/likes', methods=['GET'])
+@app.route('/ntuaflix_api/likes', methods=['GET'])
 def likes():
     if request.method == 'GET':
         userID = session.get('user_id')
@@ -704,7 +713,7 @@ def likes():
     return jsonify({"error" : "Internal server error"}), 500
 
   
-@app.route('/rating/<int:titleID>', methods = ['POST'])
+@app.route('/ntuaflix_api/rating/<int:titleID>', methods = ['POST'])
 def rating(titleID):
     if request.method == 'POST':
         try:
@@ -739,7 +748,7 @@ def rating(titleID):
     else:
         return jsonify({"error": "Not Available"}), 404
 
-@app.route('/movie_info/<int:titleID>', methods=['GET'])
+@app.route('/ntuaflix_api/movie_info/<int:titleID>', methods=['GET'])
 def movie_info(titleID):
     if request.method == 'GET':
         cursor = db.cursor()
@@ -747,15 +756,15 @@ def movie_info(titleID):
         query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
         cursor.execute(query_basics,(titleID,))
 
-        title_data = cursor.fetchone()
+        movie_data = cursor.fetchone()
 
-        if title_data:
+        if movie_data:
             try:
                 column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
-                title = dict(zip(column_names, title_data))
-                title['genres'] = title['genres'].split(',') if title['genres'] else [] 
-                title['startYear'] = str(title['startYear'])
-                title['titleID'] = str(title['titleID'])
+                movie = dict(zip(column_names, movie_data))
+                movie['genres'] = movie['genres'].split(',') if movie['genres'] else [] 
+                movie['startYear'] = str(movie['startYear'])
+                movie['titleID'] = str(movie['titleID'])
 
                 # Fetch title_akas, title_principals, and title_rating for each title
                 query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
@@ -763,18 +772,19 @@ def movie_info(titleID):
                 title_akas = cursor.fetchall()
 
                 if title_akas:
-                     title['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+                     movie['titleAkas'] = [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
                 
-                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+                # We also select the principals images when we display the movie information
+                query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category, nb.img_url_asset FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
                 cursor.execute(query_principals, (titleID,))
                 title_principals = cursor.fetchall()
                 
                 if title_principals:
-                    title['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]    
+                    movie['principals'] = [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2], 'image': principal[3]} for principal in title_principals]    
 
-                title['rating'] = fetch_title_rating(cursor, title_data[0])
+                movie['rating'] = fetch_title_rating(cursor, movie_data[0])
 
-                return jsonify(title), 200
+                return jsonify(movie), 200
             
             except Exception as e:
                 print("Error in query_akas execution:", str(e))
@@ -785,10 +795,134 @@ def movie_info(titleID):
     
     else:
         return jsonify({"error": "Not Available"}), 404
+
+
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
     
-    return jsonify({"error" : "Internal server error"}), 500
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_principals_fields = ['titleID', 'nameID', 'name', 'category']
+    title_rating_fields = ['titleID', 'averageRating', 'numVotes']
+
+    # Write the header row and data rows for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    for movie in json_data:
+        writer.writerow([movie[field] for field in title_basics_fields])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row and data rows for title principals
+    writer.writerow(['title_principals'])
+    writer.writerow(title_principals_fields)
+    for movie in json_data:
+        title_principals = movie.get('principals')
+        if title_principals:
+            for principal_info in title_principals:
+                writer.writerow([movie['titleID'], principal_info['nameID'], principal_info['name'], principal_info['category']])
+        else:
+            writer.writerow(['N/A'] * len(title_principals_fields))  # Write placeholder values if no title principals are available
+
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row and data rows for title rating
+    writer.writerow(['title_rating'])
+    writer.writerow(title_rating_fields)
+    for movie in json_data:
+        title_rating = movie.get('rating')
+        if title_rating:
+            writer.writerow([movie['titleID'], title_rating['avRating'], title_rating['numVotes']])
+        else:
+            writer.writerow(['N/A'] * len(title_rating_fields))  # Write placeholder values if no title rating is available
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+
+
+@app.route('/ntuaflix_api/admin/upload/titlebasics', methods=['POST'])
+def upload_title_basics():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+            
+            for line in iter_content:
+                values = line.split('\t')
+                tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset = values
+                
+                endYear = 'NULL' if endYear == '\\N' else endYear
+                runtimeMinutes = 'NULL' if runtimeMinutes == '\\N' else runtimeMinutes                
+                genres = 'NULL' if genres == '\\N' else genres
+                img_url_asset = 'NULL' if img_url_asset == '\\N' else img_url_asset  
+
+                tconst = int(tconst[2:])
+                query_insert = f"INSERT INTO title_basics (tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset) VALUES ({tconst}, '{titleType}', '{primaryTitle}', '{originalTitle}', {isAdult}, {startYear}, {endYear}, {runtimeMinutes}, '{genres}', '{img_url_asset}')"
+                cursor.execute(query_insert)
+
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
         
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+@app.route('/ntuaflix_api/admin/upload/titleakas', methods=['POST'])
+def upload_title_akas():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+            
+            for line in iter_content:
+                values = line.split('\t')
+                titleId, ordering, title, region, language, types, attributes, isOriginalTitle = values
+                
+                region = 'NULL' if region == '\\N' else region
+                language = 'NULL' if language == '\\N' else language                
+                types = 'NULL' if types == '\\N' else types
+                attributes = 'NULL' if attributes == '\\N' else attributes  
+
+                titleId = int(titleId[2:])
+                query_insert = f"INSERT INTO title_akas (titleId, ordering, title, region, language, types, attributes, isOriginalTitle) VALUES ({title}, '{ordering}', '{title}', '{region}', {language}, {types}, {attributes}, {isOriginalTitle}')"
+                cursor.execute(query_insert)
+
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+
+    
+if __name__ == '__main__':
+    app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
