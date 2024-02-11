@@ -165,9 +165,15 @@ def login():
 def logout():
     if request.method == 'POST':
         try:
-            if 'user_id' in session:
+            if 'user_id' in session or 'is_admin' in session:
+                user_id = session['user_id']
                 session.pop('user_id', None)
-                return jsonify({"message": "Logout successful"}), 200
+                session.pop('is_admin', None)
+
+                print(f"User {user_id} logged out successfully")
+                print("Session after logout:", session)
+                
+                return jsonify({"message": f"User {user_id} logged out successfully"}), 200
             else:
                 return jsonify({"error": "Not logged in"}), 401
         
@@ -256,7 +262,7 @@ def searchTitle():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        #data = request.get_json()   take the data from the body
+        #data = request.get_json() take the data from the body
         titlePart = request.args.get('titlePart')
         output_format = request.args.get('format', 'json')
 
