@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #navigation {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .content {
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        #resultContainer {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        p {
+            margin: 0;
+        }
+    </style>
+
+    <script>
+        function toggleSearchBar() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.style.transform = (searchBar.style.transform === 'scaleX(0)' || searchBar.style.transform === '') ? 'scaleX(1)' : 'scaleX(0)';
+        }
+
+        function closeSearchBar() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.style.transform = 'scaleX(0)';
+        }
+    </script>
+</head>
+
+<body>
+    <div id="navigation">
+        {% include 'navigation.html' %}
+    </div>
+
+    <div class="content">
+        <h1>Adminnnn</h1>
+
+        <button onclick="performHealthCheck()">Health Check</button>
+        <div id="resultContainer"></div>
+        <button onclick="">Upload TitleAkas</button>
+        <button onclick="performHealthCheck()">Upload Name Basics</button>
+        <button onclick="performHealthCheck()">Upload Title Crew</button>
+        <button onclick="performHealthCheck()">Upload Title Episode</button>
+        <button onclick="performHealthCheck()">Upload Title Principles</button>
+        <button onclick="performHealthCheck()">Upload Title Ratings</button>
+        <button onclick="resetAll()">Reset All</button>
+        <div id="resetButton"></div>
+        <button onclick="performHealthCheck()">Add User or Change Password</button>
+        <button onclick="performHealthCheck()">See user</button>
+        <script>
+
+            //H E A L T H  C H E C K
+            function performHealthCheck() {
+                // Make an AJAX request to the /admin/healthcheck endpoint
+                fetch('/admin/healthcheck')
+                    .then(response => response.json())
+                    .then(result => {
+                        // Display the result in the resultContainer div
+                        document.getElementById('resultContainer').innerHTML = JSON.stringify(result, null, 2);
+
+                        // Check the status and display a message
+                        if (result.status === 'OK') {
+                            showMessage('Health check passed!');
+                        } else {
+                            showMessage('Health check failed. Check the console for details.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error performing health check:', error);
+                        showMessage('Error performing health check. Check the console for details.');
+                    });
+            }
+
+            function showMessage(message) {
+                // Display a message below the resultContainer div
+                var messageElement = document.createElement('p');
+                messageElement.innerText = message;
+                document.getElementById('resultContainer').appendChild(messageElement);
+            }
+
+            //R E S E T  A L L 
+            document.getElementById('resetButton').addEventListener('click', function () {
+                resetAll();
+            });
+
+            function resetAll() {
+                // Make an AJAX request to the /admin/resetall endpoint
+                fetch('/admin/resetall', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(result => {console.log(result);
+                        if (result.status === 'OK') {
+                            showMessage('Everything Deleted!');
+                        } else {
+                            showMessage('Delete Failed! Check the console for details.');
+                        }
+                    })
+                    .catch(error => {console.error('Error resetting data:', error);});
+            }
+        </script>
+    </div>
+</body>
+
+</html>
