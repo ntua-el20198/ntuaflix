@@ -33,22 +33,38 @@ def load_session_info():
         # Handle invalid JSON format
         return None
     
+def handle_response(response, format):
+    try:
+        if response.status_code == 200:
+            if format.lower() == 'json':
+                try:
+                    print(response.json())
+                except json.decoder.JSONDecodeError as json_err:
+                    print(f"Error decoding JSON: {json_err}")
+            elif format.lower() == 'csv':
+                print(response.text)
+            else:
+                print(f"Error: Invalid format specified: {format}")
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    
 @cli.command()
-@click.option('--username', prompt='Username', help='The username for login')
-@click.option('--password', prompt=True, hide_input=True, help='The password for login')
+@click.option('--username', prompt='Username', help='The username for login', required=True)
+@click.option('--password', prompt=True, hide_input=True, help='The password for login', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def login(username, password, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/login' # url from api
-    data = {'username': username, 'password': password, 'format' : format}
+    data = {'username': username, 'password': password, 'format': format}
 
     response = post(url, data=data, verify=False)
+    response.raise_for_status() 
 
-    if response.status_code == 200:
-        session_info = response.json()
-        store_session_info(session_info)
-        print(session_info)
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
+    handle_response(response, format)
+
 
 @cli.command()
 @click.option('--format', help='The desired output format', default='json')
@@ -70,111 +86,71 @@ def logout(format):
     else:
         print("Error: No session information available. Please log in.")
 
-# format fff
+
 @cli.command()
-@click.option('--titleID', prompt='titleID', help='The titleID for searchTitle')
+@click.option('--titleID', prompt='titleID', help='The titleID for searchTitle', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def title(titleid, format):
     url = f'https://127.0.0.1:9876/ntuaflix_api/title/{titleid}' # url from api
-    data = {'format' : format}
+    params = {'format' : format}
 
-    response = requests.get(url, data=data, verify=False)
-    try:
-        if response.status_code == 200:
-            if format.lower() == 'json':
-                try:
-                    print(response.json())
-                except json.decoder.JSONDecodeError as json_err:
-                    print(f"Error decoding JSON: {json_err}")
-            elif format.lower() == 'csv':
-                print(response.text)
-            else:
-                print(f"Error: Invalid format specified: {format}")
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
-                
-    except Exception as e:
-        print(f"Error: {e}")
+    response = requests.get(url, params=params, verify=False)
+    response.raise_for_status() # Raises HTTPError, if one occurred.
+
+    handle_response(response, format)
+
 
 @cli.command()
-@click.option('--titlepart', prompt='titlepart', help='The titlepart for searchTitle')
+@click.option('--titlepart', prompt='titlepart', help='The titlepart for searchTitle', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def searchtitle(titlepart, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/searchTitle'
     params = {'titlePart': titlepart, 'format': format}
 
-    try:
-        response = requests.get(url, params=params, verify=False)
-        response.raise_for_status() 
+    response = requests.get(url, params=params, verify=False)
+    response.raise_for_status() 
 
-        if response.status_code == 200:
-            if format.lower() == 'json':
-                try:
-                    print(response.json())
-                except json.decoder.JSONDecodeError as json_err:
-                    print(f"Error decoding JSON: {json_err}")
-            elif format.lower() == 'csv':
-                print(response.text)
-            else:
-                print(f"Error: Invalid format specified: {format}")
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
-
-    except Exception as e:
-        print(f"Error: {e}")
+    handle_response(response, format)
 
 @cli.command()
-@click.option('--nameID', prompt='nameID', help='The titleID for searchTitle')
+@click.option('--genre', prompt='genre', help='The genre of the movie', required=True)
+@click.option('--min', prompt='min', help='Minimum Rating of movie', required=True)
+@click.option('--start', type=int, help='Start year for filtering titles (optional)')
+@click.option('--end', type=int, help='End year for filtering titles (optional)')
+@click.option('--format', help='The desired output format', default='json')
+def bygenre(genre, min, start, end, format):
+    url = 'https://127.0.0.1:9876/ntuaflix_api/bygenre'
+    params = {'qgenre': genre, 'minrating': min, 'yrFrom': start, 'yrTo': end, 'format': format}
+
+    response = requests.get(url, params=params, verify=False)
+    response.raise_for_status() 
+
+    handle_response(response, format)
+
+@cli.command()
+@click.option('--nameID', prompt='nameID', help='The titleID for searchTitle', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def name(nameid, format):
     url = f'https://127.0.0.1:9876/ntuaflix_api/name/{nameid}'  # URL from API
-    data = {'format': format}
+    params = {'format': format}
 
-    response = requests.get(url, data=data, verify=False)
+    response = requests.get(url, params=params, verify=False)
+    response.raise_for_status() 
 
-    try:
-        if response.status_code == 200:
-            if format.lower() == 'json':
-                try:
-                    print(response.json())
-                except json.decoder.JSONDecodeError as json_err:
-                    print(f"Error decoding JSON: {json_err}")
-            elif format.lower() == 'csv':
-                print(response.text)
-            else:
-                print(f"Error: Invalid format specified: {format}")
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
-                
-    except Exception as e:
-        print(f"Error: {e}")
+    handle_response(response, format)
 
 
 @cli.command()
-@click.option('--namepart', prompt='namepart', help='The titlepart for searchPrincipals')
+@click.option('--namepart', prompt='namepart', help='The titlepart for searchPrincipals', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def searchname(namepart, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/searchname' # url from api
     params = {'namePart': namepart, 'format': format}
 
     response = requests.get(url, params=params, verify=False)
+    response.raise_for_status() 
 
-    try:
-        if response.status_code == 200:
-            if format.lower() == 'json':
-                try:
-                    print(response.json())
-                except json.decoder.JSONDecodeError as json_err:
-                    print(f"Error decoding JSON: {json_err}")
-            elif format.lower() == 'csv':
-                print(response.text)
-            else:
-                print(f"Error: Invalid format specified: {format}")
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
-                
-    except Exception as e:
-        print(f"Error: {e}")
+    handle_response(response, format)
         
 if __name__ == '__main__':
     cli()
