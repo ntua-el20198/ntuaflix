@@ -9,8 +9,13 @@ import secrets
 import csv
 from io import StringIO
 
+<<<<<<< HEAD
+template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
+static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
+=======
 template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
 static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
+>>>>>>> 5a55a0d27eafcad37a2657d2b4889158dc792de0
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
