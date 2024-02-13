@@ -117,32 +117,74 @@ async function displayMovieResults(movie, movieContainer) {
         // Create the container for the comment box
         const commentBoxContainer = document.createElement('div');
         commentBoxContainer.classList.add('comment-box');
-    
+        
         // Create the form element
         const formElement = document.createElement('form');
         formElement.id = 'commentForm';
-    
+        
         // Create the textarea element
         const textareaElement = document.createElement('textarea');
         textareaElement.id = 'commentInput';
         textareaElement.placeholder = 'Add your comment here...';
-    
+        
         // Create the submit button
         const submitButton = document.createElement('button');
         submitButton.type = 'submit';
         submitButton.textContent = 'Submit';
-    
+
+        submitButton.addEventListener('click', async (event) => {
+        event.preventDefault(); // Prevent form submission
+        console.log('Submit pressed');
+        const commentInput = textareaElement.value;
+        console.log(commentInput);
+        await sendRatingAndComment(movie.id, 8, commentInput);
+        });
+
         // Append textarea and submit button to the form
         formElement.appendChild(textareaElement);
         formElement.appendChild(submitButton);
-    
+        
         // Append the form to the comment box container
         commentBoxContainer.appendChild(formElement);
-    
+        
         // Return the created comment box container
         return commentBoxContainer;
     }
+
+
+    let selectedRating = null; // Variable to store the selected rating value
+
+    // Add event listeners to star rating inputs
+    const starInputs = document.querySelectorAll('.star-rating input[type="radio"]');
+    starInputs.forEach(starInput => {
+        starInput.addEventListener('change', () => {
+            selectedRating = parseInt(starInput.value); // Update selectedRating when a star is selected
+        });
+    });
+
     
-    // Example usage:
     
+    async function sendRatingAndComment(movieId, ratingValue, comment) {
+        const data = { rating: ratingValue, comment: comment };
+        try {
+            const response = await fetch(`/ntuaflix_api/rating/${movieId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                // Rating - comment submitted successfully
+                console.log('Rating/comment submitted successfully');
+                // Reload or update UI if needed
+            } else {
+                // Error handling
+                console.error('Error submitting rating or comment:', response.statusText);
+            }
+        } catch (error) {
+            // Network error handling
+            console.error('Network error:', error);
+        }
+    }
 }
