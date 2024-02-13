@@ -9,8 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -22,7 +22,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "2255",  
+    "password": "",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
