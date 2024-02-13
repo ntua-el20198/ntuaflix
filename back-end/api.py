@@ -9,8 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
+static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -923,7 +923,10 @@ def upload_title_akas():
         return jsonify({"error": "Not Available"}), 404
 
     
+'''
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
+'''
 
-
+if __name__ == "__main__":
+    app.run(debug=True)
