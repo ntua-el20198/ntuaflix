@@ -22,7 +22,6 @@ async function displayMovieResults(movie, movieContainer) {
 
     bigContainerElement.appendChild(posterElement);
 
-
     const smallContainerElement = document.createElement('div');
     smallContainerElement.classList.add('smallContainer');
     // Create a div for movie information
@@ -47,41 +46,41 @@ async function displayMovieResults(movie, movieContainer) {
     const ratingContainer = document.createElement('div');
     ratingContainer.classList.add('ratingContainer');
 
-   // ratingButtonContainer.insertBefore(starRating, ratingButtonContainer.firstChild);
+    // ratingButtonContainer.insertBefore(starRating, ratingButtonContainer.firstChild);
     const ratingElement = document.createElement('h3');
     ratingElement.textContent = `${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
-   
+
     // Create a container for the buttons
     const buttonsContainer = document.createElement('div');
     buttonsContainer.classList.add('buttonsContainer');
 
-    // Assuming createListButton and createLikeButton are defined
-    const likeButton = await createLikeButton(movie);
-    const listButton = await createListButton(movie);
-    
-    buttonsContainer.appendChild(listButton);
-    buttonsContainer.appendChild(likeButton);
+    async function createContent() {
+        const likeButton = await createLikeButton(movie);
+        const listButton = await createListButton(movie);
 
-    const yourRatingContainer = document.createElement('div');
-    yourRatingContainer.classList.add('yourRatingContainer')
-    const starRating = createStarRating();
-    yourRatingContainer.appendChild(starRating)
-    const commentBox = createCommentBox();
-    yourRatingContainer.appendChild(commentBox);
+        buttonsContainer.appendChild(listButton);
+        buttonsContainer.appendChild(likeButton);
 
-    ratingContainer.appendChild(ratingElement);
+        const yourRatingContainer = document.createElement('div');
+        yourRatingContainer.classList.add('yourRatingContainer')
+        const starRating = createStarRating();
+        yourRatingContainer.appendChild(starRating)
+        const commentBox = createCommentBox();
+        yourRatingContainer.appendChild(commentBox);
 
-    ratingContainer.appendChild(buttonsContainer);
-    
-    smallContainerElement.appendChild(ratingContainer);
+        ratingContainer.appendChild(ratingElement);
 
-    containerElement.appendChild(smallContainerElement);
+        ratingContainer.appendChild(buttonsContainer);
 
-    containerElement.appendChild(yourRatingContainer);
+        smallContainerElement.appendChild(ratingContainer);
 
-    bigContainerElement.appendChild(containerElement);
-    
+        containerElement.appendChild(smallContainerElement);
 
+        containerElement.appendChild(yourRatingContainer);
+
+        bigContainerElement.appendChild(containerElement);
+    }
+    createContent();
     movieContainer.appendChild(titleContainer);
     //movieContainer.appendChild(containerElement);
     movieContainer.appendChild(bigContainerElement);
@@ -93,23 +92,25 @@ async function displayMovieResults(movie, movieContainer) {
     function createStarRating() {
         const starRatingContainer = document.createElement('div');
         starRatingContainer.className = 'star-rating';
-    
+
         for (let i = 10; i >= 1; i--) {
             const starInput = document.createElement('input');
             starInput.type = 'radio';
             starInput.id = `star${i}`;
             starInput.name = 'rating';
             starInput.value = i;
-    
+
+            starInput.setAttribute('title', i);
+
             const starLabel = document.createElement('label');
             starLabel.htmlFor = `star${i}`;
             starLabel.title = `${i} stars`;
             starLabel.textContent = '★';
-    
+
             starRatingContainer.appendChild(starInput);
             starRatingContainer.appendChild(starLabel);
         }
-    
+
         return starRatingContainer;
     }
 
@@ -127,6 +128,7 @@ async function displayMovieResults(movie, movieContainer) {
         textareaElement.id = 'commentInput';
         textareaElement.placeholder = 'Add your comment here...';
         
+
         // Create the submit button
         const submitButton = document.createElement('button');
         submitButton.type = 'submit';

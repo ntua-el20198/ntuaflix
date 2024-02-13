@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #navigation {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .content {
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        #resultContainer {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navigation">
+        {% include 'navigation.html' %}
+    </div>
+
+    <div class="content">
+        <h1>Adminnnn</h1>
+
+        <button onclick="performHealthCheck()">Health Check</button>
+        <div id="resultContainer"></div>
+        <button onclick="uploadTitleBasics()">Upload Title Basics</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".tsv">
+        <button onclick="uploadTitleAkas()">Upload Title Akas</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".tsv">
+        <button onclick="">Upload Name Basics</button>
+        <button onclick="">Upload Title Crew</button>
+        <button onclick="">Upload Title Episode</button>
+        <button onclick="">Upload Title Principles</button>
+        <button onclick="uploadTitleRatings()">Upload Title Ratings</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".tsv">
+        <button onclick="resetAll()">Reset All</button>
+        <div id="resetButton"></div>
+        <button onclick="openUserModificationModal()">Add User or Change Password</button>
+        <!-- The modal for Add User/Change Password -->
+        <div id="userModificationModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeUserModificationModal()">&times;</span>
+                <form id="userModificationForm">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required><br>
+                    
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required><br>
+
+                    <button type="button" onclick="submitForm()">OK</button>
+                </form>
+            </div>
+        </div>
+        <button onclick="">See user</button>
+
+    </div>
+</body>
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</html>
