@@ -64,11 +64,11 @@ function resetAll() {
 // Upload title_basics
 function uploadTitleBasics() {
     // Trigger file input click
-    document.getElementById('fileInput').click();
+    document.getElementById('fileInputBasics').click();
 }
 
 // Handle file selection
-document.getElementById('fileInput').addEventListener('change', function () {
+document.getElementById('fileInputBasics').addEventListener('change', function () {
     // Get the selected file
     const file = this.files[0];
 
@@ -94,10 +94,10 @@ document.getElementById('fileInput').addEventListener('change', function () {
 
 // Upload title_akas
 function uploadTitleAkas() {
-    document.getElementById('fileInput').click();
+    document.getElementById('fileInputAkas').click();
 }
 
-document.getElementById('fileInput').addEventListener('change', function () {
+document.getElementById('fileInputAkas').addEventListener('change', function () {
     const file = this.files[0];
 
     const formData = new FormData();
@@ -120,10 +120,10 @@ document.getElementById('fileInput').addEventListener('change', function () {
 
 // Upload title_ratings
 function uploadTitleRatings() {
-    document.getElementById('fileInput').click();
+    document.getElementById('fileInputRatings').click();
 }
 
-document.getElementById('fileInput').addEventListener('change', function () {
+document.getElementById('fileInputRatings').addEventListener('change', function () {
     const file = this.files[0];
 
     const formData = new FormData();
