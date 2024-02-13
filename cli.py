@@ -1,5 +1,6 @@
 import json
 import click
+import os
 from requests import post
 import requests
 import urllib3
@@ -12,27 +13,23 @@ SESSION_FILE_PATH = 'session.json'
 def cli():
     pass
 
-def store_session_info(session_info):
-    """
-    Store session information in a JSON file.
-    """
+def save_session(user_id, is_admin):
+    session_data = {'user_id': user_id, 'is_admin': is_admin}
     with open(SESSION_FILE_PATH, 'w') as file:
-        json.dump(session_info, file)
+        json.dump(session_data, file)
 
-def load_session_info():
-    """
-    Load session information from the JSON file.
-    """
-    try:
+def load_session():
+    if os.path.exists(SESSION_FILE_PATH):
         with open(SESSION_FILE_PATH, 'r') as file:
-            session_info = json.load(file)
-        return session_info
-    except FileNotFoundError:
-        return None
-    except json.JSONDecodeError:
-        # Handle invalid JSON format
-        return None
-    
+            return json.load(file)
+    return None
+
+def clear_session():
+    # Clear the stored session information
+    if os.path.exists(SESSION_FILE_PATH):
+        os.remove(SESSION_FILE_PATH)
+
+
 def handle_response(response, format):
     try:
         if response.status_code == 200:
@@ -61,6 +58,10 @@ def login(username, password, format):
     data = {'username': username, 'password': password, 'format': format}
 
     response = post(url, data=data, verify=False)
+    response.raise_for_status()
+
+    user_data = response.json()
+    save_session(user_data.get('user_id'), user_data.get('is_admin'))
     response.raise_for_status() 
 
     handle_response(response, format)
@@ -69,22 +70,27 @@ def login(username, password, format):
 @cli.command()
 @click.option('--format', help='The desired output format', default='json')
 def logout(format):
-    session_info = load_session_info()
-    print(session_info)
-    if session_info:
-        url = 'https://127.0.0.1:9876/ntuaflix_api/logout'
+    session_data = load_session()
+
+    if session_data:
+        url = f'https://127.0.0.1:9876/ntuaflix_api/logout'
         data = {'format': format}
+
+        print(f"Sending logout request to {url} with data: {data}")
 
         response = post(url, data=data, verify=False)
 
-        if response.status_code == 200:
-            print(response.json())
-            # Clear session information after successful logout
-            store_session_info(None)
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
+        # Clear the stored session information after the request is made
+        clear_session()
+
+        try:
+            response.raise_for_status()
+            handle_response(response, format)
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error: {e}")
     else:
-        print("Error: No session information available. Please log in.")
+        print("Error: Not logged in")
+
 
 
 @cli.command()
@@ -151,6 +157,113 @@ def searchname(namepart, format):
     response.raise_for_status() 
 
     handle_response(response, format)
+
+@cli.command()
+@click.option('--format', help='The desired output format', default='json')
+def healthcheck(format):
+    session_data = load_session()
+    if session_data.get('is_admin'):
+        url = 'https://127.0.0.1:9876/ntuaflix_api/admin/healthcheck'
+        data = {'format': format}
+        
+        response = requests.get(url, data=data, verify=False)
+        response.raise_for_status() 
+
+        handle_response(response, format)
+    else:
+        print('Only admin can check the database connection')
+
+
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newtitles(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlebasics'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newakas(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleakas'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newratings(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleratings'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            response.raise_for_status() 
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--passw', prompt=True, hide_input=True, help='The password os user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def adduser(username, passw, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):          
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=False)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can modify other users')
+
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def user(username, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=False)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can see other users')
         
 if __name__ == '__main__':
     cli()
