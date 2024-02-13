@@ -160,7 +160,6 @@ def login():
     else:
         return jsonify({"error": "Not Available"}), 404
 
-
 @app.route('/ntuaflix_api/logout', methods=['POST'])
 def logout():
     if request.method == 'POST':
@@ -183,7 +182,6 @@ def logout():
     else:
         return jsonify({"error": "Not Available"}), 404
     
-
 @app.route('/ntuaflix_api/get_user_id', methods = ['GET'])
 def get_user_id():
     user_id = session.get('user_id')
@@ -220,7 +218,6 @@ def fetch_title_rating(cursor, title_id):
     title_rating = cursor.fetchone()
     return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
 
-
 @app.route('/ntuaflix_api/title/<int:titleID>', methods=['GET'])
 def title(titleID):
     if request.method == 'GET':
@@ -256,7 +253,6 @@ def title(titleID):
     else:
         return jsonify({"error": "Not Available"}), 404
     
-
 @app.route('/ntuaflix_api/searchTitle', methods=['GET'])
 def searchTitle():
     if request.method == 'GET':
@@ -314,6 +310,7 @@ def bygenre():
         minrating = float(request.args.get('minrating'))
         yrFrom = request.args.get('yrFrom')
         yrTo = request.args.get('yrTo')
+        output_format = request.args.get('format', 'json')
 
         query = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN title_ratings r ON t.tconst = r.tconst WHERE t.genres LIKE %s AND r.averageRating >= %s "
         parameters = [f"%{qgenre}%",minrating]
@@ -348,7 +345,10 @@ def bygenre():
 
                 title_list.append(title_dict)
         
-        if title_list:
+        if output_format == 'csv':
+            csv_data = convert_to_csv(title_list)
+            return Response(csv_data, mimetype='text/csv')
+        elif title_list:
             return jsonify(title_list), 200
         else:
             return jsonify({"error": "Movies not found"}), 204
@@ -357,7 +357,6 @@ def bygenre():
     else:
         return jsonify({"error": "Not Available"}), 404
     
-
 @app.route('/ntuaflix_api/name/<int:nameID>', methods=['GET'])
 def name(nameID):
     if request.method == 'GET':
@@ -391,7 +390,6 @@ def name(nameID):
     else:
         return jsonify({"error": "Not Available"}), 404
     
-
 @app.route('/ntuaflix_api/searchname', methods=['GET'])
 def searchnamename():
     if request.method == 'GET':
@@ -593,7 +591,6 @@ def add_to_likes(titleID):
                 return jsonify({"error": "Something went wrong"}), 204
     return jsonify({"error" : "Internal server error"}), 500
 
-
 @app.route('/ntuaflix_api/remove_from_likes/<int:titleID>', methods=['POST'])
 def remove_from_likes(titleID):
     if request.method == 'POST':
@@ -665,7 +662,6 @@ def check_likelist(titleID):
         # Return a JSON response indicating whether the movie is in the watchlist or not
         return jsonify({'inLikelist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
 
-
 @app.route('/ntuaflix_api/likes', methods=['GET'])
 def likes():
     if request.method == 'GET':
@@ -713,7 +709,6 @@ def likes():
         
     return jsonify({"error" : "Internal server error"}), 500
 
-  
 @app.route('/ntuaflix_api/rating/<int:titleID>', methods = ['POST'])
 def rating(titleID):
     if request.method == 'POST':
@@ -797,7 +792,6 @@ def movie_info(titleID):
     else:
         return jsonify({"error": "Not Available"}), 404
 
-
 def convert_to_csv(json_data):
     # Initialize a StringIO object to write CSV data
     csv_buffer = StringIO()
@@ -807,6 +801,7 @@ def convert_to_csv(json_data):
     
     # Define fieldnames for CSV headers
     title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleID', 'akas', 'regionAbbrev']
     title_principals_fields = ['titleID', 'nameID', 'name', 'category']
     title_rating_fields = ['titleID', 'averageRating', 'numVotes']
 
@@ -818,7 +813,21 @@ def convert_to_csv(json_data):
     
     # Write a blank row to separate the umbrella titles
     writer.writerow([])
+
+    # Write the header row and data rows for title akas
+    writer.writerow(['title_Akas'])
+    writer.writerow(title_akas_fields)
+    for movie in json_data:
+        title_akas = movie.get('titleAkas')
+        if title_akas:
+            for akas_info in title_akas:
+                writer.writerow([movie['titleID'], akas_info['titleAkas'], akas_info['regionAbbrev']])
+        else:
+            writer.writerow(['N/A'] * len(title_akas_fields))  # Write placeholder values if no title akas are available
     
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+
     # Write the header row and data rows for title principals
     writer.writerow(['title_principals'])
     writer.writerow(title_principals_fields)
@@ -850,7 +859,6 @@ def convert_to_csv(json_data):
     csv_buffer.close()
     
     return csv_data
-
 
 @app.route('/ntuaflix_api/admin/upload/titlebasics', methods=['POST'])
 def upload_title_basics():
@@ -922,7 +930,6 @@ def upload_title_akas():
     else:
         return jsonify({"error": "Not Available"}), 404
 
-    
 '''
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')

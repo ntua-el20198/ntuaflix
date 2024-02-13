@@ -19,7 +19,8 @@
     </form>
 
     <div id="resultsContainer" class="movieResults"></div>
-
+    <!-- Button to trigger CSV download (initially hidden) -->
+    <button id="downloadCSV" style="display: none;">Download CSV</button>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchButton = document.querySelector('.middle-search-button');
@@ -27,30 +28,27 @@
             const minRatingInput = document.querySelector('input[name="minRating"]');
             const yearFromInput = document.querySelector('input[name="yearFrom"]');
             const yearToInput = document.querySelector('input[name="yearTo"]');
+            const downloadButton = document.getElementById('downloadCSV');
             const resultsContainer = document.getElementById('resultsContainer');
+            
+            let genre, minRating, yearFrom, yearTo;
 
             searchButton.addEventListener('click', function (event) {
                 event.preventDefault(); // display the results in the same page
 
                 // Get values from form inputs
-                const genre = genreInput.value.trim();
-                const minRating = minRatingInput.value.trim();
+                genre = genreInput.value.trim();
+                minRating = minRatingInput.value.trim();
                 // Check if mandatory fields are filled
                 if (!genre || !minRating) {
                     alert('Please fill in Genre and Minimum Rating fields.');
                     return;
                 }
-                const yearFrom = yearFromInput.value.trim();
-                const yearTo = yearToInput.value.trim();
+                yearFrom = yearFromInput.value.trim();
+                yearTo = yearToInput.value.trim();
 
                 // Create a URL with the form parameters
-                const url = new URL('/ntuaflix_api/bygenre', window.location.origin);
-                url.searchParams.append('qgenre', genre);
-                url.searchParams.append('minrating', minRating);
-                url.searchParams.append('yrFrom', yearFrom);
-                url.searchParams.append('yrTo', yearTo);
-                const resultsContainer = document.getElementById('resultsContainer');
-
+                const url = `/ntuaflix_api/bygenre?qgenre=${genre}&minrating=${minRating}&yrFrom=${yearFrom}&yrTo=${yearTo}&format=json`;
                 fetch(url, {
                     method: 'GET',
                     headers: {
@@ -61,14 +59,43 @@
                     .then(data => {
                         console.log(data);
                         displaySearchResults(data, resultsContainer);
+                        // Show the download button
+                        downloadButton.style.display = 'inline-block';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+
+            // Function to trigger CSV download
+            downloadButton.addEventListener('click', function () {
+                const downloadUrl = `/ntuaflix_api/bygenre?qgenre=${genre}&minrating=${minRating}&yrFrom=${yearFrom}&yrTo=${yearTo}&format=csv`;
+                
+                fetch(downloadUrl)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        // Create a temporary URL for the blob
+                        const blobURL = window.URL.createObjectURL(blob);
+                        
+                        // Create a link element
+                        const a = document.createElement('a');
+                        a.href = blobURL;
+                        a.download = 'titles.csv';
+                        
+                        // Append the link to the body and trigger the click event
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Clean up by removing the link and revoking the object URL
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(blobURL);
                     })
                     .catch(error => {
                         console.error('Error:', error);
                     });
             });
         });
-
-    </script>
+    </script>    
     <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
     <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
     <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
