@@ -9,17 +9,13 @@ import secrets
 import csv
 from io import StringIO
 
-<<<<<<< HEAD
-template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
-static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
-=======
 template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
 static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
->>>>>>> origin/new
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
 CORS(app)
 
 # Database configuration
@@ -27,7 +23,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "",  
+    "password": "2255",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
@@ -88,6 +84,75 @@ def my_likes():
 @app.route('/ntuaflix_api/my-history.html')
 def my_history():
     return render_template('history.html')
+
+def check_database_connection():
+    try:
+        # Establish database connection
+        db = mysql.connector.connect(**db_config)
+
+        if db.is_connected():
+            return {"status": "OK", "dataconnection": db_config}
+
+    except mysql.connector.Error as err:
+        return {"status": "failed", "dataconnection": db_config, "error": str(err)}
+
+    finally:
+        # Close the database connection when done
+        if db.is_connected():
+            db.close()
+
+# Health check endpoint
+@app.route('/ntuaflix_api/admin/healthcheck', methods=['GET'])
+def health_check():
+    result = check_database_connection()
+    return jsonify(result)  
+
+@app.route('/ntuaflix_api/admin/resetall', methods=['POST'])
+def reset_all():
+    if request.method == 'POST':
+        try:
+            
+            # Create a cursor to execute SQL queries
+            cursor = db.cursor()
+
+            # Execute SQL queries to reset data in each table
+            tables_to_reset = [
+                "director",
+                "knownfortitles",
+                "likes",
+                "listforwatchinglater",
+                "name_basics",
+                "title_akas",
+                "title_basics",
+                "title_episode",
+                "title_principals",
+                "title_ratings",
+                "users",
+                "writer",
+                "user_ratings"
+            ]
+            
+            for table in tables_to_reset:
+                query = f"DELETE FROM {table}"
+                cursor.execute(query)
+            db.commit()
+            db.close()
+
+            return {"status": "OK"}
+        
+        except Exception as e:
+            print("status: failed, reason:", str(e))
+            return {"status": "failed", "reason": str(e)}
+
+
+@app.route('/ntuaflix_api/admin/check')
+def admin_check():
+    # Retrieve is_admin from the session
+    is_admin = session.get('is_admin') 
+    print(is_admin)
+    # Render the template and pass is_admin to it
+    return render_template('admin_check.html', is_admin=is_admin)
+
 
 @app.route('/ntuaflix_api/signupform', methods=['POST'])
 def signupform():
@@ -152,8 +217,9 @@ def login():
                     # Store user ID in the session
                     session['user_id'] = user_id
                     session['is_admin'] = is_admin
+                    print("Session after login:", session)
                     
-                    return jsonify({"user_id": user_id, "username": username}), 200
+                    return jsonify({"user_id": user_id, "username": username, "is_admin": is_admin}), 200
                 else:
                     return jsonify({"error": "Not authorized"}), 401
 
@@ -170,10 +236,19 @@ def login():
 def logout():
     if request.method == 'POST':
         try:
-            if 'user_id' in session:
-                session.pop('user_id', None)
-                return jsonify({"message": "Logout successful"}), 200
+            print("Session before logout:", session)
+            user_id = session.get('user_id')
+
+            if user_id is not None:
+                session.pop('user_id')
+                session.pop('is_admin')
+
+                print(f"User {user_id} logged out successfully")
+                print("Session after logout:", session)
+                
+                return jsonify({"message": f"User {user_id} logged out successfully"}), 200
             else:
+                print("User not logged in")
                 return jsonify({"error": "Not logged in"}), 401
         
         except Exception as e:
@@ -261,7 +336,7 @@ def searchTitle():
     if request.method == 'GET':
         cursor = db.cursor()
 
-        #data = request.get_json()   take the data from the body
+        #data = request.get_json() take the data from the body
         titlePart = request.args.get('titlePart')
         output_format = request.args.get('format', 'json')
 
@@ -854,75 +929,153 @@ def convert_to_csv(json_data):
 @app.route('/ntuaflix_api/admin/upload/titlebasics', methods=['POST'])
 def upload_title_basics():
     if request.method == 'POST':
-        cursor = db.cursor()
-        try:
-            file = request.files['file']
-            # Read the TSV file
-            content = file.read().decode('utf-8').splitlines()
+            cursor = db.cursor()
+            try:
+                file = request.files['file']
+                # Read the TSV file
+                content = file.read().decode('utf-8').splitlines()
 
-            # Skip the first line (header)
-            iter_content = iter(content)
-            next(iter_content)
-            
-            for line in iter_content:
-                values = line.split('\t')
-                tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset = values
+                # Skip the first line (header)
+                iter_content = iter(content)
+                next(iter_content)
                 
-                endYear = 'NULL' if endYear == '\\N' else endYear
-                runtimeMinutes = 'NULL' if runtimeMinutes == '\\N' else runtimeMinutes                
-                genres = 'NULL' if genres == '\\N' else genres
-                img_url_asset = 'NULL' if img_url_asset == '\\N' else img_url_asset  
+                for line in iter_content:
+                    values = line.split('\t')
+                    tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset = values
+                    
+                    endYear = 'NULL' if endYear == '\\N' else endYear
+                    runtimeMinutes = 'NULL' if runtimeMinutes == '\\N' else runtimeMinutes                
+                    genres = 'NULL' if genres == '\\N' else genres
+                    img_url_asset = 'NULL' if img_url_asset == '\\N' else img_url_asset  
 
-                tconst = int(tconst[2:])
-                query_insert = f"INSERT INTO title_basics (tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset) VALUES ({tconst}, '{titleType}', '{primaryTitle}', '{originalTitle}', {isAdult}, {startYear}, {endYear}, {runtimeMinutes}, '{genres}', '{img_url_asset}')"
-                cursor.execute(query_insert)
+                    tconst = int(tconst[2:])
+                    query_insert = f"INSERT INTO title_basics (tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset) VALUES ({tconst}, '{titleType}', '{primaryTitle}', '{originalTitle}', {isAdult}, {startYear}, {endYear}, {runtimeMinutes}, '{genres}', '{img_url_asset}')"
+                    cursor.execute(query_insert)
 
-            db.commit()
+                db.commit()
 
-            return jsonify({"message": "Data successfully uploaded."}), 200
-        
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+                return jsonify({"message": "Data successfully uploaded."}), 200
+            
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
     else:
-        return jsonify({"error": "Not Available"}), 404
+        return jsonify({"error": "Not available"}), 404
     
 @app.route('/ntuaflix_api/admin/upload/titleakas', methods=['POST'])
 def upload_title_akas():
     if request.method == 'POST':
-        cursor = db.cursor()
-        try:
-            file = request.files['file']
-            # Read the TSV file
-            content = file.read().decode('utf-8').splitlines()
+            cursor = db.cursor()
+            try:
+                file = request.files['file']
+                # Read the TSV file
+                content = file.read().decode('utf-8').splitlines()
 
-            # Skip the first line (header)
-            iter_content = iter(content)
-            next(iter_content)
-            
-            for line in iter_content:
-                values = line.split('\t')
-                titleId, ordering, title, region, language, types, attributes, isOriginalTitle = values
+                # Skip the first line (header)
+                iter_content = iter(content)
+                next(iter_content)
                 
-                region = 'NULL' if region == '\\N' else region
-                language = 'NULL' if language == '\\N' else language                
-                types = 'NULL' if types == '\\N' else types
-                attributes = 'NULL' if attributes == '\\N' else attributes  
+                for line in iter_content:
+                    values = line.split('\t')
+                    titleId, ordering, title, region, language, types, attributes, isOriginalTitle = values
+                    
+                    region = 'NULL' if region == '\\N' else region
+                    language = 'NULL' if language == '\\N' else language                
+                    types = 'NULL' if types == '\\N' else types
+                    attributes = 'NULL' if attributes == '\\N' else attributes  
 
-                titleId = int(titleId[2:])
-                query_insert = f"INSERT INTO title_akas (titleId, ordering, title, region, language, types, attributes, isOriginalTitle) VALUES ({title}, '{ordering}', '{title}', '{region}', {language}, {types}, {attributes}, {isOriginalTitle}')"
-                cursor.execute(query_insert)
+                    titleId = int(titleId[2:])
+                    query_insert = f"INSERT INTO title_akas (titleId, ordering, title, region, language, types, attributes, isOriginalTitle) VALUES ({titleId}, '{ordering}', '{title}', '{region}', '{language}', '{types}', '{attributes}', {isOriginalTitle})"
+                    cursor.execute(query_insert)
+
+                db.commit()
+
+                return jsonify({"message": "Data successfully uploaded."}), 200
+            
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not available"}), 404
+
+@app.route('/ntuaflix_api/admin/upload/titleratings', methods=['POST'])
+def upload_title_ratings():
+    if request.method == 'POST':
+            cursor = db.cursor()
+            try:
+                file = request.files['file']
+                # Read the TSV file
+                content = file.read().decode('utf-8').splitlines()
+
+                # Skip the first line (header)
+                iter_content = iter(content)
+                next(iter_content)
+                
+                for line in iter_content:
+                    values = line.split('\t')
+                    tconst, averageRating, numVotes= values
+
+                    tconst = int(tconst[2:])
+                    query_insert = f"INSERT INTO title_ratings (tconst, averageRating, numVotes) VALUES ({tconst}, {averageRating}, {numVotes})"
+                    cursor.execute(query_insert)
+
+                db.commit()
+
+                return jsonify({"message": "Data successfully uploaded."}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not available"}), 404
+    
+@app.route('/ntuaflix_api/admin/usermod/<username>/<password>', methods=['POST'])
+def usermod(username, password):
+    if request.method == 'POST':
+        try:
+            cursor = db.cursor()
+            query_check = "SELECT * FROM users WHERE Username = %s"
+            cursor.execute(query_check,(username,))
+            user = cursor.fetchone()
+            if user:
+                query = "UPDATE users SET password = %s WHERE Username = %s"
+                cursor.execute(query, (password, username))
+            else:
+                query = "INSERT INTO users (Username, password, is_admin) VALUES (%s, %s, 0)"
+                cursor.execute(query, (username, password))
 
             db.commit()
+            return jsonify({"message": "User modification successful"}), 200
 
-            return jsonify({"message": "Data successfully uploaded."}), 200
-        
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    else:
-        return jsonify({"error": "Not Available"}), 404
+            # Handle errors
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
 
+    else:
+        return jsonify({"error": "Not available"}), 404
+
+@app.route('/ntuaflix_api/admin/users/<username>', methods=['POST'])
+def users(username):
+    if request.method == 'POST':
+        try:
+            cursor = db.cursor()
+            query_check = "SELECT * FROM users WHERE Username = %s"
+            cursor.execute(query_check,(username,))
+            user = cursor.fetchone()
+            if user:
+                user_data = {
+                    'id': user[0],
+                    'username': user[1],
+                    'password': user[2]
+                }
+                return jsonify({"User Data": user_data}), 200
+            else:
+                return jsonify({"message": "User not found"}), 204
+
+        except Exception as e:
+            # Handle errors
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+
+    else:
+        return jsonify({"error": "Not available"}), 404
     
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
-
-
