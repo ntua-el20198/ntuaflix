@@ -58,15 +58,17 @@
         <button onclick="performHealthCheck()">Health Check</button>
         <div id="resultContainer"></div>
         <button onclick="uploadTitleBasics()">Upload Title Basics</button>
-        <input type="file" id="fileInput" style="display: none;" accept=".tsv">
+        <input type="file" id="fileInputBasics" style="display: none;" accept=".tsv">
         <button onclick="uploadTitleAkas()">Upload Title Akas</button>
-        <input type="file" id="fileInput" style="display: none;" accept=".tsv">
+        <input type="file" id="fileInputAkas" style="display: none;" accept=".tsv">
         <button onclick="">Upload Name Basics</button>
-        <button onclick="">Upload Title Crew</button>
-        <button onclick="">Upload Title Episode</button>
+        <button onclick="uploadTitleCrew()">Upload Title Crew</button>
+        <input type="file" id="fileInputCrew" style="display: none;" accept=".tsv">
+        <button onclick="uploadTitleEpisode()">Upload Title Episode</button>
+        <input type="file" id="fileInputEpisode" style="display: none;" accept=".tsv">
         <button onclick="">Upload Title Principles</button>
         <button onclick="uploadTitleRatings()">Upload Title Ratings</button>
-        <input type="file" id="fileInput" style="display: none;" accept=".tsv">
+        <input type="file" id="fileInputRatings" style="display: none;" accept=".tsv">
         <button onclick="resetAll()">Reset All</button>
         <div id="resetButton"></div>
         <button onclick="openUserModificationModal()">Add User or Change Password</button>
@@ -85,8 +87,18 @@
                 </form>
             </div>
         </div>
-        <button onclick="">See user</button>
+        <button onclick="openUserInfoModal()">See user</button>
+        <div id="userInfoModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeUserInfoModal()">&times;</span>
+                <form id="userInfoForm">
+                    <label for="user">Username:</label>
+                    <input type="text" id="user" name="user" required><br>                
 
+                    <button type="button" onclick="getInfo()">OK</button>
+                </form>
+            </div>
+        </div>
     </div>
 </body>
     <script src="{{ url_for('static', filename='admin.js') }}"></script>
