@@ -178,3 +178,41 @@ function submitForm() {
     xhr.send();
 }
 
+function openUserInfoModal() {
+    document.getElementById("userInfoModal").style.display = "flex";
+}
+
+function closeUserInfoModal() {
+    document.getElementById("userInfoModal").style.display = "none";
+}
+function getInfo() {
+    var username = document.getElementById("user").value;
+
+    if (username === '') {
+        alert("Username is required.");
+        return;
+    }
+
+    // Perform AJAX request to Flask route using POST method
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/ntuaflix_api/admin/users/" + username, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    // Send the username in the request body
+    var requestBody = JSON.stringify({ username: username });
+    xhr.send(requestBody);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                // Handle the successful response here
+                var responseData = JSON.parse(xhr.responseText);
+                alert("User information retrieved successfully: " + JSON.stringify(responseData));
+            } else {
+                // Handle the error response here
+                alert("Error: " + xhr.responseText);
+            }
+        }
+    };4
+    console.log("Username sent to backend:", username);
+}

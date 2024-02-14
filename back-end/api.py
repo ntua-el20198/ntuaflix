@@ -9,8 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
+static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -23,7 +23,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "2255",  
+    "password": "",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
@@ -509,7 +509,7 @@ def searchnamename():
 def topRated():
     if request.method == 'GET':
         cursor = db.cursor()
-        query_top10 = "SELECT tp.img_url_asset, tr.averageRating FROM title_basics tp INNER JOIN title_ratings tr ON tp.tconst = tr.tconst WHERE tp.img_url_asset IS NOT NULL ORDER BY tr.averageRating DESC LIMIT 10"
+        query_top10 = "SELECT tp.img_url_asset, tr.averageRating, tp.tconst, tp.originalTitle FROM title_basics tp INNER JOIN title_ratings tr ON tp.tconst = tr.tconst WHERE tp.img_url_asset IS NOT NULL ORDER BY tr.averageRating DESC LIMIT 10"
         cursor.execute(query_top10)
         top_rated = cursor.fetchall()
 
@@ -519,7 +519,7 @@ def topRated():
             img_url = result[0]
             width_variable = 'w200'  # Replace 'w500' with your desired width value
             poster_url = img_url.replace('{width_variable}', width_variable) if img_url else '/static/images/default_image_for_titles.jpeg'
-            top_rated_with_width.append({'poster_url': poster_url, 'averageRating': result[1]})
+            top_rated_with_width.append({'poster_url': poster_url, 'averageRating': result[1], 'ID': result[2], 'originalTitle': result[3]})
 
         if top_rated_with_width:
             return jsonify(top_rated_with_width), 200

@@ -732,10 +732,20 @@ form .form-help :where(label, a) {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
+.modal-content {
+    position: relative; /* Ensure it's positioned relative to the modal */
+    margin: auto; /* Center the box */
+    padding: 20px; /* Add some padding inside the box */
+    border-radius: 10px; 
+    width: 30%; /* Or specify a fixed width */
+    background-color: rgba(23, 21, 21, 0.75); /* Slightly see-through white */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); /* Adds a shadow for better visibility */
+}
+
 .modal-content label {
     display: block;
     margin-bottom: 10px;
-    color: #333; /* Adjust the color to your preference */
+    color: #e5dede; /* Adjust the color to your preference */
 }
 
 .modal-content input {
@@ -760,3 +770,29 @@ form .form-help :where(label, a) {
     text-decoration: none;
     cursor: pointer;
 }
+
+.content {
+    display: flex;
+    align-items: center;
+    margin-top: 150px;
+    flex-direction: column;
+}
+
+.content button {
+    background-color: #e50914;
+    color: white;
+    font-size: 17px;
+    font-family: 'Poppins', sans-serif;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    width: 300px;
+    border-radius: 10px; 
+    margin: 7px;
+}
+
+/* #resultContainer {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+} */

@@ -1,59 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        #navigation {
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .content {
-            margin: 20px;
-        }
-
-        h1 {
-            color: #333;
-        }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-
-        #resultContainer {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-top: 10px;
-        }
-
-        p {
-            margin: 0;
-        }
-    </style>
-</head>
+{% include 'head.html' %}
 
 <body>
-    <div id="navigation">
-        {% include 'navigation.html' %}
-    </div>
+
+    {% include 'navigation.html' %}
 
     <div class="content">
-        <h1>Adminnnn</h1>
+        <!-- <h1>Adminnnn</h1> -->
 
         <button onclick="performHealthCheck()">Health Check</button>
         <div id="resultContainer"></div>
@@ -85,8 +40,17 @@
                 </form>
             </div>
         </div>
-        <button onclick="">See user</button>
-
+        <button onclick="openUserInfoModal()">See user</button>
+        <div id="userInfoModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeUserInfoModal()">&times;</span>
+                <form id="userInfoForm">
+                    <label for="user">Username:</label>
+                    <input type="text" id="user" name="user" required><br>                
+                    <button type="button" onclick="getInfo()">OK</button>
+                </form>
+            </div>
+        </div>
     </div>
 </body>
     <script src="{{ url_for('static', filename='admin.js') }}"></script>
