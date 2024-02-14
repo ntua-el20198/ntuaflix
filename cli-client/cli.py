@@ -213,6 +213,44 @@ def newakas(filename, format):
     else:
         print("Error: No file provided.")
 
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newcrew(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlecrew'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newepisode(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleepisode'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
 
 @cli.command()
 @click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
@@ -246,6 +284,7 @@ def adduser(username, passw, format):
         data = {'format': format}
         response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
+
         handle_response(response, format)
     else:
         print('Only admin can modify other users')
@@ -261,6 +300,7 @@ def user(username, format):
         data = {'format': format}
         response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
+
         handle_response(response, format)
     else:
         print('Only admin can see other users')

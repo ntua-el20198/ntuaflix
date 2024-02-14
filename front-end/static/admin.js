@@ -64,11 +64,11 @@ function resetAll() {
 // Upload title_basics
 function uploadTitleBasics() {
     // Trigger file input click
-    document.getElementById('fileInput').click();
+    document.getElementById('fileInputBasics').click();
 }
 
 // Handle file selection
-document.getElementById('fileInput').addEventListener('change', function () {
+document.getElementById('fileInputBasics').addEventListener('change', function () {
     // Get the selected file
     const file = this.files[0];
 
@@ -94,10 +94,10 @@ document.getElementById('fileInput').addEventListener('change', function () {
 
 // Upload title_akas
 function uploadTitleAkas() {
-    document.getElementById('fileInput').click();
+    document.getElementById('fileInputAkas').click();
 }
 
-document.getElementById('fileInput').addEventListener('change', function () {
+document.getElementById('fileInputAkas').addEventListener('change', function () {
     const file = this.files[0];
 
     const formData = new FormData();
@@ -118,12 +118,64 @@ document.getElementById('fileInput').addEventListener('change', function () {
         });
 });
 
-// Upload title_ratings
-function uploadTitleRatings() {
-    document.getElementById('fileInput').click();
+// Upload title_crew
+function uploadTitleCrew() {
+    document.getElementById('fileInputCrew').click();
 }
 
-document.getElementById('fileInput').addEventListener('change', function () {
+document.getElementById('fileInputCrew').addEventListener('change', function () {
+    const file = this.files[0];
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/ntuaflix_api/admin/upload/titlecrew', {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            alert(data.message || data.error);
+        })
+        .catch(error => {
+            console.error(error);
+            alert('An error occurred while uploading the file.');
+        });
+});
+
+// Upload title_episode
+function uploadTitleEpisode() {
+    document.getElementById('fileInputEpisode').click();
+}
+
+document.getElementById('fileInputEpisode').addEventListener('change', function () {
+    const file = this.files[0];
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/ntuaflix_api/admin/upload/titleepisode', {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            alert(data.message || data.error);
+        })
+        .catch(error => {
+            console.error(error);
+            alert('An error occurred while uploading the file.');
+        });
+});
+
+// Upload title_ratings
+function uploadTitleRatings() {
+    document.getElementById('fileInputRatings').click();
+}
+
+document.getElementById('fileInputRatings').addEventListener('change', function () {
     const file = this.files[0];
 
     const formData = new FormData();
@@ -213,6 +265,7 @@ function getInfo() {
                 alert("Error: " + xhr.responseText);
             }
         }
-    };4
+    };
     console.log("Username sent to backend:", username);
 }
+
