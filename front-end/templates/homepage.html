@@ -17,8 +17,7 @@
             searchBar.style.transform = 'scaleX(0)';
         }
     </script>
-
-
+    
 </head>
 
 <body>
@@ -61,6 +60,12 @@
                     data.forEach(function (movie) {
                         // Create an image element and set its attributes
                         var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster");
+
+
+                        img.on('click', function () {
+                            console.log(`Clicked poster for movie: ${movie.originalTitle}`);
+                            window.location.href = `/ntuaflix_api/info/${movie.ID}`;
+                        });
 
                         // Append the image to the container
                         container.append(img);
