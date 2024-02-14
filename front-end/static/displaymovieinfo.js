@@ -49,6 +49,9 @@ async function displayMovieResults(movie, movieContainer) {
     // ratingButtonContainer.insertBefore(starRating, ratingButtonContainer.firstChild);
     const ratingElement = document.createElement('h3');
     ratingElement.textContent = `${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
+    //const avRating = movie.rating ? movie.rating.avRating.toFixed(3) : 'N/A';
+    //const numVotes = movie.rating ? movie.rating.numVotes : '0';
+    //ratingElement.textContent = `${avRating} (${numVotes} votes)`;
 
     // Create a container for the buttons
     const buttonsContainer = document.createElement('div');
@@ -139,7 +142,7 @@ async function displayMovieResults(movie, movieContainer) {
         console.log('Submit pressed');
         const commentInput = textareaElement.value;
         console.log(commentInput);
-        await sendRatingAndComment(movie.id, 8, commentInput);
+        await sendRatingAndComment(movie.titleID, 8, commentInput);
         });
 
         // Append textarea and submit button to the form
@@ -164,7 +167,7 @@ async function displayMovieResults(movie, movieContainer) {
         });
     });
 
-    
+    form: int(data.rating)
     
     async function sendRatingAndComment(movieId, ratingValue, comment) {
         const data = { rating: ratingValue, comment: comment };
@@ -174,7 +177,8 @@ async function displayMovieResults(movie, movieContainer) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                
             });
             if (response.ok) {
                 // Rating - comment submitted successfully

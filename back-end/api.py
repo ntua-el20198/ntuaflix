@@ -9,13 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-<<<<<<< HEAD
 template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
 static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
-=======
-template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
-static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
->>>>>>> 5a55a0d27eafcad37a2657d2b4889158dc792de0
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -792,8 +787,11 @@ def likes():
 def rating(titleID):
     if request.method == 'POST':
         try:
-            rating = int(request.form.get('rating'))
-            comment = str(request.form.get('comment','')) # If the field is not filled in by the user, it will return an empty string ('')
+            data = request.json
+            rating = int(data['rating'])
+            #rating = int(request.form.get('rating'))
+            comment = str(data['comment'])
+            #comment = str(request.form.get('comment','')) # If the field is not filled in by the user, it will return an empty string ('')
             userID = session.get('user_id')
 
             if not userID:
@@ -807,7 +805,7 @@ def rating(titleID):
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
 
                 if cursor.rowcount > 0:
-                    query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating + %s)/(numVotes + 1) WHERE tconst = %s"
+                    query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating * numVotes + %s)/(numVotes + 1) WHERE tconst = %s"
                     cursor.execute(query_movie_ratings,(rating,titleID))
 
                     if cursor.rowcount > 0:
@@ -1092,7 +1090,4 @@ def users(username):
     
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
-'''
 
-if __name__ == "__main__":
-    app.run(debug=True)
