@@ -9,8 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
-static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -23,7 +23,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "",  
+    "password": "2255",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
@@ -835,10 +835,12 @@ def rating(titleID):
                 cursor = db.cursor()
                 query_user_rating = "INSERT INTO user_ratings(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
+                db.commit()
 
                 if cursor.rowcount > 0:
                     query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating * numVotes + %s)/(numVotes + 1) WHERE tconst = %s"
                     cursor.execute(query_movie_ratings,(rating,titleID))
+                    db.commit()
 
                     if cursor.rowcount > 0:
                         return jsonify({"message": "Rating added succesfully"}), 200
@@ -1201,7 +1203,6 @@ def upload_title_ratings():
     else:
         return jsonify({"error": "Not available"}), 404
     
-
     
 @app.route('/ntuaflix_api/admin/usermod/<username>/<password>', methods=['POST'])
 def usermod(username, password):
