@@ -996,6 +996,89 @@ def upload_title_akas():
     else:
         return jsonify({"error": "Not available"}), 404
 
+@app.route('/ntuaflix_api/admin/upload/namebasics', methods=['POST'])
+def upload_name_basics():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+
+            for line in iter_content:
+                values = line.split('\t')
+                nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles, img_url_asset = values
+                nconst = nconst[2:]
+                knownForTitles = [tconst[2:] for tconst in knownForTitles.split(',')]
+
+                # Insert into name_basics using parameterized query
+                name_basics_query = """
+                INSERT INTO name_basics (nconst, primaryName, birthYear, deathYear, primaryProfession, img_url_asset)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(name_basics_query, (nconst, primaryName, birthYear, deathYear, primaryProfession, img_url_asset))
+
+                # Insert into knownForTitles using parameterized query with tconst as integer
+                if knownForTitles:
+                    knownForTitles_query = """
+                    INSERT INTO knownfortitles (name_basicsnconst, title_basicstconst)
+                    VALUES (%s, %s)
+                    """
+                    for tconst in knownForTitles:
+                        tconst_int = int(tconst) if tconst else None
+                        cursor.execute(knownForTitles_query, (nconst, tconst_int if tconst_int is not None else 0))
+
+            db.commit()
+
+                    
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not available"}), 404
+
+@app.route('/ntuaflix_api/admin/upload/titleprincipals', methods=['POST'])
+def upload_title_principals():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+
+            for line in iter_content:
+                values = line.split('\t')
+                tconst, ordering, nconst, category, job, characters, img_url_asset = values
+                tconst = tconst[2:]
+                nconst = nconst[2:]
+
+                job = None if job == '\\N' else job
+                characters = None if characters == '\\N' else characters
+                img_url_asset = None if img_url_asset == '\\N' else img_url_asset
+
+                # Insert into name_basics using parameterized query
+                title_principals_query = """
+                INSERT INTO title_principals (tconst, ordering, name_basicsnconst, category, job, characters, img_url_asset)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(title_principals_query, (tconst, ordering, nconst, category, job, characters, img_url_asset))
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not available"}), 404
+    
+
 @app.route('/ntuaflix_api/admin/upload/titleratings', methods=['POST'])
 def upload_title_ratings():
     if request.method == 'POST':

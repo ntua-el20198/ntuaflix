@@ -6,7 +6,7 @@ import numpy as np
 config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '2255',
+    'password': '',
     'database': 'ntuaflix'
 }
 
