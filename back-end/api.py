@@ -9,13 +9,9 @@ import secrets
 import csv
 from io import StringIO
 
-<<<<<<< HEAD
 template_folder_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/templates'
 static_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/static'
-=======
-template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
-static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
->>>>>>> 80a00a46d733afa54481e39401811b28acf19801
+
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -1100,8 +1096,79 @@ def upload_title_crew():
                 file = request.files['file']
                 # Read the TSV file
                 content = file.read().decode('utf-8').splitlines()
+                # Skip the first line (header)
+                iter_content = iter(content)
+                next(iter_content)
+                for line in iter_content:
+                    values = line.split('\t')
+                    tconst, directors, writers = values
+                    
+                    directors = [nconst[2:] for nconst in (directors.split(',') if directors else [])]
+                    writers = [nconst[2:] for nconst in (writers.split(',') if writers else [])]
+                    tconst = int(tconst[2:])
 
-<<<<<<< HEAD
+                    if directors:
+                        directors_query = """
+                            INSERT INTO director (name_basicsnconst, title_basicstconst)
+                            VALUES (%s, %s)
+                        """
+                        for nconst in directors:
+                            nconst = int(nconst) if nconst else None
+                            cursor.execute(directors_query, (nconst, tconst))
+
+                    if writers:
+                        writers_query = """
+                            INSERT INTO writer (name_basicsnconst, title_basicstconst)
+                            VALUES (%s, %s)
+                        """
+                        for nconst in writers:
+                            nconst = int(nconst) if nconst else None
+                            cursor.execute(writers_query, (nconst, tconst))
+
+                db.commit()
+
+                return jsonify({"message": "Data successfully uploaded."}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+            
+            finally:
+                cursor.close()
+        else:
+            return jsonify({"error": "Not available"}), 404
+    
+@app.route('/ntuaflix_api/admin/upload/titleepisode', methods=['POST'])
+def upload_title_episode():
+    if request.method == 'POST':
+            cursor = db.cursor()
+            try:
+                file = request.files['file']
+                # Read the TSV file
+                content = file.read().decode('utf-8').splitlines()
+
+                # Skip the first line (header)
+                iter_content = iter(content)
+                next(iter_content)
+                
+                for line in iter_content:
+                    values = line.split('\t')
+                    tconst, parentTconst, seasonNumber, episodeNumber = values
+
+                    tconst = int(tconst[2:])
+                    parentTconst = int(parentTconst[2:])
+                    query_insert = f"INSERT INTO title_episode (tconst, parentTconst, seasonNumber, episodeNumber) VALUES ({tconst}, {parentTconst}, {seasonNumber}, {episodeNumber})"
+                    cursor.execute(query_insert)
+
+                db.commit()
+
+                return jsonify({"message": "Data successfully uploaded."}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+            
+            finally:
+                cursor.close()
+    else:
+        return jsonify({"error": "Not available"}), 404
+
 @app.route('/ntuaflix_api/admin/upload/namebasics', methods=['POST'])
 def upload_name_basics():
     if request.method == 'POST':
@@ -1185,81 +1252,6 @@ def upload_title_principals():
         return jsonify({"error": "Not available"}), 404
     
 
-=======
-                # Skip the first line (header)
-                iter_content = iter(content)
-                next(iter_content)
-                for line in iter_content:
-                    values = line.split('\t')
-                    tconst, directors, writers = values
-                    
-                    directors = [nconst[2:] for nconst in (directors.split(',') if directors else [])]
-                    writers = [nconst[2:] for nconst in (writers.split(',') if writers else [])]
-                    tconst = int(tconst[2:])
-
-                    if directors:
-                        directors_query = """
-                            INSERT INTO director (name_basicsnconst, title_basicstconst)
-                            VALUES (%s, %s)
-                        """
-                        for nconst in directors:
-                            nconst = int(nconst) if nconst else None
-                            cursor.execute(directors_query, (nconst, tconst))
-
-                    if writers:
-                        writers_query = """
-                            INSERT INTO writer (name_basicsnconst, title_basicstconst)
-                            VALUES (%s, %s)
-                        """
-                        for nconst in writers:
-                            nconst = int(nconst) if nconst else None
-                            cursor.execute(writers_query, (nconst, tconst))
-
-                db.commit()
-
-                return jsonify({"message": "Data successfully uploaded."}), 200
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-            
-            finally:
-                cursor.close()
-        else:
-            return jsonify({"error": "Not available"}), 404
-    
-@app.route('/ntuaflix_api/admin/upload/titleepisode', methods=['POST'])
-def upload_title_episode():
-    if request.method == 'POST':
-            cursor = db.cursor()
-            try:
-                file = request.files['file']
-                # Read the TSV file
-                content = file.read().decode('utf-8').splitlines()
-
-                # Skip the first line (header)
-                iter_content = iter(content)
-                next(iter_content)
-                
-                for line in iter_content:
-                    values = line.split('\t')
-                    tconst, parentTconst, seasonNumber, episodeNumber = values
-
-                    tconst = int(tconst[2:])
-                    parentTconst = int(parentTconst[2:])
-                    query_insert = f"INSERT INTO title_episode (tconst, parentTconst, seasonNumber, episodeNumber) VALUES ({tconst}, {parentTconst}, {seasonNumber}, {episodeNumber})"
-                    cursor.execute(query_insert)
-
-                db.commit()
-
-                return jsonify({"message": "Data successfully uploaded."}), 200
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-            
-            finally:
-                cursor.close()
-    else:
-        return jsonify({"error": "Not available"}), 404
-    
->>>>>>> 80a00a46d733afa54481e39401811b28acf19801
 @app.route('/ntuaflix_api/admin/upload/titleratings', methods=['POST'])
 def upload_title_ratings():
     if request.method == 'POST':
