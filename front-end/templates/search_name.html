@@ -33,7 +33,7 @@
                 event.preventDefault();
                 const namePart = searchInput.value.trim();
 
-                const url = `/ntuaflix_api/searchname?=${namePart}&format=json`;
+                const url = `/ntuaflix_api/searchname?namePart=${namePart}&format=json`;
 
                 fetch(url, {
                     method: 'GET',
@@ -57,7 +57,7 @@
             // Function to trigger CSV download
             downloadButton.addEventListener('click', function () {
                 const namePart = searchInput.value.trim();
-                const url = `/ntuaflix_api/searchname?=${namePart}&format=csv`;
+                const url = `/ntuaflix_api/searchname?namePart=${namePart}&format=csv`;
                 
                 fetch(url)
                     .then(response => response.blob())

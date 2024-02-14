@@ -512,13 +512,13 @@ def searchnamename():
         
         else:
             return jsonify({"error": "No name found"}), 204
-    
     else:
         return jsonify({"error": "Not Available"}), 404
     
     return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/ntuaflix_api/topRated', methods=['GET'])
+
 def topRated():
     if request.method == 'GET':
         cursor = db.cursor()
@@ -1241,7 +1241,6 @@ def users(username):
                 user_data = {
                     'id': user[0],
                     'username': user[1],
-                    'password': user[2]
                 }
                 return jsonify({"User Data": user_data}), 200
             else:
@@ -1253,6 +1252,7 @@ def users(username):
             return jsonify({"error": "Internal server error"}), 500
 
     else:
+
         return jsonify({"error": "Not available"}), 404   
 
 if __name__ == '__main__':

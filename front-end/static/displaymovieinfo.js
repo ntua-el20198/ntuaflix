@@ -118,83 +118,75 @@ async function displayMovieResults(movie, movieContainer) {
         // Create the container for the comment box
         const commentBoxContainer = document.createElement('div');
         commentBoxContainer.classList.add('comment-box');
-
+        
         // Create the form element
         const formElement = document.createElement('form');
         formElement.id = 'commentForm';
-
+        
         // Create the textarea element
         const textareaElement = document.createElement('textarea');
         textareaElement.id = 'commentInput';
         textareaElement.placeholder = 'Add your comment here...';
+        
 
         // Create the submit button
         const submitButton = document.createElement('button');
         submitButton.type = 'submit';
         submitButton.textContent = 'Submit';
 
-        submitButton.addEventListener('click', function (event) {
-            event.preventDefault(); // Prevent the default form submission behavior
-            submitForm(); // Call your submitForm function when the button is clicked
+        submitButton.addEventListener('click', async (event) => {
+        event.preventDefault(); // Prevent form submission
+        console.log('Submit pressed');
+        const commentInput = textareaElement.value;
+        console.log(commentInput);
+        await sendRatingAndComment(movie.id, 8, commentInput);
         });
-
 
         // Append textarea and submit button to the form
         formElement.appendChild(textareaElement);
         formElement.appendChild(submitButton);
-
+        
         // Append the form to the comment box container
         commentBoxContainer.appendChild(formElement);
-
+        
+        // Return the created comment box container
         return commentBoxContainer;
     }
 
-    function getSelectedRating() {
-        const selectedRatingInput = document.querySelector('input[name="rating"]:checked');
-        
-        if (selectedRatingInput) {
-            const titleAttribute = selectedRatingInput.getAttribute('title');
-            if (titleAttribute !== null) {
-                return parseInt(titleAttribute, 10);  // Return the stars as a string
+
+    let selectedRating = null; // Variable to store the selected rating value
+
+    // Add event listeners to star rating inputs
+    const starInputs = document.querySelectorAll('.star-rating input[type="radio"]');
+    starInputs.forEach(starInput => {
+        starInput.addEventListener('change', () => {
+            selectedRating = parseInt(starInput.value); // Update selectedRating when a star is selected
+        });
+    });
+
+    
+    
+    async function sendRatingAndComment(movieId, ratingValue, comment) {
+        const data = { rating: ratingValue, comment: comment };
+        try {
+            const response = await fetch(`/ntuaflix_api/rating/${movieId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                // Rating - comment submitted successfully
+                console.log('Rating/comment submitted successfully');
+                // Reload or update UI if needed
+            } else {
+                // Error handling
+                console.error('Error submitting rating or comment:', response.statusText);
             }
-        } else {
-            return '0';  // Return a default value when no rating is selected
+        } catch (error) {
+            // Network error handling
+            console.error('Network error:', error);
         }
     }
-
-    function getComment() {
-        return document.getElementById('commentInput').value.trim();
-    }
-
-    function submitForm() {
-        const titleID = movie.titleID;
-        const rating = getSelectedRating();
-        const comment = getComment();
-
-        // Send an asynchronous request to your backend
-        fetch(`/ntuaflix_api/rating/${titleID}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                rating: rating,
-                comment: comment,
-            }),
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Rating added successfully:', data.message);
-            })
-            .catch(error => {
-                console.error('Error adding rating:', error.message);
-            });
-    }
-
-
 }
