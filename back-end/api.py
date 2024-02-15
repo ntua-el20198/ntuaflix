@@ -835,9 +835,9 @@ def rating(titleID):
                 return jsonify({"message": "Bad request"}), 400
             else:
                 cursor = db.cursor()
-                query_user_rating = "INSERT INTO user_ratings(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
+                query_user_rating = "INSERT INTO user_rating(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
-
+                db.commit()
                 if cursor.rowcount > 0:
                     query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating * numVotes + %s)/(numVotes + 1) WHERE tconst = %s"
                     cursor.execute(query_movie_ratings,(rating,titleID))
