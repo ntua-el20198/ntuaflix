@@ -9,8 +9,10 @@ import secrets
 import csv
 from io import StringIO
 
-template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
-static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
+
+template_folder_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/static'
+
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -1131,7 +1133,6 @@ def upload_title_crew():
                 file = request.files['file']
                 # Read the TSV file
                 content = file.read().decode('utf-8').splitlines()
-
                 # Skip the first line (header)
                 iter_content = iter(content)
                 next(iter_content)
@@ -1204,7 +1205,90 @@ def upload_title_episode():
                 cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
+
+@app.route('/ntuaflix_api/admin/upload/namebasics', methods=['POST'])
+def upload_name_basics():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+
+            for line in iter_content:
+                values = line.split('\t')
+                nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles, img_url_asset = values
+                nconst = nconst[2:]
+                knownForTitles = [tconst[2:] for tconst in knownForTitles.split(',')]
+
+                # Insert into name_basics using parameterized query
+                name_basics_query = """
+                INSERT INTO name_basics (nconst, primaryName, birthYear, deathYear, primaryProfession, img_url_asset)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(name_basics_query, (nconst, primaryName, birthYear, deathYear, primaryProfession, img_url_asset))
+
+                # Insert into knownForTitles using parameterized query with tconst as integer
+                if knownForTitles:
+                    knownForTitles_query = """
+                    INSERT INTO knownfortitles (name_basicsnconst, title_basicstconst)
+                    VALUES (%s, %s)
+                    """
+                    for tconst in knownForTitles:
+                        tconst_int = int(tconst) if tconst else None
+                        cursor.execute(knownForTitles_query, (nconst, tconst_int if tconst_int is not None else 0))
+
+            db.commit()
+
+                    
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not available"}), 404
+
+@app.route('/ntuaflix_api/admin/upload/titleprincipals', methods=['POST'])
+def upload_title_principals():
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+
+            for line in iter_content:
+                values = line.split('\t')
+                tconst, ordering, nconst, category, job, characters, img_url_asset = values
+                tconst = tconst[2:]
+                nconst = nconst[2:]
+
+                job = None if job == '\\N' else job
+                characters = None if characters == '\\N' else characters
+                img_url_asset = None if img_url_asset == '\\N' else img_url_asset
+
+                # Insert into name_basics using parameterized query
+                title_principals_query = """
+                INSERT INTO title_principals (tconst, ordering, name_basicsnconst, category, job, characters, img_url_asset)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(title_principals_query, (tconst, ordering, nconst, category, job, characters, img_url_asset))
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Not available"}), 404
     
+
 @app.route('/ntuaflix_api/admin/upload/titleratings', methods=['POST'])
 def upload_title_ratings():
     if request.method == 'POST':
@@ -1293,6 +1377,31 @@ def users(username):
     else:
 
         return jsonify({"error": "Not available"}), 404   
+    
+@app.route('/ntuaflix_api/check_myratingslist', methods=['GET'])
+def check_myratingslist():
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM user_rating WHERE usersid = %s "
+        cursor.execute(query, (userID, ))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_myratingslist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inWatchlist': in_myratingslist_count}), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')

@@ -118,6 +118,57 @@ document.getElementById('fileInputAkas').addEventListener('change', function () 
         });
 });
 
+//Upload name_basics
+function uploadNameBasics() {
+    document.getElementById('fileInputNameBasics').click();
+}
+document.getElementById('fileInputNameBasics').addEventListener('change', function () {
+    const file = this.files[0];
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/ntuaflix_api/admin/upload/namebasics', {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            alert(data.message || data.error);
+        })
+        .catch(error => {
+            console.error(error);
+            alert('An error occurred while uploading the file.');
+        });
+});
+
+//Upload Titlte Principles
+function uploadTitlePrinciples() {
+    document.getElementById('fileInputTitlePrinciples').click();
+}
+document.getElementById('fileInputTitlePrinciples').addEventListener('change', function () {
+    const file = this.files[0];
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/ntuaflix_api/admin/upload/titleprincipals', {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            alert(data.message || data.error);
+        })
+        .catch(error => {
+            console.error(error);
+            alert('An error occurred while uploading the file.');
+        });
+});
+
+
 // Upload title_crew
 function uploadTitleCrew() {
     document.getElementById('fileInputCrew').click();
