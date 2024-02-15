@@ -9,8 +9,10 @@ import secrets
 import csv
 from io import StringIO
 
+
 template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
 static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -1021,6 +1023,40 @@ def convert_to_csv_titleObject(json_data):
     
     return csv_data
 
+@app.route('/ntuaflix_api/movie_reviews/<int:titleID>', methods=['GET'])
+def get_user_reviews_by_movie(titleID):
+    # SQL query to join user_rating with users on userid and filter by title_basicstconst
+ try:
+    sql_query = f"""
+    SELECT u.Username, ur.rating, ur.comment
+    FROM user_ratings ur
+    JOIN users u ON ur.usersid = u.id
+    WHERE ur.title_basicstconst = {titleID}
+    """
+    # Execute the query
+    cursor = db.cursor()
+    cursor.execute(sql_query)
+    
+    # Fetch all the results
+    results = cursor.fetchall()
+    
+    # Optionally, convert results to a more readable format
+    reviews = [{'username': row[0], 'rating': row[1], 'comment': row[2]} for row in results]
+#  except mysql.DatabaseError as e:
+#         # Handle database-related errors, e.g., connection issues, SQL errors
+#         print(f"Database error: {e}")
+#         reviews = []  # Return an empty list or you could also choose to re-raise the exception
+ except Exception as e:
+        # Handle other possible errors
+        print(f"An error occurred: {e}")
+        reviews = []  # Return an empty list or re-raise the exception
+ finally:
+        # Ensure the database connection is closed properly
+        cursor.close()
+    
+ return reviews
+
+
 @app.route('/ntuaflix_api/admin/upload/titlebasics', methods=['POST'])
 def upload_title_basics():
     if request.method == 'POST':
@@ -1347,6 +1383,31 @@ def users(username):
     else:
 
         return jsonify({"error": "Not available"}), 404   
+    
+@app.route('/ntuaflix_api/check_myratingslist', methods=['GET'])
+def check_myratingslist():
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM user_rating WHERE usersid = %s "
+        cursor.execute(query, (userID, ))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_myratingslist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inWatchlist': in_myratingslist_count}), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
