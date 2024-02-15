@@ -835,10 +835,12 @@ def rating(titleID):
                 cursor = db.cursor()
                 query_user_rating = "INSERT INTO user_ratings(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
+                db.commit()
 
                 if cursor.rowcount > 0:
                     query_movie_ratings = "UPDATE title_ratings SET numVotes = numVotes + 1, averageRating = (averageRating * numVotes + %s)/(numVotes + 1) WHERE tconst = %s"
                     cursor.execute(query_movie_ratings,(rating,titleID))
+                    db.commit()
 
                     if cursor.rowcount > 0:
                         return jsonify({"message": "Rating added succesfully"}), 200
@@ -1010,6 +1012,40 @@ def convert_to_csv_titleObject(json_data):
     csv_buffer.close()
     
     return csv_data
+
+@app.route('/ntuaflix_api/movie_reviews/<int:titleID>', methods=['GET'])
+def get_user_reviews_by_movie(titleID):
+    # SQL query to join user_rating with users on userid and filter by title_basicstconst
+ try:
+    sql_query = f"""
+    SELECT u.Username, ur.rating, ur.comment
+    FROM user_ratings ur
+    JOIN users u ON ur.usersid = u.id
+    WHERE ur.title_basicstconst = {titleID}
+    """
+    # Execute the query
+    cursor = db.cursor()
+    cursor.execute(sql_query)
+    
+    # Fetch all the results
+    results = cursor.fetchall()
+    
+    # Optionally, convert results to a more readable format
+    reviews = [{'username': row[0], 'rating': row[1], 'comment': row[2]} for row in results]
+#  except mysql.DatabaseError as e:
+#         # Handle database-related errors, e.g., connection issues, SQL errors
+#         print(f"Database error: {e}")
+#         reviews = []  # Return an empty list or you could also choose to re-raise the exception
+ except Exception as e:
+        # Handle other possible errors
+        print(f"An error occurred: {e}")
+        reviews = []  # Return an empty list or re-raise the exception
+ finally:
+        # Ensure the database connection is closed properly
+        cursor.close()
+    
+ return reviews
+
 
 @app.route('/ntuaflix_api/admin/upload/titlebasics', methods=['POST'])
 def upload_title_basics():

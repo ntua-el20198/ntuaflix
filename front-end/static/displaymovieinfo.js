@@ -17,7 +17,7 @@ async function displayMovieResults(movie, movieContainer) {
 
     const posterSrc = movie.titlePoster ? movie.titlePoster : '/static/images/default.jpg';
     const posterElement = document.createElement('img');
-    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+    posterElement.src = await posterSrc.replace('{width_variable}', 'w500');
     posterElement.classList.add('row__poster2');
 
     bigContainerElement.appendChild(posterElement);
@@ -66,9 +66,9 @@ async function displayMovieResults(movie, movieContainer) {
 
         const yourRatingContainer = document.createElement('div');
         yourRatingContainer.classList.add('yourRatingContainer')
-        const starRating = createStarRating();
+        const starRating = await createStarRating();
         yourRatingContainer.appendChild(starRating)
-        const commentBox = createCommentBox();
+        const commentBox = await createCommentBox();
         yourRatingContainer.appendChild(commentBox);
 
         ratingContainer.appendChild(ratingElement);
@@ -81,18 +81,20 @@ async function displayMovieResults(movie, movieContainer) {
 
         containerElement.appendChild(yourRatingContainer);
 
-        bigContainerElement.appendChild(containerElement);
+        bigContainerElement.appendChild(containerElement); 
     }
-    createContent();
-    movieContainer.appendChild(titleContainer);
+    await createContent();
+    await movieContainer.appendChild(titleContainer);
     //movieContainer.appendChild(containerElement);
-    movieContainer.appendChild(bigContainerElement);
+    await movieContainer.appendChild(bigContainerElement);
+
+    await displayReviews(movie.titleID, movieContainer);
 
 
     console.log('listButton type:', typeof listButton, listButton);
     console.log('likeButton type:', typeof likeButton, likeButton);
 
-    function createStarRating() {
+    async function createStarRating() {
         const starRatingContainer = document.createElement('div');
         starRatingContainer.className = 'star-rating';
 
@@ -117,7 +119,7 @@ async function displayMovieResults(movie, movieContainer) {
         return starRatingContainer;
     }
 
-    function createCommentBox() {
+    async function createCommentBox() {
         // Create the container for the comment box
         const commentBoxContainer = document.createElement('div');
         commentBoxContainer.classList.add('comment-box');
@@ -136,7 +138,7 @@ async function displayMovieResults(movie, movieContainer) {
         const submitButton = document.createElement('button');
         submitButton.type = 'submit';
         submitButton.textContent = 'Submit';
-
+        
         submitButton.addEventListener('click', async (event) => {
         event.preventDefault(); // Prevent form submission
         console.log('Submit pressed');
@@ -192,5 +194,54 @@ async function displayMovieResults(movie, movieContainer) {
             // Network error handling
             console.error('Network error:', error);
         }
+    }
+
+    async function displayReviews(movieId, movieContainer) {
+        const reviewsContainer = document.createElement('div');
+        reviewsContainer.classList.add('reviewsContainer');
+        const reviewsTitle = document.createElement('h3');
+        reviewsTitle.textContent = 'Reviews';
+        reviewsContainer.appendChild(reviewsTitle);
+    
+        try {
+            const response = await fetch(`/ntuaflix_api/movie_reviews/${movieId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch reviews');
+            }
+            const reviews = await response.json();
+    
+            if (reviews.length === 0) {
+                const noReviewsMsg = document.createElement('p');
+                noReviewsMsg.textContent = 'No reviews yet.';
+                reviewsContainer.appendChild(noReviewsMsg);
+            } else {
+                reviews.forEach(review => {
+                    const reviewElement = document.createElement('div');
+                    reviewElement.classList.add('review');
+    
+                    const usernameElement = document.createElement('h4');
+                    usernameElement.textContent = review.username;
+    
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${review.rating}`;
+    
+                    const commentElement = document.createElement('p');
+                    commentElement.textContent = review.comment;
+    
+                    reviewElement.appendChild(usernameElement);
+                    reviewElement.appendChild(ratingElement);
+                    reviewElement.appendChild(commentElement);
+    
+                    reviewsContainer.appendChild(reviewElement);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading reviews:', error);
+            const errorMsg = document.createElement('p');
+            errorMsg.textContent = 'Error loading reviews.';
+            reviewsContainer.appendChild(errorMsg);
+        }
+    
+        await movieContainer.appendChild(reviewsContainer);
     }
 }
