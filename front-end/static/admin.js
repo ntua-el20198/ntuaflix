@@ -43,7 +43,7 @@ document.getElementById('resetButton').addEventListener('click', function () {
 
 function resetAll() {
     // Make an AJAX request to the /admin/resetall endpoint
-    fetch('/admin/resetall', {
+    fetch('/ntuaflix_api/admin/resetall', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

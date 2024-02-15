@@ -9,7 +9,6 @@ import secrets
 import csv
 from io import StringIO
 
-
 template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
 static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
@@ -112,37 +111,45 @@ def health_check():
 def reset_all():
     if request.method == 'POST':
         try:
-            
             # Create a cursor to execute SQL queries
             cursor = db.cursor()
 
+            # Disable foreign key checks
+            cursor.execute("SET foreign_key_checks = 0")
+
             # Execute SQL queries to reset data in each table
             tables_to_reset = [
-                "director",
-                "knownfortitles",
                 "likes",
-                "listforwatchinglater",
-                "name_basics",
-                "title_akas",
-                "title_basics",
-                "title_episode",
-                "title_principals",
+                "knownForTitles",
+                "ListForWtachingLater",
                 "title_ratings",
-                "users",
+                "title_principals",
+                "title_akas",
+                "title_episode",
                 "writer",
-                "user_ratings"
+                "director",
+                "user_ratings",
+                "name_basics",
+                "users",
+                "title_basics"
             ]
-            
+
             for table in tables_to_reset:
                 query = f"DELETE FROM {table}"
                 cursor.execute(query)
+
+            # Enable foreign key checks
+            cursor.execute("SET foreign_key_checks = 1")
+
+            # Commit the changes and close the database connection
             db.commit()
+            cursor.close()
             db.close()
 
             return {"status": "OK"}
-        
+
         except Exception as e:
-            print("status: failed, reason:", str(e))
+            print("Status: failed, Reason:", str(e))
             return {"status": "failed", "reason": str(e)}
 
 @app.route('/ntuaflix_api/admin/check')
@@ -1187,7 +1194,7 @@ def upload_name_basics():
             for line in iter_content:
                 values = line.split('\t')
                 nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles, img_url_asset = values
-                nconst = nconst[2:]
+                nconst = int(nconst[2:])
                 knownForTitles = [tconst[2:] for tconst in knownForTitles.split(',')]
 
                 # Insert into name_basics using parameterized query
@@ -1209,7 +1216,6 @@ def upload_name_basics():
 
             db.commit()
 
-                    
             return jsonify({"message": "Data successfully uploaded."}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -1232,8 +1238,8 @@ def upload_title_principals():
             for line in iter_content:
                 values = line.split('\t')
                 tconst, ordering, nconst, category, job, characters, img_url_asset = values
-                tconst = tconst[2:]
-                nconst = nconst[2:]
+                tconst = int(tconst[2:])
+                nconst = int(nconst[2:])
 
                 job = None if job == '\\N' else job
                 characters = None if characters == '\\N' else characters

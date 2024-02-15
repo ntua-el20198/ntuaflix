@@ -142,7 +142,7 @@ async function displayMovieResults(movie, movieContainer) {
         console.log('Submit pressed');
         const commentInput = textareaElement.value;
         console.log(commentInput);
-        await sendRatingAndComment(movie.titleID, 8, commentInput);
+        await sendRatingAndComment(movie.titleID, selectedRating, commentInput);
         });
 
         // Append textarea and submit button to the form
