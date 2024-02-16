@@ -1396,7 +1396,7 @@ def check_myratingslist():
         cursor = db.cursor()
 
         # Check if the movie with titleID is in the watchlist for the current user
-        query = "SELECT * FROM user_rating WHERE usersid = %s "
+        query = "SELECT * FROM user_ratings WHERE usersid = %s "
         cursor.execute(query, (userID, ))
 
         # Fetch the result
