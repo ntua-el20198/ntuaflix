@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
+static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -825,6 +825,24 @@ def likes():
         
     return jsonify({"error" : "Internal server error"}), 500
 
+@app.route('/ntuaflix_api/check_rating/<int:titleID>', methods=['GET'])
+def check_rating(titleID):
+    userID = session.get('user_id')
+
+    if not userID:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    cursor = db.cursor()
+    query = "SELECT * FROM user_ratings WHERE usersid = %s AND title_basicstconst = %s"
+    cursor.execute(query, (userID, titleID))
+    result = cursor.fetchone()
+
+    if result:
+        # User has already rated the movie
+        return jsonify({"rated": True}), 200
+    # User has not rated the movie yet
+    return jsonify({"rated": False}), 200
+    
 @app.route('/ntuaflix_api/rating/<int:titleID>', methods = ['POST'])
 def rating(titleID):
     if request.method == 'POST':
@@ -864,6 +882,50 @@ def rating(titleID):
             return jsonify({"error": "Internal server error"}), 500
     else:
         return jsonify({"error": "Not Available"}), 404
+
+@app.route('/ntuaflix_api/replace_rating/<int:titleID>', methods=['PUT'])
+def replace_rating(titleID):
+    if request.method == 'PUT':
+        try:
+            data = request.json
+            new_rating = int(data['rating'])
+            comment = str(data['comment'])
+            userID = session.get('user_id')
+
+            if not userID:
+                return jsonify({"error": "User not authenticated"}), 401
+
+            cursor = db.cursor()
+            # Get the previous rating and comment
+            query_prev_rating = "SELECT rating FROM user_ratings WHERE usersid = %s AND title_basicstconst = %s"
+            cursor.execute(query_prev_rating, (userID, titleID))
+            prev_rating_row = cursor.fetchone()
+
+            if not prev_rating_row:
+                return jsonify({"error": "No previous rating found"}), 404
+
+            prev_rating = prev_rating_row[0]
+
+            # Update the user's rating and comment
+            query_update_rating = "UPDATE user_ratings SET rating = %s, comment = %s WHERE usersid = %s AND title_basicstconst = %s"
+            cursor.execute(query_update_rating, (new_rating, comment, userID, titleID))
+
+            # Update the movie's average rating
+            query_update_avg_rating = "UPDATE title_ratings SET averageRating = averageRating + (%s - %s) / numVotes WHERE tconst = %s"
+            cursor.execute(query_update_avg_rating, (new_rating, prev_rating, titleID))
+
+            db.commit()
+
+            if cursor.rowcount > 0:
+                return jsonify({"message": "Rating replaced successfully"}), 200
+            else:
+                return jsonify({"message": "No rating replaced"}), 204
+        except Exception as e:
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+
 
 @app.route('/ntuaflix_api/movie_info/<int:titleID>', methods=['GET'])
 def movie_info(titleID):
