@@ -335,7 +335,6 @@ def newratings(filename, format):
             headers = {'format': format}  # Pass format in headers
 
             response = requests.post(url, files=files, headers=headers, verify=False)
-            response.raise_for_status() 
             handle_response(response, format)
         else:
             print('Only admin can upload files')
