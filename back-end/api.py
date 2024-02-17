@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
+static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
