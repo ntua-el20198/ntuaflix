@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
-static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -197,7 +197,7 @@ def signupform():
 
 @app.route('/ntuaflix_api/signup_success')
 def signup_success():
-    return render_template('homepage.html')
+    return render_template('signin.html')
 
 @app.route('/ntuaflix_api/login', methods=['POST'])
 def login():
@@ -298,7 +298,10 @@ def fetch_title_rating(cursor, title_id):
     query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
     cursor.execute(query_rating, (title_id,))
     title_rating = cursor.fetchone()
-    return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
+    return {
+    'avRating': str(round(title_rating[0], 2)) if title_rating else None,
+    'numVotes': str(title_rating[1]) if title_rating else None
+}
 
 @app.route('/ntuaflix_api/title/<int:titleID>', methods=['GET'])
 def title(titleID):
@@ -790,6 +793,60 @@ def likes():
         if movies:
             for movie in movies:
                 query2 = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN Likes l ON t.tconst = l.title_basicstconst WHERE t.tconst = %s"
+                cursor.execute(query2,(movie[1],))
+                movie_info = cursor.fetchone()
+                movie_dict = {
+                    'titleID': str(movie_info[0]),
+                    'type': movie_info[1],
+                    'originalTitle': movie_info[2],
+                    'titlePoster': movie_info[3],
+                    'startYear': str(movie_info[4]),
+                    'endYear': str(movie_info[5]),
+                    'genres': movie_info[6].split(',') if movie_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                movie_dict['titleAkas'] = fetch_title_akas(cursor, movie_info[0])
+                movie_dict['principals'] = fetch_title_principals(cursor, movie_info[0])
+                movie_dict['rating'] = fetch_title_rating(cursor, movie_info[0])
+
+                movie_list.append(movie_dict)
+
+            if output_format == 'csv':
+                csv_data = convert_to_csv_titleObject(movie_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if movie_list:
+                    return jsonify(movie_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
+            else:
+                return jsonify({"error": "Invalid format specified"}), 400
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 405
+        
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/ntuaflix_api/check_myratingslist', methods=['GET'])
+def check_myratingslist():
+    if request.method == 'GET':
+        userID = session.get('user_id')
+        output_format = request.args.get('format', 'json')
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query1 = "SELECT * FROM user_ratings WHERE usersid = %s"
+        cursor.execute(query1, (userID,))
+        movies = cursor.fetchall()
+
+        movie_list = []
+
+        if movies:
+            for movie in movies:
+                query2 = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN user_ratings ur ON t.tconst = ur.title_basicstconst WHERE t.tconst = %s"
                 cursor.execute(query2,(movie[1],))
                 movie_info = cursor.fetchone()
                 movie_dict = {
@@ -1419,6 +1476,7 @@ def usermod(username, password):
 
     else:
         return jsonify({"error": "Not available"}), 404
+    
 
 @app.route('/ntuaflix_api/admin/users/<username>', methods=['POST'])
 def users(username):
@@ -1446,30 +1504,7 @@ def users(username):
 
         return jsonify({"error": "Not available"}), 404   
     
-@app.route('/ntuaflix_api/check_myratingslist', methods=['GET'])
-def check_myratingslist():
-        userID = session.get('user_id')
 
-        if not userID:
-            # If user ID is not in the session, handle it accordingly
-            return jsonify({"error": "User not authenticated"}), 401
-
-        # Create a cursor to execute SQL queries
-        cursor = db.cursor()
-
-        # Check if the movie with titleID is in the watchlist for the current user
-        query = "SELECT * FROM user_ratings WHERE usersid = %s "
-        cursor.execute(query, (userID, ))
-
-        # Fetch the result
-        result = cursor.fetchone()
-
-        # Check if fetchone() returned a result
-        in_myratingslist_count = result[0] if result and result[0] is not None else 0
-        #print(in_watchlist_count)
-
-        # Return a JSON response indicating whether the movie is in the watchlist or not
-        return jsonify({'inWatchlist': in_myratingslist_count}), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
