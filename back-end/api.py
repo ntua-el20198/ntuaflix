@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
-static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
+template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
+static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -197,7 +197,7 @@ def signupform():
 
 @app.route('/ntuaflix_api/signup_success')
 def signup_success():
-    return render_template('homepage.html')
+    return render_template('signin.html')
 
 @app.route('/ntuaflix_api/login', methods=['POST'])
 def login():
@@ -528,7 +528,6 @@ def searchnamename():
     return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/ntuaflix_api/topRated', methods=['GET'])
-
 def topRated():
     if request.method == 'GET':
         cursor = db.cursor()
@@ -1472,4 +1471,4 @@ def check_myratingslist():
         return jsonify({'inWatchlist': in_myratingslist_count}), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
+    app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')
