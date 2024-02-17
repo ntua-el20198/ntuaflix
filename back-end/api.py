@@ -531,7 +531,6 @@ def searchnamename():
     return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/ntuaflix_api/topRated', methods=['GET'])
-
 def topRated():
     if request.method == 'GET':
         cursor = db.cursor()
@@ -1507,4 +1506,4 @@ def users(username):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
+    app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')
