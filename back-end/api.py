@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
+static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -25,7 +25,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "2255",  
+    "password": "",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
@@ -1590,31 +1590,6 @@ def users(username):
     else:
 
         return jsonify({"error": "Not available"}), 404   
-    
-@app.route('/ntuaflix_api/check_myratingslist', methods=['GET'])
-def check_myratingslist():
-        userID = session.get('user_id')
-
-        if not userID:
-            # If user ID is not in the session, handle it accordingly
-            return jsonify({"error": "User not authenticated"}), 401
-
-        # Create a cursor to execute SQL queries
-        cursor = db.cursor()
-
-        # Check if the movie with titleID is in the watchlist for the current user
-        query = "SELECT * FROM user_rating WHERE usersid = %s "
-        cursor.execute(query, (userID, ))
-
-        # Fetch the result
-        result = cursor.fetchone()
-
-        # Check if fetchone() returned a result
-        in_myratingslist_count = result[0] if result and result[0] is not None else 0
-        #print(in_watchlist_count)
-
-        # Return a JSON response indicating whether the movie is in the watchlist or not
-        return jsonify({'inWatchlist': in_myratingslist_count}), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')
