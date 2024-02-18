@@ -13,6 +13,17 @@ The goal of the project is to develop "Ntuaflix," a software application for nav
 
 To ensure secure communication between the application and the web, NTUAFLIX employs HTTPS (Hypertext Transfer Protocol Secure) via an SSL (Secure Sockets Layer) certificate located at /back-end/cert.pem. Prior to running the /back-end/api.py file, it is necessary to have OpenSSL installed. When prompted for the PEM password, please enter "2255" (without quotes) and confirm it. This certificate enables encrypted data transmission, safeguarding sensitive information exchanged between the application and external servers.
 
+**DDL**
+
+To create and populate the database, download the DDL.sql file from this link: https://drive.google.com/file/d/1OtcCAJuJ95iDy4wkaNPt-g9dw2dSRKP1/view
+After downloading, open a terminal window and type the following commands:
+
+mysql -u root -p
+
+source "path/to/DDL.sql"
+
+Replace "path/to/DDL.sql" with the actual path of your downloaded DDL file.
+
 Admin: 
    ```json
       "Admin": {"username":"admin","password":"0"}
