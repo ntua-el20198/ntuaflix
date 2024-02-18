@@ -9,14 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-<<<<<<< HEAD
 template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
 static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
-=======
-
-template_folder_path = r'/TL/ntuaflix2/softeng23-17/front-end/templates'
-static_path = r'/TL/ntuaflix2/softeng23-17/front-end/static'
->>>>>>> a28cb332ee0c83ed31511a5d858cadf670f57a87
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -1481,7 +1475,6 @@ def usermod(username, password):
     else:
         return jsonify({"error": "Not available"}), 404
     
-
 @app.route('/ntuaflix_api/admin/users/<username>', methods=['POST'])
 def users(username):
     if request.method == 'POST':
