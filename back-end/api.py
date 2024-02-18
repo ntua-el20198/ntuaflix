@@ -9,7 +9,6 @@ import secrets
 import csv
 from io import StringIO
 
-
 template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
 static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
@@ -530,7 +529,6 @@ def searchnamename():
     return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/ntuaflix_api/topRated', methods=['GET'])
-
 def topRated():
     if request.method == 'GET':
         cursor = db.cursor()
@@ -1566,7 +1564,6 @@ def usermod(username, password):
     else:
         return jsonify({"error": "Not available"}), 404
     
-
 @app.route('/ntuaflix_api/admin/users/<username>', methods=['POST'])
 def users(username):
     if request.method == 'POST':
@@ -1590,10 +1587,7 @@ def users(username):
             return jsonify({"error": "Internal server error"}), 500
 
     else:
-
-        return jsonify({"error": "Not available"}), 404   
-    
-
+        return jsonify({"error": "Not available"}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
+    app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')
