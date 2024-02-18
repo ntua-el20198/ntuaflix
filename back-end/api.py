@@ -9,14 +9,8 @@ import secrets
 import csv
 from io import StringIO
 
-templates = r'/softeng23-17/front-end/templates'
-static = r'/softeng23-17/front-end/static'
-
-base_path = r'/Users/mariasabani/Desktop/ntuaflix'
-
-template_folder_path = f'{base_path}{templates}'
-static_path = f'{base_path}{static}'
-
+template_folder_path = r'../front-end/templates'
+static_path = r'../front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
