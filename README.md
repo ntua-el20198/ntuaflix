@@ -1,10 +1,34 @@
-# SoftEng-template
+ # NTUAFLIX
 
-Template repository, used for NTUA/ECE Software Engineering, 2023-2024
+**Semester Project for Software Engineering course @ NTUA, 7th-9th Semester 2023-2024**
 
-Το αρχείο αυτό περιέχει οδηγίες για το στήσιμο του git repository.  
+This project was conducted for the course of Software Engineering at the 2023-2024 Winter semester of the Electrical and Computer Engineering School at the National Technical University of Athens
 
-Κατεβάζουμε το xampp και κάνουμε start το Apache και το Mysql. 
-Αρχικά κατεβάζουμε την έκδοση 3.11.3 της Python.
 
-Για την ανάπτυξη της εφαρμογής μας χρησιμοποιούμε το Flask της Python το οποίο είναι ένα web framework που διευκολύνει την ανάπτυξη εφαρμογών. Το Flask βασίζεται στο εργαλείο Werkzeg και στο Jinga2 template engine. Μέσω του Jinja2 μπορούμε να περάσουμε μεταβλητές της Python σε templates της HTML  και μέσω του Werkzeug, υλοποιείται η σύνδεση μεταξύ του web server και της εφαρμογής μας
+**Project Goal**
+The goal of the project is to develop "Ntuaflix," a software application for navigating through movie and TV show data, extracting statistical information using various criteria, and creating and managing personal watchilists. This project includes identifying and specifying requirements, architecture and detailed design, implementation of selected features, testing, and documentation. The project aims to achieve these goals using appropriate tools and automation, ensuring that all deliverables are generated automatically without manual text writing. 
+
+Admin: 
+   ```json
+      "Admin": {"username":"Admin","password":"Admin"}
+   ```
+
+**Technical Details**
+
+| Asset | Technologies Used |
+| ----- | ----------- |
+| backend | Python |
+| frontend | HTML, CSS, JAVASCRIPT |
+| database | MySQL, MariaDB|
+| CLI | Python
+
+**This project was a collaborate effort of a team of 6 members:**
+
+| Name
+| ----- 
+| Georgios Alexandros Georgantzas
+| Maria Sabani
+| Athanasios Kalogeropoulos
+| Konstantinos Spiridonos
+| Dimitra Gkini
+| Paraskevi Thanou
