@@ -15,7 +15,7 @@ To ensure secure communication between the application and the web, NTUAFLIX emp
 
 Admin: 
    ```json
-      "Admin": {"username":"Admin","password":"Admin"}
+      "Admin": {"username":"admin","password":"0"}
    ```
 
 **Technical Details**
