@@ -1,0 +1,19 @@
+{
+    "answers": {
+        "phase": "coding",
+        "action": "source code authoring",
+        "scope":  "frontend",
+        "action experience":  "little",
+        "prog lang": "js",
+        "other prog lang": "<fill in>",
+        "tool": "chat gpt 3.x", 
+        "other tool": "<fill in>",
+        "tool option": "free",
+        "tool experience":  "master",
+        "time allocated (h)": "1",
+        "time saved estimate (h)": "3", 
+        "quality of ai help": "ready-to-use",
+        "generic feeling":  "great as-is",
+        "notes": "at this point it is very helpful and definetely saves you time, however it doesnt find the solution immediately, or you have to phrase it properly, also sometimes when things dont work it tends to find problems in things that are not the problem"
+    }
+}

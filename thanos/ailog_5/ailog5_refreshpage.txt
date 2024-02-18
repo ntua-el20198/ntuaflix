@@ -1,0 +1,103 @@
+so in javascript i have an event listener which when activated calls an async event which calls an endpoint and changes the database ratings. 
+this works, but when doing so the user still sees the old rating, (i have an element that show the avergae rating of a movie)  , so what i want is that after the rating is updated this is also changed in the frontend, this could either happen by refreshing the page or executing code that specifically changes the rating depicted, which is preferable ? write code for it
+
+
+
+Refreshing the page to update the rating might not be the most user-friendly approach, especially if the user has already interacted with other elements on the page. Instead, it's better to update the rating dynamically in the frontend after the rating is successfully updated in the database. Here's how you can achieve this:
+
+Let's assume you have an HTML element with an id averageRating where you display the average rating of the movie. You can update this element's text content with the new average rating after the rating is successfully updated in the backend.
+
+Here's the updated code:
+
+<div id="averageRating">Average Rating: 4.5</div>
+
+async function sendRatingAndComment(movieId, ratingValue, comment) {
+    const data = { rating: ratingValue, comment: comment };
+    try {
+        const response = await fetch(`/ntuaflix_api/rating/${movieId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            // Rating/comment submitted successfully
+            console.log('Rating/comment submitted successfully');
+            // Update UI with new rating
+            updateRatingUI(movieId);
+        } else {
+            // Error handling
+            console.error('Error submitting rating or comment:', response.statusText);
+        }
+    } catch (error) {
+        // Network error handling
+        console.error('Network error:', error);
+    }
+}
+
+function updateRatingUI(movieId) {
+    // Assuming you have a function to fetch the updated rating from the backend
+    fetchUpdatedRating(movieId)
+        .then(updatedRating => {
+            // Update the average rating element with the new rating
+            const averageRatingElement = document.getElementById('averageRating');
+            averageRatingElement.textContent = `Average Rating: ${updatedRating}`;
+        })
+        .catch(error => {
+            console.error('Error fetching updated rating:', error);
+        });
+}
+
+// Function to fetch updated rating from backend
+function fetchUpdatedRating(movieId) {
+    return fetch(`/ntuaflix_api/rating/${movieId}/average`)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to fetch updated rating');
+        });
+}
+
+
+In this code:
+
+The sendRatingAndComment function now calls updateRatingUI after successfully submitting the rating/comment.
+The updateRatingUI function fetches the updated rating from the backend using fetchUpdatedRating, and then updates the UI with the new rating.
+The fetchUpdatedRating function sends a request to the backend to fetch the updated average rating of the movie.
+This way, the rating displayed in the frontend will be dynamically updated without the need for a page refresh.
+
+
+because at the end of the same page , after rating(which includes a comment) , i will also need to now depict the comment that was written, maybe it is useful to refresh ? 
+
+Refreshing the page after submitting the rating and comment can indeed be a viable approach, especially if you need to update multiple elements on the page and it's simpler to reset the entire state.
+
+Here's how you could do it by reloading the page after the rating and comment submission:
+
+
+async function sendRatingAndComment(movieId, ratingValue, comment) {
+    const data = { rating: ratingValue, comment: comment };
+    try {
+        const response = await fetch(`/ntuaflix_api/rating/${movieId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            // Rating/comment submitted successfully
+            console.log('Rating/comment submitted successfully');
+            // Reload the page to reflect changes
+            window.location.reload();
+        } else {
+            // Error handling
+            console.error('Error submitting rating or comment:', response.statusText);
+        }
+    } catch (error) {
+        // Network error handling
+        console.error('Network error:', error);
+    }
+}
+

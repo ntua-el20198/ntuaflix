@@ -10,9 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/static'
-
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -1450,16 +1449,23 @@ def upload_title_principals():
         cursor = db.cursor()
         try:
             file = request.files['file']
+            file_content = file.read().decode('utf-8')
+            app.logger.info(f"File content: {file_content}")
+            
             max_file_size_kb = 1024
             if file and file.content_length and file.content_length > max_file_size_kb * 1024:
                 return jsonify({"error": "File size exceeds the allowed limit."}), 400
 
             # Read the TSV file
-            content = file.read().decode('utf-8').splitlines()
+            content = file_content.splitlines()
 
             # Skip the first line (header)
             iter_content = iter(content)
             next(iter_content)
+            title_principals_query = """
+                INSERT INTO title_principals (tconst, ordering, name_basicsnconst, category, job, characters, img_url_asset)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
 
             for line in iter_content:
                 values = line.split('\t')
@@ -1472,27 +1478,24 @@ def upload_title_principals():
                 img_url_asset = None if img_url_asset == '\\N' else img_url_asset
 
                 # Insert into name_basics using parameterized query
-                title_principals_query = """
-                INSERT INTO title_principals (tconst, ordering, name_basicsnconst, category, job, characters, img_url_asset)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """
                 cursor.execute(title_principals_query, (tconst, ordering, nconst, category, job, characters, img_url_asset))
+            
             db.commit()
-
             return jsonify({"message": "Data successfully uploaded."}), 200
+
         except IntegrityError as e:
-                # Handle duplicate key error
+            # Handle duplicate key error
             db.rollback()
             return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
 
         except Exception as e:
+            print({"error": str(e)})
             return jsonify({"error": str(e)}), 500
 
         finally:
             cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
-    
 
 @app.route('/ntuaflix_api/admin/upload/titleratings', methods=['POST'])
 def upload_title_ratings():
@@ -1590,31 +1593,6 @@ def users(username):
     else:
 
         return jsonify({"error": "Not available"}), 404   
-    
-@app.route('/ntuaflix_api/check_myratingslist', methods=['GET'])
-def check_myratingslist():
-        userID = session.get('user_id')
-
-        if not userID:
-            # If user ID is not in the session, handle it accordingly
-            return jsonify({"error": "User not authenticated"}), 401
-
-        # Create a cursor to execute SQL queries
-        cursor = db.cursor()
-
-        # Check if the movie with titleID is in the watchlist for the current user
-        query = "SELECT * FROM user_rating WHERE usersid = %s "
-        cursor.execute(query, (userID, ))
-
-        # Fetch the result
-        result = cursor.fetchone()
-
-        # Check if fetchone() returned a result
-        in_myratingslist_count = result[0] if result and result[0] is not None else 0
-        #print(in_watchlist_count)
-
-        # Return a JSON response indicating whether the movie is in the watchlist or not
-        return jsonify({'inWatchlist': in_myratingslist_count}), 200, {'Content-Type': 'application/json'}
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')
