@@ -1,0 +1,547 @@
+i want the testing for them
+        elif "upload/titlebasics" in url:
+            return MockResponse(200, '{"message": "Titles uploaded successfully"}')
+        elif "upload/namebasics" in url:
+            return MockResponse(200, '{"message": "Names uploaded successfully"}')
+        elif "upload/titleprincipals" in url:
+            return MockResponse(200, '{"message": "Principals uploaded successfully"}')
+        elif "upload/titlecrew" in url:
+            return MockResponse(200, '{"message": "Crew uploaded successfully"}')
+        elif "upload/titleepisode" in url:
+            return MockResponse(200, '{"message": "Episode uploaded successfully"}')
+        elif "upload/titleakas" in url:
+            return MockResponse(200, '{"message": "Akas uploaded successfully"}')
+        elif "upload/titleratings" in url:
+            return MockResponse(200, '{"message": "Ratings uploaded successfully"}')
+        elif "/admin/adduser" in url:
+            return MockResponse(200, '{"message": "User modification successful"}')
+        elif "/admin/user" in url:
+            return MockResponse(200, '{"message": "User data"}')
+ChatGPT
+Great! Given the additional information about the responses you expect for certain URLs, you can now modify the unit test to include those expectations. Below is an extended version of the previous unit test with added test cases for the upload and admin commands:
+
+python
+Copy code
+import unittest
+from unittest.mock import patch
+from click.testing import CliRunner
+from your_cli_script_name import cli  # Replace with your actual CLI script name
+
+class MockResponse:
+    def __init__(self, status_code, content):
+        self.status_code = status_code
+        self.content = content
+
+class TestYourCLI(unittest.TestCase):
+
+    def setUp(self):
+        self.runner = CliRunner()
+
+    def test_login_command(self):
+        # Replace with valid test data
+        test_username = 'test_user'
+        test_password = 'test_password'
+
+        # Use CliRunner to invoke the CLI command
+        result = self.runner.invoke(cli, ['login', '--username', test_username, '--password', test_password])
+
+        # Assertions based on the expected behavior of the login command
+        self.assertEqual(result.exit_code, 0)  # Replace with the expected exit code
+        self.assertIn('Successfully logged in', result.output)  # Replace with the expected output message
+
+    def test_newtitles_command(self):
+        # Replace with valid test data
+        test_filename = 'test_titles.tsv'
+
+        # Mock the API response for the upload command
+        with patch('requests.post') as mock_post:
+            mock_post.return_value = MockResponse(200, '{"message": "Titles uploaded successfully"}')
+
+            # Use CliRunner to invoke the CLI command
+            result = self.runner.invoke(cli, ['newtitles', '--filename', test_filename])
+
+            # Assertions based on the expected behavior of the newtitles command
+            self.assertEqual(result.exit_code, 0)  # Replace with the expected exit code
+            self.assertIn('Titles uploaded successfully', result.output)  # Replace with the expected output message
+
+    # Add more test methods for other CLI commands
+
+if __name__ == '__main__':
+    unittest.main()
+Extend this template by adding similar test methods for other commands, and make sure to mock the API responses as needed for each command. Adjust the assertions based on the expected behavior of your CLI commands and the responses you specified for each URL.
+
+User
+give me the whole correct file
+import json
+from unittest.mock import patch
+import pytest
+from click.testing import CliRunner
+from cli import adduser, cli, handle_response, user  # Assuming handle_response is part of your module
+
+class MockResponse:
+    def __init__(self, status_code, content):
+        self.status_code = status_code
+        self.content = content
+
+    def json(self):
+        return json.loads(self.content)
+
+@pytest.fixture
+def mock_post(monkeypatch):
+    def mock_post_function(url, data=None, verify=None, files = None, headers=None):
+        if "login" in url:
+            return MockResponse(200, '{"user_id": 5, "is_admin": 1, "username": "admin"}')
+        elif "title" in url:
+            return MockResponse(200, '{"titleID": 929')
+        elif "searchtitle" in url:
+            return MockResponse(200, '[{"titlepart": "Air America"}, {"titlepart": "Catchfire"}]')
+        elif "bygenre" in url:
+            return MockResponse(200, '[{"genre": "Comedy", "min": 5.0}, {"genre": "Drama", "min": 4.0, "start": 1990, "end" 1995}]')
+        elif "name" in url:
+            return MockResponse(200, '{"nameID": 100}')
+        elif "searchname" in url:
+            return MockResponse(200, '[{"namepart": "James"}, {"namepart": "Anna"}]')
+        elif "healthcheck" in url:
+            return MockResponse(200, '[{ "dataconnection": { "charset": "utf8mb4", "collation": "utf8mb4_general_ci", "database": "ntuaflix", "host": "127.0.0.1", "password": "2255", "port": 3306, "user": "root" }, "status": "OK" }]')
+        elif "upload/titlebasics" in url:
+            return MockResponse(200, '{"message": "Titles uploaded successfully"}')
+        elif "upload/namebasics" in url:
+            return MockResponse(200, '{"message": "Names uploaded successfully"}')
+        elif "upload/titleprincipals" in url:
+            return MockResponse(200, '{"message": "Principals uploaded successfully"}')
+        elif "upload/titlecrew" in url:
+            return MockResponse(200, '{"message": "Crew uploaded successfully"}')
+        elif "upload/titleepisode" in url:
+            return MockResponse(200, '{"message": "Episode uploaded successfully"}')
+        elif "upload/titleakas" in url:
+            return MockResponse(200, '{"message": "Akas uploaded successfully"}')
+        elif "upload/titleratings" in url:
+            return MockResponse(200, '{"message": "Ratings uploaded successfully"}')
+        elif "/admin/adduser" in url:
+            return MockResponse(200, '{"message": "User modification successful"}')
+        elif "/admin/user" in url:
+            return MockResponse(200, '{"message": "User data"}')
+    monkeypatch.setattr("requests.post", mock_post_function)
+
+def test_handle_response_json():
+    response_content = '{"user_id": 1, "is_admin": 0}'
+    result = handle_response(MockResponse(200, response_content), 'json')
+    assert result == json.loads(response_content)
+
+def test_handle_response_invalid_format():
+    response_content = '{"user_id": 1, "is_admin": 0}'
+    result = handle_response(MockResponse(200, response_content), 'invalid_format')
+    assert result is None  # Adjust based on your actual handling of invalid format
+
+def test_login_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["login", "--username", "admin", "--password", "0"])
+    assert result.exit_code == 0
+    assert "{'is_admin': 1, 'user_id': 5, 'username': 'admin'}" in result.output
+
+def test_title_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["title", "--titleID", "929"])
+    assert result.exit_code == 0
+    assert "929" in result.output
+
+def test_searchtitle_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["searchtitle", "--titlepart", "Air America"])
+    assert result.exit_code == 0
+    assert "Air America" in result.output
+
+def test_bygenre_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["bygenre", "--genre", "Comedy", "--min", "5.2", "--start", "1990", "--end", "2000"])
+    assert result.exit_code == 0
+
+def test_name_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["name", "--nameID", "100"])
+    assert result.exit_code == 0
+    assert "1" in result.output
+
+def test_searchname_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["searchname", "--namepart", "James"])
+    assert result.exit_code == 0
+    assert "James" in result.output
+
+def test_heathcheck_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["healthcheck"])
+    assert result.exit_code == 0
+    assert "'status': 'OK'"  in result.output
+ChatGPT
+Your unit test file looks good, and you've covered a variety of scenarios for the different CLI commands. I made a few adjustments for clarity and consistency in the test cases. Below is the modified version:
+
+python
+Copy code
+import json
+import pytest
+from click.testing import CliRunner
+from unittest.mock import patch
+from cli import adduser, cli, handle_response, user  # Assuming handle_response is part of your module
+
+class MockResponse:
+    def __init__(self, status_code, content):
+        self.status_code = status_code
+        self.content = content
+
+    def json(self):
+        return json.loads(self.content)
+
+@pytest.fixture
+def mock_post(monkeypatch):
+    def mock_post_function(url, data=None, verify=None, files=None, headers=None):
+        if "login" in url:
+            return MockResponse(200, '{"user_id": 5, "is_admin": 1, "username": "admin"}')
+        elif "title" in url:
+            return MockResponse(200, '{"titleID": 929}')
+        elif "searchtitle" in url:
+            return MockResponse(200, '[{"titlepart": "Air America"}, {"titlepart": "Catchfire"}]')
+        elif "bygenre" in url:
+            return MockResponse(200, '[{"genre": "Comedy", "min": 5.0}, {"genre": "Drama", "min": 4.0, "start": 1990, "end": 1995}]')
+        elif "name" in url:
+            return MockResponse(200, '{"nameID": 100}')
+        elif "searchname" in url:
+            return MockResponse(200, '[{"namepart": "James"}, {"namepart": "Anna"}]')
+        elif "healthcheck" in url:
+            return MockResponse(200, '[{"dataconnection": {"charset": "utf8mb4", "collation": "utf8mb4_general_ci", "database": "ntuaflix", "host": "127.0.0.1", "password": "2255", "port": 3306, "user": "root"}, "status": "OK"}]')
+        elif "upload/titlebasics" in url:
+            return MockResponse(200, '{"message": "Titles uploaded successfully"}')
+        elif "upload/namebasics" in url:
+            return MockResponse(200, '{"message": "Names uploaded successfully"}')
+        elif "upload/titleprincipals" in url:
+            return MockResponse(200, '{"message": "Principals uploaded successfully"}')
+        elif "upload/titlecrew" in url:
+            return MockResponse(200, '{"message": "Crew uploaded successfully"}')
+        elif "upload/titleepisode" in url:
+            return MockResponse(200, '{"message": "Episode uploaded successfully"}')
+        elif "upload/titleakas" in url:
+            return MockResponse(200, '{"message": "Akas uploaded successfully"}')
+        elif "upload/titleratings" in url:
+            return MockResponse(200, '{"message": "Ratings uploaded successfully"}')
+        elif "/admin/adduser" in url:
+            return MockResponse(200, '{"message": "User modification successful"}')
+        elif "/admin/user" in url:
+            return MockResponse(200, '{"message": "User data"}')
+    monkeypatch.setattr("requests.post", mock_post_function)
+
+def test_handle_response_json():
+    response_content = '{"user_id": 1, "is_admin": 0}'
+    result = handle_response(MockResponse(200, response_content), 'json')
+    assert result == json.loads(response_content)
+
+def test_handle_response_invalid_format():
+    response_content = '{"user_id": 1, "is_admin": 0}'
+    result = handle_response(MockResponse(200, response_content), 'invalid_format')
+    assert result is None  # Adjust based on your actual handling of invalid format
+
+def test_login_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["login", "--username", "admin", "--password", "0"])
+    assert result.exit_code == 0
+    assert "'is_admin': 1, 'user_id': 5, 'username': 'admin'" in result.output
+
+def test_title_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["title", "--titleID", "929"])
+    assert result.exit_code == 0
+    assert "929" in result.output
+
+def test_searchtitle_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["searchtitle", "--titlepart", "Air America"])
+    assert result.exit_code == 0
+    assert "Air America" in result.output
+
+def test_bygenre_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["bygenre", "--genre", "Comedy", "--min", "5.2", "--start", "1990", "--end", "2000"])
+    assert result.exit_code == 0
+
+def test_name_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["name", "--nameID", "100"])
+    assert result.exit_code == 0
+    assert "1" in result.output
+
+def test_searchname_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["searchname", "--namepart", "James"])
+    assert result.exit_code == 0
+    assert "James" in result.output
+
+def test_heathcheck_unit(mock_post):
+    runner = CliRunner()
+    result = runner.invoke(cli, ["healthcheck"])
+    assert result.exit_code == 0
+    assert "'status': 'OK'" in result.output
+This version includes a few formatting adjustments for consistency. The test cases should still cover the same scenarios. Make sure to adapt and extend the test cases as needed for your specific requirements.
+
+User
+in the file i just gave you i wanna add the testing for these commands
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newtitles(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlebasics'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# N A M E  B A S I C S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newnames(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/namebasics'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+
+# T I T L E  P R I N C I P A L S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newprincipals(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleprincipals'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# N E W  C R E W
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newcrew(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlecrew'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# N E W  E P I S O D E
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newepisode(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleepisode'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+
+# T I T L E  A K A S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newakas(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleakas'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# T I T L E  R A T I N G S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newratings(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleratings'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=False)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# A D D  U S E R
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--passw', prompt=True, hide_input=True, help='The password os user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def adduser(username, passw, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):          
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=False)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can modify other users')
+
+# S E E  U S E R
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def user(username, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=False)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can see other users')
+        
+
+mock_post = None
+
+    def test_adduser_unit(mock_post):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["adduser", "--username", "mar", "--passw", "5", "--format", "json"])
+        print(result.output)
+>       assert result.exit_code == 0
+E       assert 1 == 0
+E        +  where 1 = <Result AttributeError("'MockResponse' object has no attribute 'raise_for_status'")>.exit_code
+
+test_cli_unit.py:146: AssertionError
+---------------------------------------------------------------------------------- Captured stdout call -----------------------------------------------------------------------------------
+
+_____________________________________________________________________________________ test_user_unit ______________________________________________________________________________________
+
+mock_post = None
+
+    def test_user_unit(mock_post):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["user", "--username", "mar", "--format", "json"])
+        print(result.output)
+>       assert result.exit_code == 0
+E       assert 1 == 0
+E        +  where 1 = <Result AttributeError("'MockResponse' object has no attribute 'raise_for_status'")>.exit_code
+
+test_cli_unit.py:153: AssertionError
+---------------------------------------------------------------------------------- Captured stdout call -----------------------------------------------------------------------------------
+
+
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--passw', prompt=True, hide_input=True, help='The password os user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def adduser(username, passw, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):          
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=False)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can modify other users')
+
+# S E E  U S E R
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def user(username, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=False)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can see other users')
+ChatGPT
+It seems like the issue is with the MockResponse object not having the raise_for_status attribute, which is typically found in Response objects from the requests library.
+
+In your mock setup, you can modify the MockResponse class to include a raise_for_status method. Here's an updated version of the MockResponse class:
+
+python
+Copy code
+class MockResponse:
+    def __init__(self, status_code, content):
+        self.status_code = status_code
+        self.content = content
+
+    def json(self):
+        return json.loads(self.content)
+
+    def raise_for_status(self):
+        if 400 <= self.status_code < 600:
+            raise requests.exceptions.HTTPError(f"HTTPError: {self.status_code}")
+This will allow your MockResponse objects to have the raise_for_status method, which is then called in your adduser and user commands. This should resolve the AttributeError you are encountering in your tests.
+
+After making this change, rerun your tests, and they should pass. If you encounter any other issues or have further questions, feel free to ask!
+
+
+
