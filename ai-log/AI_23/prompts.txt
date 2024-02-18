@@ -1,0 +1,158 @@
+// Test case 1: Successful genre search
+
+pm.test("Search Name - Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Search Name - Response body contains 'Action'", function () {
+    pm.expect(pm.response.text()).to.include("Action");
+});
+
+// Test case 2: Invalid format specified
+
+pm.test("Search Name - Status code is not 400", function () {
+    console.log("Response Status Code: " + pm.response.code);
+    pm.response.to.not.have.status(400);
+});
+
+pm.test("Search Name - Response body does not contain 'Invalid format specified'", function () {
+    console.log("Response Body: " + pm.response.text());
+    pm.expect(pm.response.text()).to.not.include("Invalid format specified");
+});
+
+// Test case 3: Unauthorized access (representing a client error)
+pm.test("Authorization - Status code is not 401", function () {
+    pm.response.to.not.have.status(401);
+});
+
+pm.test("Search Name - Response body does not contain 'Unauthorized'", function () {
+    pm.expect(pm.response.text()).to.not.include("Unauthorized");
+});
+i have this functional api testing for this endpoint
+@app.route('/ntuaflix_api/bygenre', methods=['GET'])
+def bygenre():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        qgenre = request.args.get('qgenre')
+        minrating = float(request.args.get('minrating'))
+        yrFrom = request.args.get('yrFrom')
+        yrTo = request.args.get('yrTo')
+        output_format = request.args.get('format', 'json')
+
+        query = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN title_ratings r ON t.tconst = r.tconst WHERE t.genres LIKE %s AND r.averageRating >= %s "
+        parameters = [f"%{qgenre}%",minrating]
+
+        if yrFrom and yrTo:
+            query += "AND t.startYear >= %s AND t.startYear <= %s"
+            parameters.append(int(yrFrom))
+            parameters.append(int(yrTo))
+
+        query += " GROUP BY t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres"
+
+        cursor.execute(query,parameters)
+        titles = cursor.fetchall()
+
+        title_list = []
+
+        for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+
+                title_list.append(title_dict)
+        
+        if output_format == 'csv':
+            csv_data = convert_to_csv_titleObject(title_list)
+            return Response(csv_data, mimetype='text/csv')
+        elif title_list:
+            return jsonify(title_list), 200
+        else:
+            return jsonify({"error": "Movies not found"}), 204
+
+    # Return an empty list if no titles are found or if titlePart is not provided
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+Is that ok? Do you have any more suggestions ?
+ChatGPT
+Your API testing script looks well-structured, and you've covered some essential test cases. However, here are a few suggestions for improvement:
+
+Error Handling in API Response:
+
+It's a good practice to include detailed error messages in your API responses. For example, when returning a 404 status code, you might want to specify why the resource is not available (e.g., "Not Available" is a bit generic). Similarly, you could provide more information in the 204 response, like "Movies not found for the specified criteria."
+Logging in the API Code:
+
+Add proper logging within your API code to record significant events or errors. This will help in troubleshooting and debugging when issues arise.
+Security Considerations:
+
+Ensure that your API endpoint is protected against SQL injection attacks. You are using parameterized queries, which is good, but always validate and sanitize user inputs to prevent potential security vulnerabilities.
+More Test Cases:
+
+Consider adding more test cases, especially for edge cases. For instance, you might want to test what happens when an invalid or missing parameter is provided.
+Documentation:
+
+Include comments in your testing script to explain the purpose of each test case. This will make it easier for others (or yourself in the future) to understand the intentions behind each test.
+Environment Setup:
+
+Ensure that your test environment is set up properly. Make sure you have realistic test data and that the environment closely mirrors the production environment.
+Consistent Naming Conventions:
+
+Keep your naming conventions consistent. For example, you have "Authorization" in one test case and "Search Name" in others. Ensure a consistent naming convention for better readability.
+Check for SQL Errors:
+
+Handle SQL errors gracefully and provide meaningful error messages in your API responses.
+HTTP Method Validation:
+
+You have a check for the HTTP method in your code, but it might be good to include a test case to check if your API endpoint responds correctly to other HTTP methods (e.g., POST, PUT, DELETE) with appropriate status codes.
+Performance Testing:
+
+Depending on the nature of your API, consider adding performance testing to ensure it can handle a certain load without degrading performance significantly.
+Always adapt these suggestions based on the specific requirements and constraints of your project.
+
+
+
+
+If I have a collection in postman for the functional testing . Can i retrieve the API documentation?
+ChatGPT
+Yes, you can generate API documentation from your Postman collection. Postman provides a feature called "API documentation" that allows you to create and publish documentation for your API directly from your collection.
+
+Here's a step-by-step guide on how to do it:
+
+Open Postman:
+Launch the Postman application and ensure that you are signed in to your Postman account.
+
+Select Collection:
+In the left sidebar, select the collection for which you want to generate API documentation.
+
+Generate Documentation:
+
+Open the collection.
+Click on the "..." (ellipsis) button in the top-right corner of the screen.
+Select the "Generate API documentation" option.
+Configure Documentation:
+
+Postman will guide you through a setup process where you can provide details such as name, version, and description for your API documentation.
+You can also customize the appearance and add additional information.
+Generate and Publish:
+
+After configuring the documentation settings, click on the "Generate API documentation" button.
+Postman will generate the documentation and provide you with a link to view it.
+View and Share:
+
+Click on the link to view your API documentation.
+You can share this link with others to provide access to the documentation.
+Keep in mind that the generated documentation will include details such as endpoints, request methods, request and response parameters, example requests, and responses based on the information present in your Postman collection.
+
+Additionally, Postman allows you to update and republish your documentation as needed. This feature is useful for maintaining accurate and up-to-date documentation as your API evolves.
