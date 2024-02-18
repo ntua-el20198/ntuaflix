@@ -9,7 +9,6 @@ import secrets
 import csv
 from io import StringIO
 
-
 template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
 static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
 
@@ -1500,10 +1499,7 @@ def users(username):
             return jsonify({"error": "Internal server error"}), 500
 
     else:
-
-        return jsonify({"error": "Not available"}), 404   
-    
-
+        return jsonify({"error": "Not available"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')

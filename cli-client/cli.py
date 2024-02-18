@@ -56,7 +56,7 @@ def handle_response(response, format):
 @click.option('--password', prompt=True, hide_input=True, help='The password for login', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def login(username, password, format):
-    url = 'http://127.0.0.1:9876/ntuaflix_api/login' # url from api
+    url = 'https://127.0.0.1:9876/ntuaflix_api/login' # url from api
     data = {'username': username, 'password': password, 'format': format}
 
     response = post(url, data=data, verify=False)
@@ -76,7 +76,7 @@ def logout(format):
     session_data = load_session()
 
     if session_data:
-        url = f'http://127.0.0.1:9876/ntuaflix_api/logout'
+        url = f'https://127.0.0.1:9876/ntuaflix_api/logout'
         data = {'format': format}
 
         print(f"Sending logout request to {url} with data: {data}")
@@ -100,7 +100,7 @@ def logout(format):
 @click.option('--titleID', prompt='titleID', help='The titleID for searchTitle', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def title(titleid, format):
-    url = f'http://127.0.0.1:9876/ntuaflix_api/title/{titleid}' # url from api
+    url = f'https://127.0.0.1:9876/ntuaflix_api/title/{titleid}' # url from api
     params = {'format' : format}
 
     response = requests.get(url, params=params, verify=False)
@@ -113,7 +113,7 @@ def title(titleid, format):
 @click.option('--titlepart', prompt='titlepart', help='The titlepart for searchTitle', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def searchtitle(titlepart, format):
-    url = 'http://127.0.0.1:9876/ntuaflix_api/searchTitle'
+    url = 'https://127.0.0.1:9876/ntuaflix_api/searchTitle'
     params = {'titlePart': titlepart, 'format': format}
 
     response = requests.get(url, params=params, verify=False)
@@ -129,7 +129,7 @@ def searchtitle(titlepart, format):
 @click.option('--end', type=int, help='End year for filtering titles (optional)')
 @click.option('--format', help='The desired output format', default='json')
 def bygenre(genre, min, start, end, format):
-    url = 'http://127.0.0.1:9876/ntuaflix_api/bygenre'
+    url = 'https://127.0.0.1:9876/ntuaflix_api/bygenre'
     params = {'qgenre': genre, 'minrating': min, 'yrFrom': start, 'yrTo': end, 'format': format}
 
     response = requests.get(url, params=params, verify=False)
@@ -142,7 +142,7 @@ def bygenre(genre, min, start, end, format):
 @click.option('--nameID', prompt='nameID', help='The titleID for searchTitle', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def name(nameid, format):
-    url = f'http://127.0.0.1:9876/ntuaflix_api/name/{nameid}'  # URL from API
+    url = f'https://127.0.0.1:9876/ntuaflix_api/name/{nameid}'  # URL from API
     params = {'format': format}
 
     response = requests.get(url, params=params, verify=False)
@@ -155,7 +155,7 @@ def name(nameid, format):
 @click.option('--namepart', prompt='namepart', help='The titlepart for searchPrincipals', required=True)
 @click.option('--format', help='The desired output format', default='json')
 def searchname(namepart, format):
-    url = 'http://127.0.0.1:9876/ntuaflix_api/searchname' # url from api
+    url = 'https://127.0.0.1:9876/ntuaflix_api/searchname' # url from api
     params = {'namePart': namepart, 'format': format}
 
     response = requests.get(url, params=params, verify=False)
@@ -169,7 +169,7 @@ def searchname(namepart, format):
 def healthcheck(format):
     session_data = load_session()
     if session_data.get('is_admin'):
-        url = 'http://127.0.0.1:9876/ntuaflix_api/admin/healthcheck'
+        url = 'https://127.0.0.1:9876/ntuaflix_api/admin/healthcheck'
         data = {'format': format}
         
         response = requests.get(url, data=data, verify=False)
@@ -185,7 +185,7 @@ def healthcheck(format):
 def resetall(format):
     session_data = load_session()
     if session_data.get('is_admin'):
-        url = 'http://127.0.0.1:9876/ntuaflix_api/admin/resetall'
+        url = 'https://127.0.0.1:9876/ntuaflix_api/admin/resetall'
         data = {'format': format}
         
         response = requests.post(url, data=data, verify=False)
@@ -206,7 +206,7 @@ def newtitles(filename, format):
     if filename is not None:
         if session_data and session_data.get('is_admin'):
             
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/titlebasics'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlebasics'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -227,7 +227,7 @@ def newnames(filename, format):
     if filename is not None:
         if session_data and session_data.get('is_admin'):
             
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/namebasics'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/namebasics'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -249,7 +249,7 @@ def newprincipals(filename, format):
     if filename is not None:
         if session_data and session_data.get('is_admin'):
             
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/titleprincipals'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleprincipals'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -269,7 +269,7 @@ def newcrew(filename, format):
 
     if filename is not None:
         if session_data and session_data.get('is_admin'):        
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/titlecrew'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlecrew'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -289,7 +289,7 @@ def newepisode(filename, format):
 
     if filename is not None:
         if session_data and session_data.get('is_admin'):        
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/titleepisode'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleepisode'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -310,7 +310,7 @@ def newakas(filename, format):
 
     if filename is not None:
         if session_data and session_data.get('is_admin'):        
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/titleakas'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleakas'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -330,7 +330,7 @@ def newratings(filename, format):
 
     if filename is not None:
         if session_data and session_data.get('is_admin'):            
-            url = 'http://127.0.0.1:9876/ntuaflix_api/admin/upload/titleratings'  # Replace with your actual API URL
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleratings'  # Replace with your actual API URL
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
@@ -350,7 +350,7 @@ def adduser(username, passw, format):
     session_data = load_session()
 
     if session_data and session_data.get('is_admin'):          
-        url = f'http://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
         data = {'format': format}
         response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
@@ -366,7 +366,7 @@ def user(username, format):
     session_data = load_session()
 
     if session_data and session_data.get('is_admin'):
-        url = f'http://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
         data = {'format': format}
         response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
