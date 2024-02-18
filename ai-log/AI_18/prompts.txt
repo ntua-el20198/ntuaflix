@@ -8,10 +8,10 @@ Traceback (most recent call last):
   File "C:\Users\Kostis\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\flask\app.py", line 615, in run
     run_simple(t.cast(str, host), port, self, **options)
   File "C:\Users\Kostis\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\werkzeug\serving.py", line 1077, in run_simple
-    srv = make_server(
+    srv = make_server
           ^^^^^^^^^^^^
   File "C:\Users\Kostis\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\werkzeug\serving.py", line 917, in make_server
-    return ThreadedWSGIServer(
+    return ThreadedWSGIServer
            ^^^^^^^^^^^^^^^^^^^
   File "C:\Users\Kostis\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\werkzeug\serving.py", line 788, in __init__
     ssl_context = load_ssl_context(*ssl_context)
