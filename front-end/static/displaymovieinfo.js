@@ -163,9 +163,6 @@ async function displayMovieResults(movie, movieContainer) {
     await movieContainer.appendChild(bigContainerElement);
 
     await displayReviews(movie.titleID, movieContainer);
-
-    console.log('listButton type:', typeof listButton, listButton);
-    console.log('likeButton type:', typeof likeButton, likeButton);
     
     async function sendRatingAndComment(movieId, ratingValue, comment) {
         const data = { rating: ratingValue, comment: comment };

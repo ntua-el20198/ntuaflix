@@ -7,38 +7,26 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     
     <script>
-         $(document).ready(function () {
-    $.ajax({
-        type: 'GET',
-        url: '/admin/get_is_admin',
-        success: function (response) {
-            if (response.is_admin === 1) {
-                $(".nav2_logo_options").append('<a href="{{ url_for("admin_check") }}" class="nav2_option">Admin\'s Check</a>');
-            }
-        },
-        error: function (error) {
-            console.error('Error getting is_admin:', error.responseText);
-        }
-    });
+        $(document).ready(function () {
             
-        function logout() {
-            $.ajax({
-                type: 'POST',
-                url: '{{ url_for("logout") }}',
-                success: function (response) {
-                    window.location.href = 'signin.html';
-                },
-                error: function (error) {
-                    console.error('Logout failed:', error.responseText);
-                }
+            function logout() {
+                $.ajax({
+                    type: 'POST',
+                    url: '{{ url_for("logout") }}',
+                    success: function (response) {
+                        window.location.href = 'signin.html';
+                    },
+                    error: function (error) {
+                        console.error('Logout failed:', error.responseText);
+                    }
+                });
+            }
+
+            $(document).on('click', '.nav2_option_logout', function () {
+                logout();
             });
-        }
 
-        $(document).on('click', '.nav2_option_logout', function () {
-            logout();
         });
-
-    });
     </script>
    
 
