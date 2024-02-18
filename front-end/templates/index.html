@@ -6,11 +6,16 @@
     <meta name="author" content="Kostis Spyridonos">
     <title>Ntuaflix</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+       function navigateToPage() {
+            window.location.href = "{{ url_for('index') }}"; // Sets the current window's location to the specified URL
+        }
+    </script>
 </head>
 <body>
 <div class="header">
     <nav>
-        <img src = "images/logo.png" class = "logo">
+        <img src = "\static\images\logo.png" class = "logo" onclick="navigateToPage()">
         <form class="signin_index" action="{{ url_for('signin') }}" method="get">
             <button type="submit">Sign In</button>
         </form>

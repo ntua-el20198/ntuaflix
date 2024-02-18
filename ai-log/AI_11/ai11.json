@@ -1,0 +1,19 @@
+{
+    "answers": {
+        "phase": "testing",
+        "action": "requirements (functional)",
+        "scope": "backend",
+        "action experience": "little",
+        "prog lang": "JavaScript",
+        "other prog lang": "<fill in>",
+        "tool": "chat gpt 3.x",
+        "other tool": "<fill in>",
+        "tool option": "free",
+        "tool experience":  "enough",
+        "time allocated (h)": "0.2",
+        "time saved estimate (h)": "0.5",
+        "quality of ai help": "ready-to-use",
+        "generic feeling": "great as-is",
+        "notes": "Used Postman for functional testing of API based on conversation with ChatGPT. Wrote test scripts to validate API responses and ensure correct functionality. No pre-request script needed for the simple health check request."
+    }
+}

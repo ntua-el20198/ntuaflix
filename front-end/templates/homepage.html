@@ -17,7 +17,7 @@
             searchBar.style.transform = 'scaleX(0)';
         }
     </script>
-    
+
 </head>
 
 <body>
@@ -26,13 +26,21 @@
 
     <div class="banner">
         <div class="banner_contents">
-            <h1 class="banner_title"> Poor Things </h1>
+            <h1 class="banner_title"> Air America </h1>
             <div class="banner_buttons">
-                <button class="banner_button">My List</button>
+                <button class="banner_button">More Info</button>
+                <script>
+                    $(document).ready(function () {
+                        $('.banner_button').on('click', function () {
+                            console.log('Clicked poster for movie: "Air America"');
+                            window.location.href = '/ntuaflix_api/info/99005';
+                        });
+                    });
+                </script>
             </div>
             <div class="banner_description">
-                The incredible tale about the fantastical evolution of Bella Baxter,
-                a young woman brought back to life by the brilliant and unorthodox scientist Dr. Godwin Baxter.
+                A young pilot finds himself recruited unwittingly into a covert and corrupt CIA airlift operation in
+                Laos during the Vietnam conflict.
             </div>
         </div>
         <div class="banner_fadeBottom">
@@ -59,9 +67,8 @@
 
                     data.forEach(function (movie) {
                         // Create an image element and set its attributes
-                        var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster");
-
-
+                        var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster").css({"margin-right": "20px", "cursor": "pointer"}); 
+                        
                         img.on('click', function () {
                             console.log(`Clicked poster for movie: ${movie.originalTitle}`);
                             window.location.href = `/ntuaflix_api/info/${movie.ID}`;
@@ -77,46 +84,6 @@
             });
         });
     </script>
-
-    <div class="row">
-        <h2> ACTION </h2>
-        <div class="_row__posters">
-
-        </div>
-
-    </div>
-
-    <div class="row">
-        <h2> COMEDY </h2>
-        <div class="_row__posters">
-
-        </div>
-
-    </div>
-
-    <div class="row">
-        <h2> HORROR </h2>
-        <div class="_row__posters">
-
-        </div>
-
-    </div>
-
-    <div class="row">
-        <h2> ROMANCE </h2>
-        <div class="_row__posters">
-
-        </div>
-
-    </div>
-
-    <div class="row">
-        <h2> DOCUMENTARIES </h2>
-        <div class="_row__posters">
-
-        </div>
-
-    </div>
 
     <script>
         const nav2 = document.getElementById('nav2');

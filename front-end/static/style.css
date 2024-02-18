@@ -282,7 +282,7 @@ form .form-help :where(label, a) {
 }
 
 .banner {
-    background-image: url('images/poor.png');
+    background-image: url('images/Air.jpg');
     background-size: cover;
     background-position: center center;
     color: white;
@@ -345,9 +345,11 @@ form .form-help :where(label, a) {
     display: flex;
     justify-content: space-between;
     padding: 20px;
+    /* background-color: #000; */
     z-index: 1;
     transition-timing-function: ease-in;
     transition: all 0.5s;
+    /* background-color: #000; */
 }
 
 .nav2_black {
@@ -791,8 +793,50 @@ form .form-help :where(label, a) {
     margin: 7px;
 }
 
-/* #resultContainer {
-    border: 1px solid #ddd;
+/* .reviewsContainer {
+    margin-top: 20px;
     padding: 10px;
-    margin-top: 10px;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
 } */
+
+.review {
+   padding: 10px;
+   background-color: #f8f8f8eb;
+   margin-bottom: 20px;
+   border-radius: 10px; 
+}
+
+.review:last-child {
+    border-bottom: 5px; /* Remove bottom border for the last review */
+    background-color: #f8f8f8eb;
+    padding: 10px;
+}
+
+.reviewsContainer h3 {
+    margin-bottom: 10px;
+    margin-top: 20px;
+    color: #fffffff4; /* Dark grey color for contrast */
+    font-size: 18px; /* Slightly larger font for usernames */
+    font-family: 'Roboto', sans-serif;
+}
+
+.review h4 {
+    margin-top: 0;
+    color: #333; /* Dark grey color for contrast */
+    font-size: 18px; /* Slightly larger font for usernames */
+}
+
+.review p {
+    margin: 5px 0; /* Spacing for readability */
+    color: #666; /* Medium grey for text */
+}
+
+.nav2_avatar {
+    cursor: pointer
+}
+
+.nav2.scrolled {
+    background-color: #000; /* Or any color you prefer */
+}

@@ -1,0 +1,202 @@
+User
+I want to create another endpoint to do this:
+
+[POST] /admin/resetall
+Υποστηρίζει τη μέθοδο POST και προβαίνει σε αρχικοποίηση όλων των δεδομένων που
+αποθηκεύονται στη ΒΔ του ntuaflix. Σε περίπτωση επιτυχίας, επιστρέφεται το json object:
+{"status":"OK"}, διαφορετικά επιστρέφεται {"status":"failed", "reason":"<...>} με
+πληροφορία σχετικά με την αποτυχία.
+
+ChatGPT
+To create the /admin/resetall endpoint with a POST method that initializes all data stored in the ntuaflix database, you can follow these steps. Assuming you're using Flask, you need to define the route and implement the logic to reset the data. Here's an example implementation:
+
+python
+Copy code
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+# Assuming you have a function to reset the data, you need to implement it
+def reset_all_data():
+    try:
+        # Your logic to reset data in the ntuaflix database
+        # This could involve deleting records, resetting values, etc.
+        # Replace the following line with your actual implementation
+        # Example: cursor.execute("DELETE FROM your_table")
+        
+        return {"status": "OK"}
+    except Exception as e:
+        return {"status": "failed", "reason": str(e)}
+
+# Define the route for the /admin/resetall endpoint
+@app.route('/admin/resetall', methods=['POST'])
+def reset_all():
+    if request.method == 'POST':
+        # Check if the request has the appropriate headers or authentication checks if needed
+
+        # Call the function to reset all data
+        result = reset_all_data()
+
+        # Return the result as JSON
+        return jsonify(result)
+
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)
+This is a basic example, and you'll need to replace the reset_all_data() function with the actual logic to reset your database. It could involve SQL queries, calling functions, or using an ORM if you're using one.
+
+Remember to handle authentication and authorization appropriately for this endpoint to ensure that only authorized users can perform the reset operation.
+
+User
+What could be the logic in the reset all data in a website like iMDB? My tables in the database are:
+| director             |
+| knownfortitles       |
+| likes                |
+| listforwatchinglater |
+| name_basics          |
+| title_akas           |
+| title_basics         |
+| title_episode        |
+| title_principals     |
+| title_ratings        |
+| users                |
+| writer
+ChatGPT
+Resetting all data in a website like IMDb involves clearing or resetting the data in various tables to their initial state. Since IMDb-like websites typically have multiple interconnected tables, you need to carefully plan the logic to avoid data integrity issues.
+
+Below is a basic example of how you might approach resetting data in the provided tables. Please note that the actual logic may depend on the specifics of your database schema and business requirements. Make sure to adapt this example to your needs:
+
+python
+Copy code
+import mysql.connector
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+# Replace these with your actual database configuration
+db_config = {
+    "host": "your_host",
+    "user": "your_user",
+    "password": "your_password",
+    "database": "your_database",
+}
+
+# Function to reset all data in the database
+def reset_all_data():
+    try:
+        # Establish a database connection
+        db = mysql.connector.connect(**db_config)
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Execute SQL queries to reset data in each table
+        tables_to_reset = [
+            "director",
+            "knownfortitles",
+            "likes",
+            "listforwatchinglater",
+            "name_basics",
+            "title_akas",
+            "title_basics",
+            "title_episode",
+            "title_principals",
+            "title_ratings",
+            "users",
+            "writer",
+        ]
+
+        for table in tables_to_reset:
+            query = f"DELETE FROM {table}"
+            cursor.execute(query)
+
+        # Commit the changes and close the connection
+        db.commit()
+        db.close()
+
+        return {"status": "OK"}
+
+    except Exception as e:
+        return {"status": "failed", "reason": str(e)}
+
+# Define the route for the /admin/resetall endpoint
+@app.route('/admin/resetall', methods=['POST'])
+def reset_all():
+    if request.method == 'POST':
+        # Check if the request has the appropriate headers or authentication checks if needed
+
+        # Call the function to reset all data
+        result = reset_all_data()
+
+        # Return the result as JSON
+        return jsonify(result)
+
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)
+This example uses a list of table names to iterate through and delete all rows in each table. Adjust the logic based on your specific requirements and relationships between tables. Additionally, consider adding proper authentication and authorization checks to secure the reset functionality.
+
+User
+I don't want to create two functions. I want what is written on reset_all_data to be included in reset_all
+ChatGPT
+Certainly! You can include the logic from reset_all_data directly in the reset_all route. Here's an updated version with the logic included in a single function:
+
+python
+Copy code
+import mysql.connector
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+# Replace these with your actual database configuration
+db_config = {
+    "host": "your_host",
+    "user": "your_user",
+    "password": "your_password",
+    "database": "your_database",
+}
+
+# Define the route for the /admin/resetall endpoint
+@app.route('/admin/resetall', methods=['POST'])
+def reset_all():
+    if request.method == 'POST':
+        try:
+            # Establish a database connection
+            db = mysql.connector.connect(**db_config)
+
+            # Create a cursor to execute SQL queries
+            cursor = db.cursor()
+
+            # Execute SQL queries to reset data in each table
+            tables_to_reset = [
+                "director",
+                "knownfortitles",
+                "likes",
+                "listforwatchinglater",
+                "name_basics",
+                "title_akas",
+                "title_basics",
+                "title_episode",
+                "title_principals",
+                "title_ratings",
+                "users",
+                "writer",
+            ]
+
+            for table in tables_to_reset:
+                query = f"DELETE FROM {table}"
+                cursor.execute(query)
+
+            # Commit the changes and close the connection
+            db.commit()
+            db.close()
+
+            return {"status": "OK"}
+
+        except Exception as e:
+            return {"status": "failed", "reason": str(e)}
+
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)
+Now, the logic for resetting the data is included directly in the reset_all route, and you only have one function (reset_all). Adjust it according to your needs and make sure to handle errors appropriately.
