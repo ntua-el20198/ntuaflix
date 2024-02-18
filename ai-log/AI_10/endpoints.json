@@ -3,7 +3,7 @@
         "phase": "coding",
         "action": "requirements (functional)",
         "scope": "backend",
-        "action experience": "enough",
+        "action experience": "fair",
         "prog lang": "python",
         "other prog lang": "<fill in>",
         "tool": "chat gpt 3.x",
@@ -12,7 +12,7 @@
         "tool experience":  "enough",
         "time allocated (h)": "0.2",
         "time saved estimate (h)": "0.5",
-        "quality of ai help": "needed changes",
+        "quality of ai help": "minor modifications needed",
         "generic feeling": "great as-is",
         "notes": "I had to change the way it called the tables in order to delete them without problems with foreign keys"
     }

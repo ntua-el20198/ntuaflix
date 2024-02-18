@@ -1,0 +1,142 @@
+
+
+User
+I am creating a website. When the user logs in it goes to a homepage.html. This homepage also contains a "navigation.html". I want this navigation to be different for simple users and admin. In my database I have a variable called is_admin that is 1 only when the user is the admin. 
+
+@app.route('/ntuaflix_api/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        try:
+            # Extract username and password from form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+
+            if username is None or password is None:
+                return jsonify({"error": "Bad request"}), 400
+            else:
+                cursor = db.cursor()
+                # Execute a query to check if the username and password exist in the same row
+                query = "SELECT * FROM users WHERE Username = %s AND password = %s"
+                cursor.execute(query, (username, password))
+
+                # Fetch the result
+                result = cursor.fetchone()
+                user_id = result[0]
+                print(result)
+
+                if result:
+                    user_id, username, is_admin = result[0], result[1], result[3]
+                    # Store user ID in the session
+                    session['user_id'] = user_id
+                    session['is_admin'] = is_admin
+                    
+                    return jsonify({"user_id": user_id, "username": username}), 200
+                else:
+                    return jsonify({"error": "Not authorized"}), 401
+
+        except Exception as e:
+            # Log the exception for debugging
+            print(str(e))
+            # Internal server error
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+
+And in the login I save the is_admin in a session. I want to pass this varriable in the homepage and also in the navigation.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Kostis Spyridonos">
+    <title>Ntuaflix</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header2">
+        <nav> 
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+        </nav>
+        <div class="form-wrapper">
+            <h2>Sign In</h2>
+            <form id="loginForm" class="Sign" action="{{ url_for('login') }}" method="post" onsubmit="performLogin(event)">
+                <div class="form-control">
+                    <input type="text" name="username" required>
+                    <label>Username</label>               
+                </div>
+                <div class="form-control">
+                    <input type="password" name="password" required>
+                    <label>Password</label>             
+                </div>
+                <button type="submit">Sign In</button>
+                <a href="#">Need help?</a>
+            </form>
+            <script>
+                function performLogin(event) {
+                    event.preventDefault(); // Prevent the default form submission behavior
+                    
+                    fetch('/ntuaflix_api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams(new FormData(document.getElementById('loginForm')))
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.user_id) {
+                            window.location.href = 'homepage.html';
+                        } else {
+                            console.error(data.error);
+                        }
+                    })
+                    .catch(error => 
+                    console.error('Error:', error));
+                }
+            </script>
+            <p>New to NTUAflix? <a href="{{ url_for('signup') }}">Sign Up now</a></p>
+        </div>
+    </div>
+</body>
+</html>
+ChatGPT
+To achieve the dynamic navigation based on the user's role (admin or simple user), you can use Jinja2 templating in your HTML files. In your homepage.html and navigation.html, you can check the value of the is_admin session variable and conditionally render the navigation accordingly.
+
+Here's an example modification for your homepage.html:
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ... your other head elements ... -->
+</head>
+<body>
+    <!-- Include the navigation template -->
+    {% include 'navigation.html' %}
+    
+    <!-- Your homepage content goes here -->
+    <h1>Welcome to NTUAflix!</h1>
+    
+    <!-- Other content... -->
+</body>
+</html>
+And for your navigation.html:
+
+html
+Copy code
+<nav> 
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+    <!-- Conditionally render admin-specific links -->
+    {% if session['is_admin'] == 1 %}
+        <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+    {% endif %}
+    <!-- Common links for both admin and simple user -->
+    <a href="{{ url_for('movies') }}">Movies</a>
+    <a href="{{ url_for('tv_shows') }}">TV Shows</a>
+    <!-- Add more links as needed... -->
+</nav>
+In this example, I assumed you have different routes for admin-specific pages like 'admin_dashboard', 'movies', 'tv_shows', etc. Make sure to update these route names according to your actual routes.
+
+This way, the navigation will be dynamically generated based on the user's role. The admin-specific links will only be displayed if the user is an admin. Adjust the code according to your specific routes and navigation structure.
