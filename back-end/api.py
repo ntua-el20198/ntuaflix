@@ -9,8 +9,9 @@ import secrets
 import csv
 from io import StringIO
 
-template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
+
+template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
+static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -24,7 +25,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "2255",  
+    "password": "",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"
@@ -742,7 +743,7 @@ def check_watchlist(titleID):
         # Check if fetchone() returned a result
         in_watchlist_count = result[1] if result and result[1] is not None else 0
         #print(in_watchlist_count)
-
+        
         # Return a JSON response indicating whether the movie is in the watchlist or not
         return jsonify({'inWatchlist': in_watchlist_count}), 200, {'Content-Type': 'application/json'}
 
@@ -1591,7 +1592,8 @@ def users(username):
             return jsonify({"error": "Internal server error"}), 500
 
     else:
-        return jsonify({"error": "Not available"}), 404
+
+        return jsonify({"error": "Not available"}), 404   
 
 if __name__ == '__main__':
     app.run(debug=True, port=9876, ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1')

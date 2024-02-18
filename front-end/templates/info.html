@@ -6,6 +6,10 @@
     {% include 'navigation.html' %}
     <div id="resultsContainer" class="movieResults" data-titleID="{{ title_ID }}"></div>
 </body>
+
+<script src="{{ url_for('static', filename='displaymovieinfo.js') }}"></script>
+<script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+<script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
 <script>
     const resultsContainer = document.getElementById('resultsContainer');
     const titleID = resultsContainer.getAttribute('data-titleID');
@@ -37,8 +41,6 @@
             console.error('Error:', error);
         });
 </script>
-<script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
-<script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
-<script src="{{ url_for('static', filename='displaymovieinfo.js') }}"></script>
+
 
 </html>

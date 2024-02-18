@@ -40,7 +40,6 @@ body {
     height: 100%;
     background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(images/header-image.png);
     background-size: cover;
-    background-position: center;
     opacity: 0.5;
     /* Adjust the opacity as needed */
     z-index: -1;
@@ -345,9 +344,11 @@ form .form-help :where(label, a) {
     display: flex;
     justify-content: space-between;
     padding: 20px;
+    /* background-color: #000; */
     z-index: 1;
     transition-timing-function: ease-in;
     transition: all 0.5s;
+    /* background-color: #000; */
 }
 
 .nav2_black {
@@ -831,3 +832,10 @@ form .form-help :where(label, a) {
     color: #666; /* Medium grey for text */
 }
 
+.nav2_avatar {
+    cursor: pointer
+}
+
+.nav2.scrolled {
+    background-color: #000; /* Or any color you prefer */
+}

@@ -1,0 +1,19 @@
+{
+    "answers": {
+        "phase": "coding",
+        "action": "requirements (functional)",
+        "scope": "backend",
+        "action experience": "fair",
+        "prog lang": "js",
+        "other prog lang": "<python>",
+        "tool": "chat gpt 3.x",
+        "other tool": "<fill in>",
+        "tool option": "free",
+        "tool experience": "enough",
+        "time allocated (h)": "6",
+        "time saved estimate (h)": "10", 
+        "quality of ai help": "minor modifications needed",
+        "generic feeling": "needs work",
+        "notes": "It is an assistant. However, I still had to detect mistakes and wrongdoings and correct them in my code. A pure copy-paste doesn't work"
+    }
+}

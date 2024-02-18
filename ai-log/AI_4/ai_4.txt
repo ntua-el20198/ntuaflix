@@ -1,0 +1,2917 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    <script>
+        function toggleSearchBar() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.style.transform = (searchBar.style.transform === 'scaleX(0)' || searchBar.style.transform === '') ? 'scaleX(1)' : 'scaleX(0)';
+        }
+
+        function closeSearchBar() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.style.transform = 'scaleX(0)';
+        }
+    </script>
+
+
+</head>
+
+<body>
+
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+        </div>
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('index') }}" class="nav2_option">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="banner">
+        <div class="banner_contents">
+            <h1 class="banner_title"> Poor Things </h1>
+            <div class="banner_buttons">
+                <button class="banner_button">My List</button>
+            </div>
+            <div class="banner_description">
+                The incredible tale about the fantastical evolution of Bella Baxter,
+                a young woman brought back to life by the brilliant and unorthodox scientist Dr. Godwin Baxter.
+            </div>
+        </div>
+        <div class="banner_fadeBottom">
+
+        </div>
+    </div>
+
+    <h2> TOP 10 </h2>
+    <div class="row">
+        <div id="topRatedContainer" class="_row__posters"></div>
+    </div>
+    <!-- Include jQuery library -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <!-- Add this script to your homepage.html -->
+    <script>
+        $(document).ready(function () {
+            // Fetch top-rated movies data from your endpoint
+            $.get("/topRated", function (data) {
+                // Check if data is available
+                if (data.length > 0) {
+                    // Iterate through the data and append images to a container
+                    var container = $("#topRatedContainer");  // Assuming you have a container with this ID
+
+                    data.forEach(function (movie) {
+                        // Create an image element and set its attributes
+                        var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster");
+
+                        // Append the image to the container
+                        container.append(img);
+                    });
+                } else {
+                    // Handle the case when no movies are found
+                    console.log("No movies found");
+                }
+            });
+        });
+    </script>
+
+    <div class="row">
+        <h2> ACTION </h2>
+        <div class="_row__posters">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+        </div>
+
+    </div>
+
+    <div class="row">
+        <h2> COMEDY </h2>
+        <div class="_row__posters">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+        </div>
+
+    </div>
+
+    <div class="row">
+        <h2> HORROR </h2>
+        <div class="_row__posters">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+        </div>
+
+    </div>
+
+    <div class="row">
+        <h2> ROMANCE </h2>
+        <div class="_row__posters">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+        </div>
+
+    </div>
+
+    <div class="row">
+        <h2> DOCUMENTARIES </h2>
+        <div class="_row__posters">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie1.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie2.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie3.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie4.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie5.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie6.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie7.jpg') }}" alt="" class="row__poster">
+            <img src="{{ url_for('static', filename='images/small-movie8.jpg') }}" alt="" class="row__poster">
+        </div>
+
+    </div>
+
+    <script>
+        const nav2 = document.getElementById('nav2');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY >= 100) {
+                nav2.classList.add('nav2_black');
+            } else {
+                nav2.classList.remove('nav2_black');
+            }
+        });
+
+
+    </script>
+
+
+</body>
+
+</html>
+
+
+
+In the top right cornet there is a clickable avatar that has a dropdown menu with a log out option. I want to also add a 'likes' option.
+
+ChatGPT
+To add a 'likes' option to the dropdown menu in the top right corner, you can modify the HTML and JavaScript code. Here's an example of how you can modify your existing code:
+
+Add the 'likes' option to the dropdown menu:
+html
+Copy code
+<!-- Add the 'likes' option to the dropdown menu -->
+<div class="dropdown">
+    <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+    <div class="dropdown_content">
+        <a href="{{ url_for('index') }}" class="nav2_option">Likes</a>
+        <a href="{{ url_for('index') }}" class="nav2_option">Log Out</a>
+    </div>
+</div>
+Modify the JavaScript code to handle the 'likes' option:
+html
+Copy code
+<!-- Modify the JavaScript code -->
+<script>
+    const nav2 = document.getElementById('nav2');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY >= 100) {
+            nav2.classList.add('nav2_black');
+        } else {
+            nav2.classList.remove('nav2_black');
+        }
+    });
+
+    // Add event listener for the 'likes' option
+    document.querySelector('.dropdown .nav2_option:nth-child(1)').addEventListener('click', function () {
+        // Handle the 'likes' option (you can replace the alert with your own logic)
+        alert('You clicked on Likes');
+    });
+</script>
+Now, when the user clicks on the 'Likes' option in the dropdown menu, it will trigger the event listener, and you can replace the alert('You clicked on Likes'); line with your own logic to handle the 'likes' action.
+User
+How to delete an entry to a table in sql?
+
+ChatGPT
+To delete an entry from a table in SQL, you can use the DELETE statement. Here's the basic syntax:
+
+sql
+Copy code
+DELETE FROM table_name
+WHERE condition;
+table_name: The name of the table from which you want to delete data.
+condition: The condition that specifies which rows to delete. If you omit the WHERE clause, all rows in the table will be deleted.
+For example, let's assume you have a table called users with columns user_id and username, and you want to delete a user with a specific user_id, you would use:
+
+sql
+Copy code
+DELETE FROM users
+WHERE user_id = 123;
+This query deletes the row(s) from the users table where the user_id is equal to 123.
+
+Important Note: Be careful when using the DELETE statement, especially without a WHERE clause, as it will delete all rows in the specified table, resulting in data loss. Always ensure you have a backup or are certain about the rows you want to delete.
+User
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('index') }}">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Call the function to fetch and display movies when the page loads
+            fetchMovies();
+        });
+
+        function fetchMovies() {
+            // Fetch movies from the /list_for_watching_later endpoint
+            fetch('/list_for_watching_later', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    displaySearchResults(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const movieInfoElement = document.createElement('div');
+                    movieInfoElement.classList.add('movieInfo');
+
+                    // Add various details about the movie
+                    const titleElement = document.createElement('p');
+                    titleElement.textContent = `Title: ${result.originalTitle}`;
+                    movieInfoElement.appendChild(titleElement);
+
+                    const typeElement = document.createElement('p');
+                    typeElement.textContent = `Type: ${result.type}`;
+                    movieInfoElement.appendChild(typeElement);
+
+                    const startYearElement = document.createElement('p');
+                    startYearElement.textContent = `Start Year: ${result.startYear}`;
+                    movieInfoElement.appendChild(startYearElement);
+
+                    const genresElement = document.createElement('p');
+                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                    movieInfoElement.appendChild(genresElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                    movieInfoElement.appendChild(ratingElement);
+
+                    // Append movieInfoElement to resultElement
+                    resultElement.appendChild(movieInfoElement);
+
+                    const likeButton = document.createElement('button');
+                    likeButton.textContent = '<3';
+                    likeButton.classList.add('likeButton');
+                    likeButton.style.fontWeight = 'bold';
+                    likeButton.style.fontSize = '20px';
+                    likeButton.addEventListener('click', function () {
+                        removeLike(result.titleID);
+                    });
+
+                    resultElement.appendChild(likeButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement2 = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement2);
+                });
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        function removeLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/remove_from_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+    </script>
+
+</body>
+
+</html>
+
+</body>
+
+</html>
+
+ChatGPT
+It looks like you've provided HTML code for a web page that displays a list of movies and allows users to like and remove movies from their list. The provided code is well-structured and seems to have functionality for fetching movies, displaying them, and handling like/removal events.
+
+Here are a few suggestions:
+
+Consistency in Like Button Text:
+Consider making the text content of the like button consistent. If you're using a heart emoji (<3), you may want to use the same emoji consistently throughout the application.
+javascript
+Copy code
+// Instead of this
+likeButton.textContent = '<3';
+
+// You might want to use
+likeButton.innerHTML = '&lt;3';
+Error Handling:
+The removeLike function includes an alert for users who are not logged in. It's good to inform users about actions they can or cannot perform, but consider providing a more user-friendly message or using a modal/popup for a better user experience.
+javascript
+Copy code
+alert('Please log in to like movies');
+Styling and Presentation:
+Ensure that your styles (defined in style.css) align with the structure of the HTML elements. For instance, make sure your class names like searchResult, row__poster, and movieInfo have corresponding styling in your CSS file.
+Consistent Fetch Method:
+Ensure consistency in the HTTP methods used for fetching data. In your fetchMovies function, you are using the GET method, but in removeLike, you are using the POST method. Ensure that the method used aligns with the intended action.
+javascript
+Copy code
+// Example in removeLike function
+fetch(`/remove_from_likes/${titleID}`, {
+    method: 'POST',
+    // ...
+})
+Loading Spinner or Indicator:
+Consider adding a loading spinner or indicator to provide feedback to users when movies are being fetched. This can enhance the user experience, especially if there is a delay in fetching and displaying the movie data.
+Overall, the code appears well-structured and functional. Make sure to test thoroughly and handle edge cases appropriately.
+User
+I am not sure if this works properly because when I go the link,instead of the desired page I get this:
+
+[
+  {
+    "endYear": "None",
+    "genres": [
+      "Drama",
+      "Mystery",
+      "Romance"
+    ],
+    "originalTitle": "Dama de noche",
+    "principals": [
+      {
+        "category": "actor",
+        "name": "Rafael S\u00e1nchez Navarro",
+        "nameID": "844752"
+      },
+      {
+        "category": "actress",
+        "name": "Cecilia Toussaint",
+        "nameID": "869732"
+      },
+      {
+        "category": "actor",
+        "name": "Miguel C\u00f3rcega",
+        "nameID": "194720"
+      },
+      {
+        "category": "actress",
+        "name": "Regina Orozco",
+        "nameID": "650495"
+      },
+      {
+        "category": "director",
+        "name": "Eva L\u00f3pez S\u00e1nchez",
+        "nameID": "529960"
+      },
+      {
+        "category": "writer",
+        "name": "David Martin del Campo",
+        "nameID": "1597742"
+      },
+      {
+        "category": "producer",
+        "name": "Gustavo Montiel Pag\u00e9s",
+        "nameID": "600039"
+      },
+      {
+        "category": "composer",
+        "name": "Jos\u00e9 Elorza",
+        "nameID": "255550"
+      },
+      {
+        "category": "cinematographer",
+        "name": "Rodrigo Prieto",
+        "nameID": "6509"
+      },
+      {
+        "category": "editor",
+        "name": "Hubert Barrero",
+        "nameID": "1457911"
+      }
+    ],
+    "rating": {
+      "avRating": "6.1",
+      "numVotes": "26"
+    },
+    "startYear": "1993",
+    "titleAkas": [
+      {
+        "regionAbbrev": "MX",
+        "titleAkas": "Dama de noche"
+      },
+      {
+        "regionAbbrev": null,
+        "titleAkas": "Dama de noche"
+      },
+      {
+        "regionAbbrev": "HU",
+        "titleAkas": "\u00c9jszakai gyilkoss\u00e1g"
+      },
+      {
+        "regionAbbrev": null,
+        "titleAkas": "Lady of the Night"
+      }
+    ],
+    "titleID": "15724",
+    "titlePoster": "https://image.tmdb.org/t/p/{width_variable}/zCmyAl7VG6aZJqWZ7PFfj9e6ToU.jpg",
+    "type": "movie"
+  },
+  {
+    "endYear": "None",
+    "genres": [
+      "Short",
+      "Western"
+    ],
+    "originalTitle": "Crossroads of Laredo",
+    "principals": [
+      {
+        "category": "actor",
+        "name": "Edward D. Wood Jr.",
+        "nameID": "248"
+      },
+      {
+        "category": "actor",
+        "name": "Duke Moore",
+        "nameID": "601146"
+      },
+      {
+        "category": "actor",
+        "name": "Don Nagel",
+        "nameID": "619265"
+      },
+      {
+        "category": "actress",
+        "name": "Ruth McCabe",
+        "nameID": "564502"
+      },
+      {
+        "category": "writer",
+        "name": "Dolores Fuller",
+        "nameID": "298215"
+      },
+      {
+        "category": "producer",
+        "name": "Crawford John Thomas",
+        "nameID": "858659"
+      },
+      {
+        "category": "composer",
+        "name": "Ben Weisman",
+        "nameID": "918840"
+      },
+      {
+        "category": "cinematographer",
+        "name": "Ray Flin",
+        "nameID": "282325"
+      }
+    ],
+    "rating": {
+      "avRating": "3.3",
+      "numVotes": "189"
+    },
+    "startYear": "1995",
+    "titleAkas": [
+      {
+        "regionAbbrev": null,
+        "titleAkas": "Crossroads of Laredo"
+      },
+      {
+        "regionAbbrev": "US",
+        "titleAkas": "The Streets of Laredo"
+      },
+      {
+        "regionAbbrev": "US",
+        "titleAkas": "Crossroads of Laredo"
+      }
+    ],
+    "titleID": "40844",
+    "titlePoster": "https://image.tmdb.org/t/p/{width_variable}/atrGjxMSp6y4jvs7nojUrlsGFUb.jpg",
+    "type": "short"
+  }
+]
+
+ChatGPT
+It seems like your server is responding with JSON data when you access the link directly. This is not an error; it's expected behavior if your server is designed to respond with JSON when accessed programmatically.
+
+In your HTML code, you are using JavaScript to fetch data from the /list_for_watching_later endpoint, which returns a JSON array of movies. When you directly visit the link in your browser, the browser displays the raw JSON data, which is what you're seeing.
+
+To properly view your web page with the fetched movies, you should access the HTML page through your web application, not by directly visiting the API endpoint. Make sure your web application is running, and then navigate to the appropriate URL in your browser (e.g., http://localhost:your_port_number/your_page.html).
+
+If you are still facing issues, please provide more information about how your web application is structured, and I'll do my best to assist you further.
+User
+app.route('/remove_from_likes/<int:titleID>', methods=['POST'])
+def remove_from_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_check = "SELECT * FROM likes WHERE usersid = %s and title_basicstconst  = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if not movie:
+           return jsonify({"message": "Movie already unliked"}), 201
+        
+        else:
+            query_rem = "DELETE FROM Likes where title_basicstconst = %s"
+            cursor.execute(query_rem, (titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie removed succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+    return jsonify({"error" : "Internal server error"}), 500
+
+ChatGPT
+Your remove_from_likes route in your Flask application appears to be designed to handle the removal of a movie from a user's liked list. Below are some suggestions for improvement:
+
+Input Validation:
+It's essential to validate and sanitize user inputs to prevent SQL injection attacks. Consider using parameterized queries instead of directly formatting the SQL query with user inputs.
+python
+Copy code
+query_check = "SELECT * FROM likes WHERE usersid = %s AND title_basicstconst = %s"
+cursor.execute(query_check, (userID, titleID))
+python
+Copy code
+query_rem = "DELETE FROM Likes WHERE title_basicstconst = %s"
+cursor.execute(query_rem, (titleID,))
+Notice the use of %s as placeholders and passing parameters as a tuple. This helps prevent SQL injection.
+HTTP Status Codes:
+Return appropriate HTTP status codes with your JSON responses. For example, use 200 OK when the operation is successful, 201 Created when a new resource is successfully created, 401 Unauthorized for authentication errors, 500 Internal Server Error for unexpected server errors, etc.
+Response Messages:
+Provide informative messages in your JSON responses to help the client understand the result of the operation.
+python
+Copy code
+return jsonify({"message": "Movie removed successfully"}), 200
+Error Handling:
+Add more specific error handling to provide meaningful error messages. For example, if the DELETE operation fails, you might want to distinguish between a database error and a case where the movie was not found.
+python
+Copy code
+if cursor.rowcount > 0:
+    return jsonify({"message": "Movie removed successfully"}), 200
+else:
+    return jsonify({"error": "Movie not found or removal failed"}), 404
+Consistency in JSON Responses:
+Maintain consistency in your JSON response structure. For example, use the same key for messages or errors across different responses.
+json
+Copy code
+return jsonify({"error": "User not authenticated"}), 401
+json
+Copy code
+return jsonify({"message": "Movie already unliked"}), 201
+json
+Copy code
+return jsonify({"error": "Something went wrong"}), 500
+Logging:
+Implement logging to keep track of server activities and potential issues. This can be helpful for debugging and monitoring.
+python
+Copy code
+app.logger.info("Movie removed successfully: %s", titleID)
+These are general suggestions to enhance the readability, security, and usability of your code. Make sure to thoroughly test your API to ensure that it behaves as expected in various scenarios.
+User
+How does this "not movie" work?
+
+        if not movie:
+           return jsonify({"message": "Movie already unliked"}), 201
+
+ChatGPT
+In the provided code:
+
+python
+Copy code
+if not movie:
+   return jsonify({"message": "Movie already unliked"}), 201
+This condition checks whether the variable movie is "truthy" or "falsy." In Python, an object is considered "truthy" if it evaluates to True in a boolean context, and "falsy" if it evaluates to False.
+
+In this context, the if not movie: statement is checking whether the result of the SQL query (movie) is falsy, indicating that there is no record found in the database for the given user ID and movie title ID.
+
+So, the condition is saying: If there is no movie found in the database (i.e., movie is None or an empty result), it means the movie is not liked, and the code returns a JSON response indicating that the movie is already unliked with an HTTP status code 201 Created.
+
+This is a common pattern in web development where you want to perform an action only if a certain condition is not met. In this case, the action is to return a response indicating that the movie is already unliked if no record is found in the database.
+User
+Is there a way to get how many rows where affected?
+
+ChatGPT
+Yes, in the provided code, after executing the DELETE statement, you can check the number of rows affected using the rowcount attribute of the cursor. The rowcount attribute returns the number of rows affected by the last executed operation.
+
+Here's an example of how you can use it:
+
+python
+Copy code
+query_rem = "DELETE FROM Likes WHERE title_basicstconst = %s"
+cursor.execute(query_rem, (titleID,))
+db.commit()
+
+if cursor.rowcount > 0:
+    return jsonify({"message": "Movie removed successfully"}), 200
+else:
+    return jsonify({"message": "Movie not found or removal failed"}), 404
+In this example, if cursor.rowcount is greater than 0, it means that at least one row was affected by the DELETE operation, indicating that the movie was successfully removed from the likes. If cursor.rowcount is 0, it means that no rows were affected, suggesting that either the movie was not found in the likes, or there was an issue with the removal operation.
+
+Adjust the logic based on how you want to handle different scenarios.
+User
+@app.route('/remove_from_likes/<int:titleID>', methods=['POST'])
+def remove_from_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_rem = "DELETE FROM Likes where title_basicstconst = %s"
+        cursor.execute(query_rem, (titleID))
+        db.commit()
+
+        if cursor.rowcount > 0 :
+            return jsonify({"message": "Movie unliked succesfully"}), 200
+        else:
+            return jsonify({"error": "Movie already unliked"}), 204
+        
+    return jsonify({"error" : "Internal server error"}), 500
+
+ChatGPT
+The code you provided looks correct for removing a movie from the likes. However, there is a potential issue in the DELETE query execution. The second argument of cursor.execute() should be a tuple, even if it contains only one element. Currently, you are passing (titleID) without the comma, which would be treated as an integer, not as a tuple.
+
+Here's the corrected line:
+
+python
+Copy code
+cursor.execute(query_rem, (titleID,))
+By adding a comma after (titleID), you ensure that it is treated as a tuple, even if it contains only one element.
+
+Additionally, you might want to consider adding a check before executing the DELETE operation to verify if the movie is already unliked, similar to what you had in the previous version of your code:
+
+python
+Copy code
+query_check = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst  = %s"
+cursor.execute(query_check, (userID, titleID))
+movie = cursor.fetchone()
+
+if not movie:
+    return jsonify({"error": "Movie already unliked"}), 400
+This way, you can avoid unnecessary database operations if the movie is already unliked.
+
+Here's the updated code with these suggestions:
+
+python
+Copy code
+@app.route('/remove_from_likes/<int:titleID>', methods=['POST'])
+def remove_from_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+
+        # Check if the movie is already unliked
+        query_check = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst  = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+
+        if not movie:
+            return jsonify({"error": "Movie already unliked"}), 400
+
+        # If not already unliked, proceed with the deletion
+        query_rem = "DELETE FROM Likes WHERE title_basicstconst = %s"
+        cursor.execute(query_rem, (titleID,))
+        db.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({"message": "Movie unliked successfully"}), 200
+        else:
+            return jsonify({"error": "Movie not found or removal failed"}), 404
+
+    return jsonify({"error": "Internal server error"}), 500
+User
+I want the like button, instead of it being text to be a heart.
+
+ChatGPT
+To make the like button appear as a heart instead of text, you can use an HTML entity for the heart symbol (&hearts;) or an emoji. Here's an updated version of your code with a heart symbol as the like button:
+
+html
+Copy code
+<!-- ... Your HTML code ... -->
+
+<div id="resultsContainer" class="movieResults"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Call the function to fetch and display movies when the page loads
+        fetchMovies();
+    });
+
+    function fetchMovies() {
+        // ... Your existing fetchMovies function ...
+    }
+
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    function displaySearchResults(results) {
+        // ... Your existing displaySearchResults function ...
+
+        // Loop through the results and create HTML elements to display them
+        results.forEach(result => {
+            // ... Your existing code ...
+
+            // Create a button for the like functionality with a heart symbol
+            const likeButton = document.createElement('button');
+            likeButton.innerHTML = '&hearts;';
+            likeButton.classList.add('likeButton');
+            likeButton.style.fontWeight = 'bold';
+            likeButton.style.fontSize = '20px';
+            likeButton.addEventListener('click', function () {
+                removeLike(result.titleID);
+            });
+
+            // Append the heart button to resultElement
+            resultElement.appendChild(likeButton);
+
+            // ... Your existing code ...
+        });
+    }
+
+    function removeLike(titleID) {
+        // ... Your existing removeLike function ...
+    }
+</script>
+
+<!-- ... Your HTML code ... -->
+In this example, I replaced the text content of the like button with the HTML entity &hearts;, which represents a heart symbol. You can customize the appearance of the heart button further by applying additional styling or using a heart emoji if you prefer.
+
+Feel free to adjust the styling and appearance based on your design preferences.
+User
+How can I make it look like an empty heart when you haven't liked yet, but when you like the heart becomes full
+
+ChatGPT
+To achieve the effect of an empty heart when the user hasn't liked the movie yet and a full heart when they do, you can use CSS classes to change the appearance of the like button dynamically. Here's an updated version of your code to implement this:
+
+html
+Copy code
+<!-- ... Your HTML code ... -->
+
+<div id="resultsContainer" class="movieResults"></div>
+
+<style>
+    .likeButton {
+        font-weight: bold;
+        font-size: 20px;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .likeButton.empty {
+        color: black; /* Set the color of an empty heart */
+    }
+
+    .likeButton.full {
+        color: red; /* Set the color of a full heart */
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Call the function to fetch and display movies when the page loads
+        fetchMovies();
+    });
+
+    function fetchMovies() {
+        // ... Your existing fetchMovies function ...
+    }
+
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    function displaySearchResults(results) {
+        // ... Your existing displaySearchResults function ...
+
+        // Loop through the results and create HTML elements to display them
+        results.forEach(result => {
+            // ... Your existing code ...
+
+            // Create a button for the like functionality with an empty heart
+            const likeButton = document.createElement('button');
+            likeButton.innerHTML = '&hearts;';
+            likeButton.classList.add('likeButton', 'empty');
+            likeButton.addEventListener('click', function () {
+                toggleLike(result.titleID, likeButton);
+            });
+
+            // Append the heart button to resultElement
+            resultElement.appendChild(likeButton);
+
+            // ... Your existing code ...
+        });
+    }
+
+    function toggleLike(titleID, button) {
+        // Toggle the like status and update the button appearance
+        if (button.classList.contains('empty')) {
+            // If not liked, make it liked (full heart)
+            button.classList.remove('empty');
+            button.classList.add('full');
+            // Call the function to handle the like operation
+            addLike(titleID);
+        } else {
+            // If already liked, make it not liked (empty heart)
+            button.classList.remove('full');
+            button.classList.add('empty');
+            // Call the function to handle the unlike operation
+            removeLike(titleID);
+        }
+    }
+
+    function addLike(titleID) {
+        // ... Your existing addLike function ...
+    }
+
+    function removeLike(titleID) {
+        // ... Your existing removeLike function ...
+    }
+</script>
+
+<!-- ... Your HTML code ... -->
+In this example, I added two CSS classes: .empty and .full. The .empty class sets the color of the heart to black, and the .full class sets it to red. The JavaScript code is updated to toggle these classes when the user clicks the like button, creating the visual effect of an empty or full heart. Adjust the colors and styling as needed for your design.
+User
+Ok I tried it. It is functional and the appearence is changing upon clicking on it. However the like button is a white opaque square with a full heart inside it either black if the movie is unliked, or red if it liked. What i want is for it to be just a heart without the square around it.
+
+ChatGPT
+To achieve the desired appearance of just a heart without a square around it, you can utilize an appropriate Unicode character for the heart and customize the style using CSS. Here's an updated version of your code with a heart character and improved styling:
+
+html
+Copy code
+<!-- ... Your HTML code ... -->
+
+<style>
+    .likeButton {
+        font-weight: bold;
+        font-size: 20px;
+        cursor: pointer;
+        transition: color 0.3s;
+        background: none;
+        border: none;
+        padding: 0;
+    }
+
+    .likeButton.empty::before {
+        content: '\2661'; /* Unicode character for an empty heart */
+        color: black; /* Set the color of an empty heart */
+    }
+
+    .likeButton.full::before {
+        content: '\2665'; /* Unicode character for a full heart */
+        color: red; /* Set the color of a full heart */
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Call the function to fetch and display movies when the page loads
+        fetchMovies();
+    });
+
+    function fetchMovies() {
+        // ... Your existing fetchMovies function ...
+    }
+
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    function displaySearchResults(results) {
+        // ... Your existing displaySearchResults function ...
+
+        // Loop through the results and create HTML elements to display them
+        results.forEach(result => {
+            // ... Your existing code ...
+
+            // Create a button for the like functionality with a heart icon
+            const likeButton = document.createElement('button');
+            likeButton.classList.add('likeButton', 'empty');
+            likeButton.addEventListener('click', function () {
+                toggleLike(result.titleID, likeButton);
+            });
+
+            // Append the heart button to resultElement
+            resultElement.appendChild(likeButton);
+
+            // ... Your existing code ...
+        });
+    }
+
+    function toggleLike(titleID, button) {
+        // Toggle the like status and update the button appearance
+        if (button.classList.contains('empty')) {
+            // If not liked, make it liked (full heart)
+            button.classList.remove('empty');
+            button.classList.add('full');
+            // Call the function to handle the like operation
+            addLike(titleID);
+        } else {
+            // If already liked, make it not liked (empty heart)
+            button.classList.remove('full');
+            button.classList.add('empty');
+            // Call the function to handle the unlike operation
+            removeLike(titleID);
+        }
+    }
+
+    function addLike(titleID) {
+        // ... Your existing addLike function ...
+    }
+
+    function removeLike(titleID) {
+        // ... Your existing removeLike function ...
+    }
+</script>
+
+<!-- ... Your HTML code ... -->
+In this code, I've used the Unicode character '\2661' for an empty heart and '\2665' for a full heart. The ::before pseudo-element is used to insert these characters before the content of the button. The styling is adjusted to remove the background, border, and padding, providing a clean appearance for just the heart icon. Adjust the Unicode characters and styling as needed for your preference.
+User
+Ok now the only thing i want to do is move it a bit more to the right.
+
+ChatGPT
+To move the heart button a bit more to the right, you can adjust the margin or padding of the button. Here's an example where I've added some right margin to the heart button:
+
+css
+Copy code
+<style>
+    .likeButton {
+        font-weight: bold;
+        font-size: 20px;
+        cursor: pointer;
+        transition: color 0.3s;
+        background: none;
+        border: none;
+        padding: 0;
+        margin-right: 5px; /* Adjust the right margin as needed */
+    }
+
+    .likeButton.empty::before {
+        content: '\2661'; /* Unicode character for an empty heart */
+        color: black; /* Set the color of an empty heart */
+    }
+
+    .likeButton.full::before {
+        content: '\2665'; /* Unicode character for a full heart */
+        color: red; /* Set the color of a full heart */
+    }
+</style>
+In this example, I added margin-right: 5px; to the .likeButton style. You can adjust the value as needed to achieve the desired spacing. If you want to move it to the left instead, you can use margin-left instead of margin-right. Feel free to experiment with the values until you achieve the layout you prefer.
+User
+Ok so far this works perfectly for one page. However, i tried to add it to other pages of my web app, and there is a small problem. Although the button works correctly, and by that I mean that when clicking an empty heart it becomes full and succesfull gets added to the liked movies in the database, this doesn't seem to be visible to different pages. I mean that when a movie is liked, then the heart next to it should always be a full red one. However, when I change pages the heart is becoming empty again even though it is a liked movie.
+
+ChatGPT
+It seems like the information about whether a movie is liked or not is not persisting across different pages. This is likely because the state of the like button is not being stored or retrieved globally, and it's resetting when you navigate between pages.
+
+To address this, you can consider using some form of global state management. One common approach is to store the liked movie IDs in the user's session or in a database so that it can be accessed across different pages.
+
+Here's a simplified example using Flask sessions:
+
+When the user likes a movie, update the session to store the liked movie IDs.
+javascript
+Copy code
+// Add this inside the removeLike function after successful removal from likes
+function updateSessionLikedMovies(titleID) {
+    const likedMovies = sessionStorage.getItem('likedMovies') || [];
+    if (!likedMovies.includes(titleID)) {
+        likedMovies.push(titleID);
+        sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+    }
+}
+When the page loads, check the session to determine whether a movie is liked or not.
+javascript
+Copy code
+document.addEventListener('DOMContentLoaded', function () {
+    // Call the function to fetch and display movies when the page loads
+    fetchMovies();
+    updateLikedButtons();
+});
+
+function updateLikedButtons() {
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    const likeButtons = document.querySelectorAll('.likeButton');
+    
+    likeButtons.forEach(button => {
+        const titleID = button.dataset.titleId;
+        if (likedMovies.includes(titleID)) {
+            button.classList.add('full');
+        } else {
+            button.classList.remove('full');
+        }
+    });
+}
+Make sure to update your HTML to include a data-title-id attribute on the like buttons:
+
+html
+Copy code
+<button class="likeButton empty" data-title-id="{{ movie.titleID }}">❤️</button>
+This is a simplified example, and depending on your application's architecture, you might need a more robust solution. Consider exploring Flask sessions or storing liked movies in a user-specific database table for a more permanent solution.
+User
+Replying to:
+When the user likes a movie, update the session to store the liked movie IDs.
+Do you mean i should add this inside this function?:
+ function removeLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/remove_from_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+
+ChatGPT
+Yes, you would incorporate the update to the session inside the removeLike function after successfully removing the like. Here's how you can modify your existing removeLike function to include the suggested changes:
+
+javascript
+Copy code
+function removeLike(titleID) {
+    fetch('/get_user_id')
+        .then(response => response.json())
+        .then(data => {
+            const userID = data;
+            console.log('User ID:', userID);
+
+            if (!userID) {
+                alert('Please log in to like movies');
+                return;
+            }
+
+            fetch(`/remove_from_likes/${titleID}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userID: userID }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+
+                // Update session with liked movies after successful removal
+                updateSessionLikedMovies(titleID);
+
+                // You may also want to trigger a visual update of like buttons
+                updateLikedButtons();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+This modification includes the call to updateSessionLikedMovies(titleID) after a successful removal. Additionally, it triggers the updateLikedButtons() function to visually update the like buttons on the current page.
+User
+What is sessionStorage?
+
+ChatGPT
+sessionStorage is a web storage object in JavaScript that allows you to store key-value pairs in a web browser with a limited lifespan. Unlike localStorage, which persists even after the browser is closed and reopened, sessionStorage is designed to be session-specific. The data stored in sessionStorage is accessible only during the lifetime of the page session.
+
+Here are some key characteristics of sessionStorage:
+
+Scope: The data stored in sessionStorage is limited to the duration of the page session. It is not shared across different tabs or windows and is cleared when the session ends (when the browser is closed or the tab is closed).
+Storage Limit: The amount of data that can be stored in sessionStorage is typically larger than the limit for cookies, but it is still limited compared to localStorage. The exact limit varies between browsers.
+Usage: You can use the sessionStorage object to store data in key-value pairs. For example:
+javascript
+Copy code
+// Store data
+sessionStorage.setItem('key', 'value');
+
+// Retrieve data
+const retrievedValue = sessionStorage.getItem('key');
+The data is stored as strings, so if you need to store and retrieve complex objects, you'll need to serialize and deserialize them.
+Security: Data stored in sessionStorage is only accessible to scripts from the same site (same-origin policy), providing a level of security.
+Here's a simple example of using sessionStorage:
+
+javascript
+Copy code
+// Store data in sessionStorage
+sessionStorage.setItem('username', 'JohnDoe');
+
+// Retrieve data from sessionStorage
+const username = sessionStorage.getItem('username');
+
+console.log(username); // Output: JohnDoe
+Remember that the data stored in sessionStorage is specific to a single tab or window and will be cleared when that tab or window is closed.
+User
+What does this do:
+const likedMovies = sessionStorage.getItem('likedMovies') || [];
+
+ChatGPT
+This line of code retrieves the value associated with the key 'likedMovies' from the sessionStorage. If there is no value (if 'likedMovies' is not set or is null), it assigns an empty array [] to the variable likedMovies.
+
+Here's a breakdown of the code:
+
+sessionStorage.getItem('likedMovies'): This retrieves the value stored in sessionStorage under the key 'likedMovies'.
+|| []: This is the logical OR operator. If the value obtained from sessionStorage is falsy (e.g., null, undefined, or not set), it defaults to the empty array [].
+The purpose of this code is to initialize the likedMovies variable with the array of liked movies stored in the sessionStorage. If there are no liked movies in the sessionStorage, it initializes likedMovies with an empty array.
+
+After this line, you can use the likedMovies variable to work with the array of liked movies in your code. If you add or remove items from likedMovies, you should also update the corresponding value in sessionStorage to persist the changes across page reloads or session duration.
+User
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+
+
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('my_likes') }}" class="nav2_option">Likes</a>
+                    <a href="{{ url_for('index') }}">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+
+                const url = new URL('/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+        });
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const movieInfoElement = document.createElement('div');
+                    movieInfoElement.classList.add('movieInfo');
+
+                    // Add various details about the movie
+                    const titleElement = document.createElement('p');
+                    titleElement.textContent = `Title: ${result.originalTitle}`;
+                    movieInfoElement.appendChild(titleElement);
+
+                    const typeElement = document.createElement('p');
+                    typeElement.textContent = `Type: ${result.type}`;
+                    movieInfoElement.appendChild(typeElement);
+
+                    const startYearElement = document.createElement('p');
+                    startYearElement.textContent = `Start Year: ${result.startYear}`;
+                    movieInfoElement.appendChild(startYearElement);
+
+                    const genresElement = document.createElement('p');
+                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                    movieInfoElement.appendChild(genresElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                    movieInfoElement.appendChild(ratingElement);
+
+                    // Append movieInfoElement to resultElement
+                    resultElement.appendChild(movieInfoElement);
+
+                    // Create a button to add the movie to the list
+                    const addButton = document.createElement('button');
+                    addButton.textContent = '+';
+                    addButton.classList.add('addButton');
+                    addButton.style.fontWeight = 'bold'; // Make the text bold
+                    addButton.style.fontSize = '20px';
+                    addButton.addEventListener('click', function () {
+                        add_removeToMyList(result.titleID);
+                    });
+
+                    resultElement.appendChild(addButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement);
+                    
+                    const likeButton = document.createElement('button');
+                    likeButton.innerHTML = '&hearts;';
+                    likeButton.classList.add('likeButton');
+                    likeButton.classList.add('likeButton', 'empty');
+                    likeButton.addEventListener('click', function () {
+                        toggleLike(result.titleID, likeButton);
+                    });
+
+                    resultElement.appendChild(likeButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement2 = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement2);x
+                });
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        function add_removeToMyList(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to add movies to your list.');
+                        return;
+                    }
+
+                    fetch(`/add_to_list/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function toggleLike(titleID, button) {
+        // Toggle the like status and update the button appearance
+        if (button.classList.contains('empty')) {
+            // If not liked, make it liked (full heart)
+            button.classList.remove('empty');
+            button.classList.add('full');
+            // Call the function to handle the like operation
+            addLike(titleID);
+        } else {
+            // If already liked, make it not liked (empty heart)
+            button.classList.remove('full');
+            button.classList.add('empty');
+            // Call the function to handle the unlike operation
+            removeLike(titleID);
+        }
+    }
+        function addLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/add_to_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+        
+        function removeLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/remove_from_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+
+    document.addEventListener('DOMContentLoaded', function () {
+    // Call the function to fetch and display movies when the page loads
+    fetchMovies();
+    updateLikedButtons();
+    });
+        
+    </script>
+
+</body>
+
+</html>
+
+ChatGPT
+It seems like you're working on a movie search application with functionality to add/remove movies to/from a list and like/unlike movies. I see that you have made significant progress, and you're working on the UI for the like buttons.
+
+Now, let's address the issue of the liked movies not being consistent across different pages. To achieve consistency, you can use sessionStorage to store the liked movie IDs, similar to how you store them in the likedMovies array. Here's an example of how you can implement this:
+
+When a user likes or unlikes a movie, update the sessionStorage accordingly.
+javascript
+Copy code
+function addLike(titleID) {
+    // ... (existing code)
+
+    // Update likedMovies in sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    likedMovies.push(titleID);
+    sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+}
+
+function removeLike(titleID) {
+    // ... (existing code)
+
+    // Update likedMovies in sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    const index = likedMovies.indexOf(titleID);
+    if (index !== -1) {
+        likedMovies.splice(index, 1);
+        sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+    }
+}
+
+function updateLikedButtons() {
+    // ... (existing code)
+
+    // Update the appearance of like buttons based on sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    const likeButtons = document.querySelectorAll('.likeButton');
+    likeButtons.forEach(button => {
+        const titleID = button.dataset.titleID;
+        if (likedMovies.includes(titleID)) {
+            button.classList.remove('empty');
+            button.classList.add('full');
+        } else {
+            button.classList.remove('full');
+            button.classList.add('empty');
+        }
+    });
+}
+Call updateLikedButtons() when the page loads to initialize the like button appearances.
+javascript
+Copy code
+document.addEventListener('DOMContentLoaded', function () {
+    // Call the function to fetch and display movies when the page loads
+    fetchMovies();
+    updateLikedButtons();
+});
+With these changes, the liked movie IDs are stored in sessionStorage, and the like buttons' appearance is updated based on this information, providing a consistent experience across different pages.
+
+Note: Make sure that the titleID is associated with each like button using a data-titleID attribute, and adjust the code accordingly.
+User
+Wait let's take it from the beginning cause I am a bit lost. I will provide you with the code again and please tell me again what to do to keep the consistency of the likes between pages.
+
+ChatGPT
+Certainly! Let's break it down step by step.
+
+Add a data-titleID attribute to your like buttons:
+In your HTML, make sure that each like button has a data-titleID attribute associated with the corresponding movie titleID. This is crucial for identifying which movie a like button represents.
+Example:
+html
+Copy code
+<!-- Add data-titleID attribute to your like button -->
+<button class="likeButton empty" data-titleID="{{ result.titleID }}" onclick="toggleLike({{ result.titleID }})">
+    &hearts;
+</button>
+Update the JavaScript for like/unlike operations:
+Update your JavaScript to include functions for liking, unliking, and initializing the like button appearances based on sessionStorage.
+javascript
+Copy code
+function addLike(titleID) {
+    // Existing code for adding a like
+
+    // Update likedMovies in sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    likedMovies.push(titleID);
+    sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+}
+
+function removeLike(titleID) {
+    // Existing code for removing a like
+
+    // Update likedMovies in sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    const index = likedMovies.indexOf(titleID);
+    if (index !== -1) {
+        likedMovies.splice(index, 1);
+        sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+    }
+}
+
+function updateLikedButtons() {
+    // Update the appearance of like buttons based on sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    const likeButtons = document.querySelectorAll('.likeButton');
+    likeButtons.forEach(button => {
+        const titleID = button.dataset.titleID;
+        if (likedMovies.includes(titleID)) {
+            button.classList.remove('
+User
+Wait let's take it from the beginning cause I am a bit lost. I will provide you with the code again and please tell me again what to do to keep the consistency of the likes between pages.
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('my_likes') }}" class="nav2_option">Likes</a>
+                    <a href="{{ url_for('index') }}">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="searchText">
+        <p>Search By Genre</p>
+    </div>
+
+    <form action="{{ url_for('search_genre') }}" method="GET" class="searchBar">
+        <input type="text" id="genre" placeholder="Genre" class="middle-search-input" name="genre">
+        <input type="text" id="minRating" placeholder="Minimum Rating" class="middle-search-input" name="minRating">
+        <input type="text" id="yearFrom" placeholder="Year From" class="middle-search-input" name="yearFrom">
+        <input type="text" id="yearTo" placeholder="Year To" class="middle-search-input" name="yearTo">
+        <button type="submit" class="middle-search-button">Search</button>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const genreInput = document.querySelector('input[name="genre"]');
+            const minRatingInput = document.querySelector('input[name="minRating"]');
+            const yearFromInput = document.querySelector('input[name="yearFrom"]');
+            const yearToInput = document.querySelector('input[name="yearTo"]');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function (event) {
+                event.preventDefault(); // display the results in the same page
+
+                // Get values from form inputs
+                const genre = genreInput.value.trim();
+                const minRating = minRatingInput.value.trim();
+                // Check if mandatory fields are filled
+                if (!genre || !minRating) {
+                    alert('Please fill in Genre and Minimum Rating fields.');
+                    return;
+                }
+                const yearFrom = yearFromInput.value.trim();
+                const yearTo = yearToInput.value.trim();
+
+                // Create a URL with the form parameters
+                const url = new URL('/bygenre', window.location.origin);
+                url.searchParams.append('qgenre', genre);
+                url.searchParams.append('minrating', minRating);
+                url.searchParams.append('yrFrom', yearFrom);
+                url.searchParams.append('yrTo', yearTo);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const movieInfoElement = document.createElement('div');
+                    movieInfoElement.classList.add('movieInfo');
+
+                    // Add various details about the movie
+                    const titleElement = document.createElement('p');
+                    titleElement.textContent = `Title: ${result.originalTitle}`;
+                    movieInfoElement.appendChild(titleElement);
+
+                    const typeElement = document.createElement('p');
+                    typeElement.textContent = `Type: ${result.type}`;
+                    movieInfoElement.appendChild(typeElement);
+
+                    const startYearElement = document.createElement('p');
+                    startYearElement.textContent = `Start Year: ${result.startYear}`;
+                    movieInfoElement.appendChild(startYearElement);
+
+                    const genresElement = document.createElement('p');
+                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                    movieInfoElement.appendChild(genresElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                    movieInfoElement.appendChild(ratingElement);
+
+                    resultElement.appendChild(movieInfoElement);
+
+                    // Create a button to add the movie to the list
+                    const addButton = document.createElement('button');
+                    addButton.textContent = '+';
+                    addButton.classList.add('addButton');
+                    addButton.style.fontWeight = 'bold'; // Make the text bold
+                    addButton.style.fontSize = '20px';
+                    addButton.addEventListener('click', function () {
+                        add_removeToMyList(result.titleID);
+                    });
+
+                    resultElement.appendChild(addButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement);
+
+                    const likeButton = document.createElement('button');
+                    likeButton.innerHTML = '&hearts;';
+                    likeButton.classList.add('likeButton');
+                    likeButton.classList.add('likeButton', 'empty');
+                    likeButton.addEventListener('click', function () {
+                        toggleLike(result.titleID, likeButton);
+                    });
+
+                    resultElement.appendChild(likeButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement2 = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement2);
+                });
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        function add_removeToMyList(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to add movies to your list.');
+                        return;
+                    }
+
+                    fetch(`/add_to_list/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+        function toggleLike(titleID, button) {
+        // Toggle the like status and update the button appearance
+        if (button.classList.contains('empty')) {
+            // If not liked, make it liked (full heart)
+            button.classList.remove('empty');
+            button.classList.add('full');
+            // Call the function to handle the like operation
+            addLike(titleID);
+        } else {
+            // If already liked, make it not liked (empty heart)
+            button.classList.remove('full');
+            button.classList.add('empty');
+            // Call the function to handle the unlike operation
+            removeLike(titleID);
+        }
+    }
+        function addLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/add_to_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+        
+        function removeLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/remove_from_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+        }
+    </script>
+
+</body>
+
+</html>
+
+ChatGPT
+To maintain consistency of likes between pages, you can use sessionStorage to store the liked movie IDs and update the like buttons based on this storage. Here are the modifications you need:
+
+Initialize sessionStorage on page load:
+javascript
+Copy code
+document.addEventListener('DOMContentLoaded', function () {
+    // Call the function to fetch and display movies when the page loads
+    fetchMovies();
+    updateLikedButtons();
+});
+Update the toggleLike, addLike, and removeLike functions to handle sessionStorage:
+javascript
+Copy code
+function toggleLike(titleID, button) {
+    // Toggle the like status and update the button appearance
+    if (button.classList.contains('empty')) {
+        // If not liked, make it liked (full heart)
+        button.classList.remove('empty');
+        button.classList.add('full');
+        // Call the function to handle the like operation
+        addLike(titleID);
+    } else {
+        // If already liked, make it not liked (empty heart)
+        button.classList.remove('full');
+        button.classList.add('empty');
+        // Call the function to handle the unlike operation
+        removeLike(titleID);
+    }
+
+    // Update likedMovies in sessionStorage
+    updateLikedMoviesInStorage();
+}
+
+function addLike(titleID) {
+    // Existing code for adding a like
+
+    // Update likedMovies in sessionStorage
+    updateLikedMoviesInStorage();
+}
+
+function removeLike(titleID) {
+    // Existing code for removing a like
+
+    // Update likedMovies in sessionStorage
+    updateLikedMoviesInStorage();
+}
+
+function updateLikedMoviesInStorage() {
+    // Update likedMovies in sessionStorage based on the current state of like buttons
+    const likeButtons = document.querySelectorAll('.likeButton');
+    const likedMovies = Array.from(likeButtons)
+        .filter(button => button.classList.contains('full'))
+        .map(button => button.dataset.titleID);
+
+    sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+}
+
+function updateLikedButtons() {
+    // Update the appearance of like buttons based on sessionStorage
+    const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+    const likeButtons = document.querySelectorAll('.likeButton');
+    likeButtons.forEach(button => {
+        const titleID = button.dataset.titleID;
+        if (likedMovies.includes(titleID)) {
+            button.classList.remove('empty');
+            button.classList.add('full');
+        } else {
+            button.classList.remove('full');
+            button.classList.add('empty');
+        }
+    });
+}
+Update the HTML like buttons to include a data-titleID attribute:
+Add data-titleID to each like button:
+html
+Copy code
+<button data-titleID="{{ result.titleID }}" class="likeButton empty" onclick="toggleLike({{ result.titleID }}, this)">
+    &hearts;
+</button>
+With these modifications, you should be able to maintain the consistency of likes between pages using sessionStorage.
+User
+Replying to:
+**Update the HTML like buttons to include a `data-titleID` attribute:**
+
+Add `data-titleID` to each like button:
+Where should I add this?
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="nav2" id="nav2">
+        <div class="nav2_logo_options">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
+            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
+            <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
+            <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>
+        </div>
+
+        <div class="nav2_avatar_search">
+
+            <div class="dropdown">
+                <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="" class="nav2_avatar">
+                <div class="dropdown_content">
+                    <a href="{{ url_for('my_likes') }}" class="nav2_option">Likes</a>
+                    <a href="{{ url_for('index') }}">Log Out</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="searchText">
+        <p>Search By Genre</p>
+    </div>
+
+    <form action="{{ url_for('search_genre') }}" method="GET" class="searchBar">
+        <input type="text" id="genre" placeholder="Genre" class="middle-search-input" name="genre">
+        <input type="text" id="minRating" placeholder="Minimum Rating" class="middle-search-input" name="minRating">
+        <input type="text" id="yearFrom" placeholder="Year From" class="middle-search-input" name="yearFrom">
+        <input type="text" id="yearTo" placeholder="Year To" class="middle-search-input" name="yearTo">
+        <button type="submit" class="middle-search-button">Search</button>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Call the function to fetch and display movies when the page loads
+            //fetchMovies();
+            updateLikedButtons();
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const genreInput = document.querySelector('input[name="genre"]');
+            const minRatingInput = document.querySelector('input[name="minRating"]');
+            const yearFromInput = document.querySelector('input[name="yearFrom"]');
+            const yearToInput = document.querySelector('input[name="yearTo"]');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function (event) {
+                event.preventDefault(); // display the results in the same page
+
+                // Get values from form inputs
+                const genre = genreInput.value.trim();
+                const minRating = minRatingInput.value.trim();
+                // Check if mandatory fields are filled
+                if (!genre || !minRating) {
+                    alert('Please fill in Genre and Minimum Rating fields.');
+                    return;
+                }
+                const yearFrom = yearFromInput.value.trim();
+                const yearTo = yearToInput.value.trim();
+
+                // Create a URL with the form parameters
+                const url = new URL('/bygenre', window.location.origin);
+                url.searchParams.append('qgenre', genre);
+                url.searchParams.append('minrating', minRating);
+                url.searchParams.append('yrFrom', yearFrom);
+                url.searchParams.append('yrTo', yearTo);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function displaySearchResults(results) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+
+            if (results && results.length > 0) {
+                // Loop through the results and create HTML elements to display them
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('searchResult'); // Add a class for styling
+
+                    const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+                    const posterElement = document.createElement('img');
+                    posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+                    posterElement.classList.add('row__poster');
+                    resultElement.appendChild(posterElement);
+
+                    // Create a div for movie information
+                    const movieInfoElement = document.createElement('div');
+                    movieInfoElement.classList.add('movieInfo');
+
+                    // Add various details about the movie
+                    const titleElement = document.createElement('p');
+                    titleElement.textContent = `Title: ${result.originalTitle}`;
+                    movieInfoElement.appendChild(titleElement);
+
+                    const typeElement = document.createElement('p');
+                    typeElement.textContent = `Type: ${result.type}`;
+                    movieInfoElement.appendChild(typeElement);
+
+                    const startYearElement = document.createElement('p');
+                    startYearElement.textContent = `Start Year: ${result.startYear}`;
+                    movieInfoElement.appendChild(startYearElement);
+
+                    const genresElement = document.createElement('p');
+                    genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+                    movieInfoElement.appendChild(genresElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+                    movieInfoElement.appendChild(ratingElement);
+
+                    resultElement.appendChild(movieInfoElement);
+
+                    // Create a button to add the movie to the list
+                    const addButton = document.createElement('button');
+                    addButton.textContent = '+';
+                    addButton.classList.add('addButton');
+                    addButton.style.fontWeight = 'bold'; // Make the text bold
+                    addButton.style.fontSize = '20px';
+                    addButton.addEventListener('click', function () {
+                        add_removeToMyList(result.titleID);
+                    });
+
+                    resultElement.appendChild(addButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement);
+
+                    const likeButton = document.createElement('button');
+                    likeButton.innerHTML = '&hearts;';
+                    likeButton.classList.add('likeButton');
+                    likeButton.classList.add('likeButton', 'empty');
+                    likeButton.addEventListener('click', function () {
+                        toggleLike(result.titleID, likeButton);
+                    });
+
+                    resultElement.appendChild(likeButton);
+                    // Append resultElement to resultsContainer
+                    resultsContainer.appendChild(resultElement);
+
+                    // Add a horizontal line between results
+                    const hrElement2 = document.createElement('hr');
+                    resultsContainer.appendChild(hrElement2);
+                });
+            } else {
+                // Display a message for no results
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        function add_removeToMyList(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to add movies to your list.');
+                        return;
+                    }
+
+                    fetch(`/add_to_list/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+        function toggleLike(titleID, button) {
+        // Toggle the like status and update the button appearance
+        if (button.classList.contains('empty')) {
+            // If not liked, make it liked (full heart)
+            button.classList.remove('empty');
+            button.classList.add('full');
+            // Call the function to handle the like operation
+            addLike(titleID);
+        } else {
+            // If already liked, make it not liked (empty heart)
+            button.classList.remove('full');
+            button.classList.add('empty');
+            // Call the function to handle the unlike operation
+            removeLike(titleID);
+        }
+        // Update likedMovies in sessionStorage
+        updateLikedMoviesInStorage();
+    }
+        function addLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/add_to_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+
+            updateLikedMoviesInStorage();
+        }
+        
+        function removeLike(titleID) {
+            fetch('/get_user_id')
+                .then(response => response.json())
+                .then(data => {
+                    const userID = data;
+                    console.log('User ID:', userID);
+
+                    if (!userID) {
+                        alert('Please log in to like movies');
+                        return;
+                    }
+
+                    fetch(`/remove_from_likes/${titleID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userID: userID }),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });    
+            updateLikedMoviesInStorage();
+        }
+
+    function updateLikedMoviesInStorage() {
+        // Update likedMovies in sessionStorage based on the current state of like buttons
+        const likeButtons = document.querySelectorAll('.likeButton');
+        const likedMovies = Array.from(likeButtons)
+            .filter(button => button.classList.contains('full'))
+            .map(button => button.dataset.titleID);
+
+        sessionStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+    }
+    
+    function updateLikedButtons() {
+        // Update the appearance of like buttons based on sessionStorage
+        const likedMovies = JSON.parse(sessionStorage.getItem('likedMovies')) || [];
+        const likeButtons = document.querySelectorAll('.likeButton');
+        likeButtons.forEach(button => {
+            const titleID = button.dataset.titleID;
+            if (likedMovies.includes(titleID)) {
+                button.classList.remove('empty');
+                button.classList.add('full');
+            } else {
+                button.classList.remove('full');
+                button.classList.add('empty');
+            }
+        });
+}
+    </script>
+
+</body>
+
+</html>
+
+ChatGPT
+Certainly! You can add the data-titleID attribute to each like button in your HTML code. Find the HTML code where you generate the like buttons inside the loop (where you create the likeButton), and add the data-titleID attribute to each button.
+
+Here's an example of how you can modify the relevant part of your code:
+
+html
+Copy code
+// Existing code...
+const likeButton = document.createElement('button');
+likeButton.innerHTML = '&hearts;';
+likeButton.classList.add('likeButton');
+likeButton.classList.add('likeButton', 'empty');
+likeButton.dataset.titleID = result.titleID; // Add this line to set data-titleID
+likeButton.addEventListener('click', function () {
+    toggleLike(result.titleID, likeButton);
+});
+
+resultElement.appendChild(likeButton);
+// Existing code...
+Make sure to add the likeButton.dataset.titleID = result.titleID; line within the loop where you create each like button. This will set the data-titleID attribute for each button with the corresponding titleID.
+
+Repeat this modification wherever you are creating like buttons for different movies in your code.
+User
+async function watchlist(titleID) {
+    try {
+        const response = await fetch(`/check_watchlist/${titleID}`);
+        const data = await response.json();
+        console.log("AAAA", data.inWatchlist);
+        return data.inWatchlist;
+    } catch (error) {
+        console.error("Error checking watchlist:", error);
+        return 0;
+    }
+}
+
+function createListButton(result) {
+    const addToListButton = document.createElement('button');
+    if (watchlist(result.titleID) > 0){
+    addToListButton.innerHTML = '<div class="icon">+</div>';
+    addToListButton.classList.add('addToListButton', 'added');
+    }
+    else{
+    addToListButton.innerHTML = '<div class="icon">+</div>';
+    addToListButton.classList.add('addToListButton', 'empty');
+    }
+    addToListButton.addEventListener('click', function () {
+        toggleAddToList(result.titleID, addToListButton);
+    });
+    return addToListButton;
+}
+
+function toggleAddToList(titleID, button) {
+    // Toggle the add to list status and update the button appearance
+    if (button.classList.contains('empty')) {
+        // If not added, make it added (tick icon)
+        button.innerHTML = '<div class="icon">&#10003;</div>';
+        button.classList.remove('empty');
+        button.classList.add('added');
+        // Call the function to handle the add to list operation
+        addToWatchlist(titleID);
+    } else {
+        // If already added, make it not added (plus icon)
+        button.innerHTML = '<div class="icon">+</div>';
+        button.classList.remove('added');
+        button.classList.add('empty');
+        // Call the function to handle the remove from list operation
+        removeFromWatchlist(titleID);
+    }
+}
+
+function addToWatchlist(titleID) {
+    fetch('/get_user_id')
+        .then(response => response.json())
+        .then(data => {
+            const userID = data;
+            console.log('User ID:', userID);
+
+            if (!userID) {
+                alert('Please log in to add movies to your watchlist');
+                return;
+            }
+
+            fetch(`/add_to_list/${titleID}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userID: userID }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function removeFromWatchlist(titleID) {
+    fetch('/get_user_id')
+        .then(response => response.json())
+        .then(data => {
+            const userID = data;
+            console.log('User ID:', userID);
+
+            if (!userID) {
+                alert('Please log in to manage your watchlist');
+                return;
+            }
+
+            fetch(`/remove_from_list/${titleID}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userID: userID }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+ChatGPT
+Your code looks good, and it seems like you've implemented functionality to add and remove movies from a watchlist. The watchlist function checks whether a movie is in the watchlist or not, and the createListButton function creates a button with the appropriate styling based on whether the movie is in the watchlist or not.
+
+Just a small suggestion: Since the watchlist function is asynchronous and returns a Promise, you should use await when calling it in the createListButton function. Here's the updated code:
+
+javascript
+Copy code
+async function createListButton(result) {
+    const addToListButton = document.createElement('button');
+    const isInWatchlist = await watchlist(result.titleID);
+
+    if (isInWatchlist > 0) {
+        addToListButton.innerHTML = '<div class="icon">+</div>';
+        addToListButton.classList.add('addToListButton', 'added');
+    } else {
+        addToListButton.innerHTML = '<div class="icon">+</div>';
+        addToListButton.classList.add('addToListButton', 'empty');
+    }
+
+    addToListButton.addEventListener('click', function () {
+        toggleAddToList(result.titleID, addToListButton);
+    });
+
+    return addToListButton;
+}
+By using await when calling watchlist(result.titleID), you ensure that the function waits for the asynchronous operation to complete before proceeding. This ensures that you get the correct value of isInWatchlist before deciding the styling of the button.
+
+Other than that, your code looks well-structured and handles the watchlist functionality effectively. If you have any specific questions or if there's anything else you'd like assistance with, feel free to let me know!
+User
+    if (watchlist(result.titleID) > 0){
+    addToListButton.innerHTML = '<div class="icon">+</div>';
+    addToListButton.classList.add('addToListButton', 'added');
+    }
+
+Is this correct? Here I want the button to be a checkmark
+
+ChatGPT
+If you want the button to display a checkmark when the movie is in the watchlist, you should update the innerHTML and the classes accordingly. Currently, your code adds a plus icon and the class 'added' when the condition watchlist(result.titleID) > 0 is true. To display a checkmark, you should set the innerHTML to the checkmark HTML entity (&#10003;), and use the class 'checked' (or any other class you prefer) instead of 'added'.
+
+Here's the modified code:
+
+javascript
+Copy code
+async function createListButton(result) {
+    const addToListButton = document.createElement('button');
+    const isInWatchlist = await watchlist(result.titleID);
+
+    if (isInWatchlist > 0) {
+        // Display a checkmark and use the class 'checked'
+        addToListButton.innerHTML = '<div class="icon">&#10003;</div>';
+        addToListButton.classList.add('addToListButton', 'checked');
+    } else {
+        // Display a plus icon and use the class 'empty'
+        addToListButton.innerHTML = '<div class="icon">+</div>';
+        addToListButton.classList.add('addToListButton', 'empty');
+    }
+
+    addToListButton.addEventListener('click', function () {
+        toggleAddToList(result.titleID, addToListButton);
+    });
+
+    return addToListButton;
+}
+Now, when the movie is in the watchlist, the button will display a checkmark, and it will have the class 'checked'. Feel free to adjust the class names or icons based on your styling preferences.
+User
+   async function displaySearchResults(results) {
+    // Clear previous results
+    resultsContainer.innerHTML = '';
+
+    if (results && results.length > 0) {
+        // Loop through the results and create HTML elements to display them
+        results.forEach(async (result) => {
+            const resultElement = document.createElement('div');
+            resultElement.classList.add('searchResult'); // Add a class for styling
+
+            const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+            const posterElement = document.createElement('img');
+            posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+            posterElement.classList.add('row__poster');
+            resultElement.appendChild(posterElement);
+
+            // Create a div for movie information
+            const movieInfoElement = document.createElement('div');
+            movieInfoElement.classList.add('movieInfo');
+
+            // Add various details about the movie
+            const titleElement = document.createElement('p');
+            titleElement.textContent = `Title: ${result.originalTitle}`;
+            movieInfoElement.appendChild(titleElement);
+
+            const typeElement = document.createElement('p');
+            typeElement.textContent = `Type: ${result.type}`;
+            movieInfoElement.appendChild(typeElement);
+
+            const startYearElement = document.createElement('p');
+            startYearElement.textContent = `Start Year: ${result.startYear}`;
+            movieInfoElement.appendChild(startYearElement);
+
+            const genresElement = document.createElement('p');
+            genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+            movieInfoElement.appendChild(genresElement);
+
+            const ratingElement = document.createElement('p');
+            ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+            movieInfoElement.appendChild(ratingElement);
+
+            resultElement.appendChild(movieInfoElement);
+
+            // Ensure createListButton is defined
+            const listButton = await createListButton(result);
+            resultElement.appendChild(listButton);
+
+            // Ensure createLikeButton is defined
+            const likeButton = createLikeButton(result);
+            resultElement.appendChild(likeButton);
+
+            // Append resultElement to resultsContainer
+            resultsContainer.appendChild(resultElement);
+
+            // Create and append a horizontal line between results
+            const hrElement = document.createElement('hr');
+            resultsContainer.appendChild(hrElement);
+
+            console.log('listButton type:', typeof listButton, listButton);
+            console.log('likeButton type:', typeof likeButton, likeButton);
+            console.log('hrElement type:', typeof hrElement, hrElement);
+        });
+    } else {
+        // Display a message for no results
+        resultsContainer.innerHTML = '<p>No results found.</p>';
+    }
+}
+
+I think that the problem is caused by the fact that there should be an await? or something? Before each iteration in results
+
+ChatGPT
+Yes, you are correct. Since createListButton is an asynchronous function that returns a promise (due to the await inside it), you need to use await before calling it in the forEach loop. The forEach loop itself doesn't wait for asynchronous operations to complete.
+
+Here's the updated code:
+
+javascript
+Copy code
+async function displaySearchResults(results) {
+    // Clear previous results
+    resultsContainer.innerHTML = '';
+
+    if (results && results.length > 0) {
+        // Loop through the results and create HTML elements to display them
+        for (const result of results) {
+            const resultElement = document.createElement('div');
+            resultElement.classList.add('searchResult'); // Add a class for styling
+
+            const posterSrc = result.titlePoster ? result.titlePoster : '/static/images/default.jpg';
+            const posterElement = document.createElement('img');
+            posterElement.src = posterSrc.replace('{width_variable}', 'w500');
+            posterElement.classList.add('row__poster');
+            resultElement.appendChild(posterElement);
+
+            // Create a div for movie information
+            const movieInfoElement = document.createElement('div');
+            movieInfoElement.classList.add('movieInfo');
+
+            // Add various details about the movie
+            const titleElement = document.createElement('p');
+            titleElement.textContent = `Title: ${result.originalTitle}`;
+            movieInfoElement.appendChild(titleElement);
+
+            const typeElement = document.createElement('p');
+            typeElement.textContent = `Type: ${result.type}`;
+            movieInfoElement.appendChild(typeElement);
+
+            const startYearElement = document.createElement('p');
+            startYearElement.textContent = `Start Year: ${result.startYear}`;
+            movieInfoElement.appendChild(startYearElement);
+
+            const genresElement = document.createElement('p');
+            genresElement.textContent = `Genres: ${result.genres.join(', ')}`;
+            movieInfoElement.appendChild(genresElement);
+
+            const ratingElement = document.createElement('p');
+            ratingElement.textContent = `Rating: ${result.rating ? result.rating.avRating : 'N/A'} (${result.rating ? result.rating.numVotes : '0'} votes)`;
+            movieInfoElement.appendChild(ratingElement);
+
+            resultElement.appendChild(movieInfoElement);
+
+            // Ensure createListButton is defined
+            const listButton = await createListButton(result);
+            resultElement.appendChild(listButton);
+
+            // Ensure createLikeButton is defined
+            const likeButton = createLikeButton(result);
+            resultElement.appendChild(likeButton);
+
+            // Append resultElement to resultsContainer
+            resultsContainer.appendChild(resultElement);
+
+            // Create and append a horizontal line between results
+            const hrElement = document.createElement('hr');
+            resultsContainer.appendChild(hrElement);
+
+            console.log('listButton type:', typeof listButton, listButton);
+            console.log('likeButton type:', typeof likeButton, likeButton);
+            console.log('hrElement type:', typeof hrElement, hrElement);
+        }
+    } else {
+        // Display a message for no results
+        resultsContainer.innerHTML = '<p>No results found.</p>';
+    }
+}
+By using a for...of loop and await, you ensure that each iteration waits for the asynchronous operation to complete before moving on to the next one.
+User
+Why does a file on vscode say that it is "Untracked"?
+
+ChatGPT
+In version control systems like Git, a file is marked as "Untracked" when it is present in the working directory but has not yet been added to the version control system. This typically happens with new files that haven't been committed or files that were created locally but haven't been included in the repository.
+
+Here are a few common scenarios that can lead to files being untracked:
+
+New Files: If you've created new files in your project directory, Git will consider them untracked until you explicitly add them to the staging area using the git add command.
+bash
+Copy code
+git add filename
+Ignored Files: If the file matches a pattern in your .gitignore file, Git will consider it untracked. Make sure that the file is not listed in your .gitignore file if you want to track it.
+Renamed or Moved Files: If you've renamed or moved a file without using git mv, Git may see the old file as untracked and the new file as untracked. It's recommended to use git mv for such operations.
+bash
+Copy code
+git mv old_filename new_filename
+Repository Initialization: If you've just initialized a new Git repository, all existing files will be untracked until you add and commit them.
+bash
+Copy code
+git add .
+git commit -m "Initial commit"
+To check the status of your files in Git, you can use the following command:
+
+bash
+Copy code
+git status
+This command will show you a list of untracked files, changes to be committed (staged changes), and changes not staged for commit. You can then take appropriate actions based on the status of your files.
+User
+Why is this returning undefined?
+
+@app.route('/check_likelist/<int:titleID>', methods=['GET'])
+def check_likelist(titleID):
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst = %s"
+        cursor.execute(query, (userID, titleID))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_likelist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inWatchlist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
+
+ChatGPT
+If you're encountering TypeError: 'NoneType' object is not subscriptable, it means that result is None, and you're trying to access an index on a None object.
+
+To avoid this error, you should first check if result is not None before attempting to access its elements. Here's how you can modify your code:
+
+python
+Copy code
+@app.route('/check_likelist/<int:titleID>', methods=['GET'])
+def check_likelist(titleID):
+    userID = session.get('user_id')
+
+    if not userID:
+        # If user ID is not in the session, handle it accordingly
+        return jsonify({"error": "User not authenticated"}), 401
+
+    # Create a cursor to execute SQL queries
+    cursor = db.cursor()
+
+    # Check if the movie with titleID is in the watchlist for the current user
+    query = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst = %s"
+    cursor.execute(query, (userID, titleID))
+
+    # Fetch the result
+    result = cursor.fetchone()
+
+    # Check if fetchone() returned a result
+    if result:
+        in_likelist_count = result[0] if result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inWatchlist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
+    else:
+        # If result is None, the movie is not in the watchlist
+        return jsonify({'inWatchlist': 0}), 200, {'Content-Type': 'application/json'}
+This modification ensures that you only try to access result[0] when result is not None. If result is None, it means the movie is not in the watchlist, and you can handle it accordingly.
+User
+This is my approute:
+
+@app.route('/check_likelist/<int:titleID>', methods=['GET'])
+def check_likelist(titleID):
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst = %s"
+        cursor.execute(query, (userID, titleID))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_likelist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inWatchlist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
+
+And this is the function that calls it:
+async function likelist(titleID) {
+    try {
+        const response = await fetch(`/check_likelist/${titleID}`);
+        const data = await response.json();
+        console.log("AAAA", data.inLikelist);
+        return data.inLikelist;
+    } catch (error) {
+        console.error("Error checking Likelist:", error);
+        return 0;
+    }
+}
+
+However, when I check console instead of "AAAA" - 3 (or any number), I get "AAAA" - Undefined
+
+ChatGPT
+It seems like there's a mismatch in the key used for accessing the value in the returned JSON object. In your Python code, you're returning inWatchlist, but in your JavaScript code, you're trying to access inLikelist. The key should be consistent between your server and client.
+
+Update your Python code to return inLikelist instead of inWatchlist:
+
+python
+Copy code
+return jsonify({'inLikelist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
+And then, in your JavaScript code, access inLikelist:
+
+javascript
+Copy code
+console.log("AAAA", data.inLikelist);
+Make sure the keys are consistent between the server and client code to avoid such discrepancies.

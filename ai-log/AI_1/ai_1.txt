@@ -1,0 +1,3176 @@
+
+
+from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for
+import mysql.connector
+from numpy import double
+from passlib.hash import bcrypt  # Import the bcrypt hashing library
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+import os
+import secrets
+
+template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
+static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
+app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
+app.secret_key = secrets.token_hex(16)
+app.config['SESSION_TYPE'] = 'filesystem'
+CORS(app)
+
+# Database configuration
+db_config = {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "2255",  
+    "database": "ntuaflix",
+    "charset": "utf8mb4",
+    "collation": "utf8mb4_general_ci"
+}
+
+try:
+    db = mysql.connector.connect(**db_config)
+except mysql.connector.Error as err:
+    db = None
+    print("Database connection failed:", err)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/homepage.html')
+def homepage():
+    top_rated_movies = topRated()  
+    return render_template('homepage.html', top_rated=top_rated_movies)
+
+@app.route('/signin.html')
+def signin():
+    return render_template('signin.html')
+
+@app.route('/signup.html')
+def signup():
+    return render_template('signup.html')
+
+@app.route('/search_title.html')
+def search_title():
+    return render_template('search_title.html')
+
+@app.route('/search_genre.html')
+def search_genre():
+    return render_template('search_genre.html')
+
+@app.route('/info/<int:title_ID>')
+def info(title_ID):
+    return render_template('/info.html', title_ID = title_ID)
+
+@app.route('/search_name.html')
+def search_name():
+    return render_template('search_name.html')
+
+@app.route('/my-list.html')
+def my_list():
+    return render_template('watching_later.html')
+
+@app.route('/my-likes.html')
+def my_likes():
+    return render_template('likes.html')
+
+@app.route('/my-history.html')
+def my_history():
+    return render_template('history.html')
+
+@app.route('/signupform', methods=['POST'])
+def signupform():
+    if request.method == 'POST':
+        try:
+            # Extract form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+
+            print(username)
+            print(password)
+
+            # Check if passwords match
+            if password != confirm_password:
+                return jsonify({"error": "Passwords do not match"}), 400
+
+            # Hash the password (you should use a secure method for password hashing)
+
+            # Execute the query to insert data into the 'users' table
+            cursor = db.cursor()
+            query = "INSERT INTO users (Username, password, is_admin) VALUES (%s, %s, 0)"
+            cursor.execute(query, (username, password))
+            db.commit()
+
+            return redirect(url_for('signup_success'))
+
+        except Exception as e:
+            # Handle errors
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+
+    return jsonify({"error": "Invalid request"}), 400
+
+
+@app.route('/signup_success')
+def signup_success():
+    return render_template('homepage.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        try:
+            # Extract username and password from form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+
+            if username is None or password is None:
+                return jsonify({"error": "Bad request"}), 400
+            else:
+                cursor = db.cursor()
+                # Execute a query to check if the username and password exist in the same row
+                query = "SELECT * FROM users WHERE Username = %s AND password = %s"
+                cursor.execute(query, (username, password))
+
+                # Fetch the result
+                result = cursor.fetchone()
+                user_id = result[0]
+                print(result)
+
+                if result:
+                    user_id, username = result[0], result[1]
+                    # Store user ID in the session
+                    session['user_id'] = user_id
+                    return jsonify({"user_id": user_id, "username": username}), 200
+                else:
+                    return jsonify({"error": "Not authorized"}), 401
+
+        except Exception as e:
+            # Log the exception for debugging
+            print(str(e))
+            # Internal server error
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    if request.method == 'POST':
+        try:
+            if 'user_id' in session:
+                session.pop('user_id', None)
+                return jsonify({"message": "Logout successful"}), 200
+            else:
+                return jsonify({"error": "Not logged in"}), 401
+        
+        except Exception as e:
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+
+@app.route('/get_user_id', methods = ['GET'])
+def get_user_id():
+    user_id = session.get('user_id')
+
+    if user_id:
+        return jsonify(user_id), 200
+    else:
+        return jsonify({"error": "User not authenticated"}), 401
+    
+
+def fetch_title_akas(cursor, title_id):
+    # Fetch title_akas for a given title
+    query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+    cursor.execute(query_akas, (title_id,))
+    title_akas = cursor.fetchall()
+    if title_akas:
+        return [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+    else: 
+        return None
+
+def fetch_title_principals(cursor, title_id):
+    # Fetch title_principals for a given title
+    query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+    cursor.execute(query_principals, (title_id,))
+    title_principals = cursor.fetchall()
+    if title_principals:
+        return [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+    else:
+        return None
+
+def fetch_title_rating(cursor, title_id):
+    # Fetch title_rating for a given title
+    query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+    cursor.execute(query_rating, (title_id,))
+    title_rating = cursor.fetchone()
+    return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
+
+
+@app.route('/title/<int:titleID>', methods=['GET'])
+def title(titleID):
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
+        cursor.execute(query_basics,(titleID,))
+
+        title_data = cursor.fetchone()
+
+        if title_data:
+            try:
+                column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
+                title = dict(zip(column_names, title_data))
+                title['genres'] = title['genres'].split(',') if title['genres'] else [] 
+                title['startYear'] = str(title['startYear'])
+                title['titleID'] = str(title['titleID'])
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title['titleAkas'] = fetch_title_akas(cursor, title_data[0])
+                title['principals'] = fetch_title_principals(cursor, title_data[0])
+                title['rating'] = fetch_title_rating(cursor, title_data[0])
+
+                return jsonify(title), 200
+            
+            except Exception as e:
+                print("Error in query_akas execution:", str(e))
+                return jsonify({"error": "Internal server error"}), 500
+
+        else:
+            return jsonify({"error": "Title not found"}), 204
+    
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+
+
+@app.route('/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if title_list:
+                return jsonify(title_list), 200
+            else:
+                return jsonify({"error": "Movies not found"}), 204
+
+    return jsonify({"error": "Not Available"}), 404
+
+@app.route('/bygenre', methods=['GET'])
+def bygenre():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        qgenre = request.args.get('qgenre')
+        minrating = float(request.args.get('minrating'))
+        yrFrom = request.args.get('yrFrom')
+        yrTo = request.args.get('yrTo')
+
+        query = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN title_ratings r ON t.tconst = r.tconst WHERE t.genres LIKE %s AND r.averageRating >= %s "
+        parameters = [f"%{qgenre}%",minrating]
+
+        if yrFrom and yrTo:
+            query += "AND t.startYear >= %s AND t.startYear <= %s"
+            parameters.append(int(yrFrom))
+            parameters.append(int(yrTo))
+
+        query += " GROUP BY t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres"
+
+        cursor.execute(query,parameters)
+        titles = cursor.fetchall()
+
+        title_list = []
+
+        for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+
+                title_list.append(title_dict)
+        
+        if title_list:
+            return jsonify(title_list), 200
+        else:
+            return jsonify({"error": "Movies not found"}), 204
+
+    # Return an empty list if no titles are found or if titlePart is not provided
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+
+@app.route('/name/<int:nameID>', methods=['GET'])
+def name(nameID):
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE nconst = %s"
+        cursor.execute(query_basics,(nameID,))
+
+        name_data = cursor.fetchone()
+
+        if name_data:
+            try:
+                column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
+                name = dict(zip(column_names, name_data))
+                
+                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
+                cursor.execute(query_principals, (nameID,))
+                name_principals = cursor.fetchall()
+
+                if name_principals:
+                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
+
+                return jsonify(name), 200
+            except Exception as e:
+                print("Error in query_akas execution:", str(e))
+                return jsonify({"error": "Internal server error"}), 500
+
+        else:
+            return jsonify({"error": "Title not found"}), 204
+    
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/searchname', methods=['GET'])
+def searchnamename():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()  # take the data from the body
+        #namePart = data.get('namePart')
+        namePart = request.args.get('namePart')
+
+        query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE primaryName LIKE %s"
+        cursor.execute(query_basics,(f"%{namePart}%",))
+
+        names = cursor.fetchall()
+        name_list = []
+
+        if names:
+            for name_data in names:
+                column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
+                name = dict(zip(column_names, name_data))
+                cursor.fetchall()
+                
+                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
+                cursor.execute(query_principals, (name_data[0],))
+                name_principals = cursor.fetchall()
+                # Fetch results of query_principals before proceeding
+                cursor.fetchall()
+
+                if name_principals:
+                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
+                name_list.append(name)
+
+            return jsonify(name_list), 200
+        
+        else:
+            return jsonify({"error": "No name found"}), 204
+    
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/topRated', methods=['GET'])
+def topRated():
+    if request.method == 'GET':
+        cursor = db.cursor()
+        query_top10 = "SELECT tp.img_url_asset, tr.averageRating FROM title_basics tp INNER JOIN title_ratings tr ON tp.tconst = tr.tconst WHERE tp.img_url_asset IS NOT NULL ORDER BY tr.averageRating DESC LIMIT 10"
+        cursor.execute(query_top10)
+        top_rated = cursor.fetchall()
+
+        top_rated_with_width = []
+
+        for result in top_rated:
+            img_url = result[0]
+            width_variable = 'w200'  # Replace 'w500' with your desired width value
+            poster_url = img_url.replace('{width_variable}', width_variable) if img_url else '/static/images/default_image_for_titles.jpeg'
+            top_rated_with_width.append({'poster_url': poster_url, 'averageRating': result[1]})
+
+        if top_rated_with_width:
+            return jsonify(top_rated_with_width), 200
+        else:
+            return jsonify({"error": "No movies found"}), 204
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 405
+
+@app.route('/add_to_list/<int:titleID>', methods=['POST'])
+def add_to_list(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "Not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst  = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if movie:
+           return jsonify({"message": "Movie already in list"}), 201
+        
+        else:
+            query_add = "INSERT INTO ListForWatchingLater(usersid, title_basicstconst ) VALUES(%s, %s)"
+            cursor.execute(query_add, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie added succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/remove_from_list/<int:titleID>', methods=['POST'])
+def remove_from_list(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_check = "SELECT * FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if movie:
+            query_remove = "DELETE FROM ListForWatchingLater WHERE usersid = %s and title_basicstconst = %s"
+            cursor.execute(query_remove, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie removed succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+        
+        else:
+            return jsonify({"error" : "Not in list"}), 201
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/list_for_watching_later', methods=['GET'])
+def list_for_watching_later():
+    if request.method == 'GET':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query1 = "SELECT * FROM ListForWatchingLater WHERE usersid = %s"
+
+        with db.cursor() as cursor:
+            cursor.execute(query1, (userID,))
+            movies = cursor.fetchall()
+
+        movie_list = []
+
+        if movies:
+            try:
+                for movie in movies:
+                    query2 = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN ListForWatchingLater l ON t.tconst = l.title_basicstconst WHERE t.tconst = %s"
+                    with db.cursor() as cursor:
+                        cursor.execute(query2,(movie[1],))
+                        movie_info = cursor.fetchone()
+                        movie_dict = {
+                            'titleID': str(movie_info[0]),
+                            'type': movie_info[1],
+                            'originalTitle': movie_info[2],
+                            'titlePoster': movie_info[3],
+                            'startYear': str(movie_info[4]),
+                            'endYear': str(movie_info[5]),
+                            'genres': movie_info[6].split(',') if movie_info[6] else []
+                        }
+                        # Fetch title_akas, title_principals, and title_rating for each title
+                        movie_dict['titleAkas'] = fetch_title_akas(cursor, movie_info[0])
+                        movie_dict['principals'] = fetch_title_principals(cursor, movie_info[0])
+                        movie_dict['rating'] = fetch_title_rating(cursor, movie_info[0])
+
+                        movie_list.append(movie_dict)
+
+            except Exception as e:
+                print(f"An exception occurred: {e}")
+                return jsonify({"error": "Internal server error"}), 500
+
+            return jsonify(movie_list), 200
+        else:
+            return jsonify({'list': []}), 200
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 405
+
+
+@app.route('/add_to_likes/<int:titleID>', methods=['POST'])
+def add_to_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_check = "SELECT * FROM likes WHERE usersid = %s and title_basicstconst  = %s"
+        cursor.execute(query_check, (userID, titleID))
+        movie = cursor.fetchone()
+        
+        if movie:
+           return jsonify({"message": "Movie already liked"}), 201
+        
+        else:
+            query_add = "INSERT INTO Likes(usersid, title_basicstconst) VALUES(%s, %s)"
+            cursor.execute(query_add, (userID, titleID))
+            db.commit()
+
+            if cursor.rowcount > 0 :
+                return jsonify({"message": "Movie added succesfully"}), 200
+            else:
+                return jsonify({"error": "Something went wrong"}), 204
+    return jsonify({"error" : "Internal server error"}), 500
+
+@app.route('/remove_from_likes/<int:titleID>', methods=['POST'])
+def remove_from_likes(titleID):
+    if request.method == 'POST':
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        cursor = db.cursor()
+        query_rem = "DELETE FROM Likes where title_basicstconst = %s"
+        cursor.execute(query_rem, (titleID,))
+        db.commit()
+
+        if cursor.rowcount > 0 :
+            return jsonify({"message": "Movie unliked succesfully"}), 200
+        else:
+            return jsonify({"error": "Movie already unliked"}), titleID
+        
+    return jsonify({"error" : "Internal server error"}), 500
+
+
+@app.route('/check_watchlist/<int:titleID>', methods=['GET'])
+def check_watchlist(titleID):
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM ListForWatchingLater WHERE usersid = %s AND title_basicstconst = %s"
+        cursor.execute(query, (userID, titleID))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_watchlist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inWatchlist': in_watchlist_count}), 200, {'Content-Type': 'application/json'}
+
+@app.route('/check_likelist/<int:titleID>', methods=['GET'])
+def check_likelist(titleID):
+        userID = session.get('user_id')
+
+        if not userID:
+            # If user ID is not in the session, handle it accordingly
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Create a cursor to execute SQL queries
+        cursor = db.cursor()
+
+        # Check if the movie with titleID is in the watchlist for the current user
+        query = "SELECT * FROM Likes WHERE usersid = %s AND title_basicstconst = %s"
+        cursor.execute(query, (userID, titleID))
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if fetchone() returned a result
+        in_likelist_count = result[0] if result and result[0] is not None else 0
+        #print(in_watchlist_count)
+
+        # Return a JSON response indicating whether the movie is in the watchlist or not
+        return jsonify({'inLikelist': in_likelist_count}), 200, {'Content-Type': 'application/json'}
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+ChatGPT
+To extend the functionality of your URLs to return either JSON or CSV based on the format parameter, you'll need to modify your existing routes to handle this parameter appropriately.
+
+Here's how you can do it:
+
+Modify Route Functions: Modify your route functions to check for the format query parameter. If the format parameter is provided and set to csv, you should return CSV data. Otherwise, continue returning JSON data as before.
+CSV Response: For CSV responses, you need to convert your JSON data into CSV format. You can use Python libraries like csv to achieve this.
+Here's an example of how you can modify one of your route functions to handle the format parameter and return CSV data:
+
+python
+Copy code
+import csv
+from flask import Response
+
+@app.route('/title/<int:titleID>', methods=['GET'])
+def title(titleID):
+    if request.method == 'GET':
+        # Check if the 'format' parameter is provided and set to 'csv'
+        output_format = request.args.get('format')
+        
+        cursor = db.cursor()
+        # Your existing query and data fetching code here...
+        
+        # Assume title_data is your JSON data fetched from the database
+
+        if output_format == 'csv':
+            # Convert JSON data to CSV format
+            csv_data = convert_to_csv(title_data)
+            
+            # Return CSV response
+            return Response(
+                csv_data,
+                mimetype="text/csv",
+                headers={"Content-disposition":
+                             "attachment; filename=titles.csv"})
+        else:
+            # Return JSON response as before
+            return jsonify(title_data), 200
+    else:
+        return jsonify({"error": "Not Available"}), 404
+For the convert_to_csv function, you would need to define a method to convert your JSON data into CSV format. This method would involve iterating over your JSON data and writing it to a CSV file or generating a CSV string.
+
+Remember to apply similar modifications to other route functions as well.
+
+When the user requests a URL with the format parameter set to csv, the server will return the data in CSV format. This will be downloaded by the browser or displayed directly depending on the browser's settings.
+
+Please note that you'll need to implement the convert_to_csv function according to the structure of your JSON data to ensure proper conversion to CSV format.
+User
+What should convert_to_csv() look like?
+
+ChatGPT
+The convert_to_csv function should take your JSON data as input and convert it into CSV format. Since you haven't provided the exact structure of your JSON data, I'll provide a general example assuming your JSON data is a list of dictionaries, where each dictionary represents a row in the CSV.
+
+Here's a sample implementation of convert_to_csv:
+
+python
+Copy code
+import csv
+from io import StringIO
+
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define the CSV fieldnames based on the keys of the first dictionary in the JSON data
+    fieldnames = json_data[0].keys()
+    
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+    
+    # Write each row of data
+    for row in json_data:
+        writer.writerow(row)
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+This function creates a StringIO buffer to write CSV data. It then initializes a CSV writer object with the appropriate fieldnames based on the keys of the dictionaries in the JSON data. The function iterates over each dictionary in the JSON data, writing it as a row in the CSV file. Finally, it returns the CSV data as a string.
+
+You can call this function in your route handlers when the format parameter is set to csv to convert your JSON data into CSV format.
+User
+Does this help you understand the structure of the json object?
+
+@app.route('/title/<int:titleID>', methods=['GET'])
+def title(titleID):
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
+        cursor.execute(query_basics,(titleID,))
+
+        title_data = cursor.fetchone()
+
+        if title_data:
+            try:
+                column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
+                title = dict(zip(column_names, title_data))
+                title['genres'] = title['genres'].split(',') if title['genres'] else [] 
+                title['startYear'] = str(title['startYear'])
+                title['titleID'] = str(title['titleID'])
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title['titleAkas'] = fetch_title_akas(cursor, title_data[0])
+                title['principals'] = fetch_title_principals(cursor, title_data[0])
+                title['rating'] = fetch_title_rating(cursor, title_data[0])
+
+                return jsonify(title), 200
+            
+            except Exception as e:
+                print("Error in query_akas execution:", str(e))
+                return jsonify({"error": "Internal server error"}), 500
+
+        else:
+            return jsonify({"error": "Title not found"}), 204
+    
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+ChatGPT
+Yes, the structure of the JSON object becomes clearer from this route handler. The JSON object returned by this route handler consists of several key-value pairs, where each key represents a piece of information about the title and its related data.
+
+Here's a breakdown of the structure of the JSON object returned by this route handler:
+
+titleID: ID of the title (converted to a string)
+type: Type of the title
+originalTitle: Original title of the movie
+titlePoster: URL of the movie poster image
+startYear: Start year of the movie (converted to a string)
+endYear: End year of the movie (converted to a string)
+genres: List of genres associated with the movie (split from a string into a list)
+titleAkas: List of alternative titles (title akas) associated with the movie
+principals: List of principal cast and crew associated with the movie
+rating: Rating information for the movie
+Based on this structure, the convert_to_csv function can be implemented to convert this JSON object into CSV format. Each key in the JSON object will correspond to a column in the CSV file, and each dictionary in the titleAkas and principals lists will correspond to a row in the CSV file.
+
+If you need further assistance implementing the convert_to_csv function based on this structure, feel free to ask!
+User
+Based on this structure what should convert_to_csv looks like?
+
+ChatGPT
+Based on the structure of the JSON object returned by the /title/<int:titleID> route handler, the convert_to_csv function should iterate over the data and flatten it into a tabular format suitable for CSV. Here's how you can implement it:
+
+python
+Copy code
+import csv
+from io import StringIO
+
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+
+    # Write data rows
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': json_data['type'],
+        'originalTitle': json_data['originalTitle'],
+        'titlePoster': json_data['titlePoster'],
+        'startYear': json_data['startYear'],
+        'endYear': json_data['endYear'],
+        'genres': ','.join(json_data['genres']) if json_data['genres'] else ''
+    })
+
+    # Write titleAkas
+    for akas in json_data['titleAkas']:
+        writer.writerow({
+            'titleID': json_data['titleID'],
+            'type': '',
+            'originalTitle': akas['titleAkas'],
+            'titlePoster': '',
+            'startYear': '',
+            'endYear': '',
+            'genres': akas['regionAbbrev']
+        })
+
+    # Write principals
+    for principal in json_data['principals']:
+        writer.writerow({
+            'titleID': json_data['titleID'],
+            'type': '',
+            'originalTitle': principal['name'],
+            'titlePoster': '',
+            'startYear': '',
+            'endYear': '',
+            'genres': principal['category']
+        })
+
+    # Write rating
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': '',
+        'originalTitle': 'Rating',
+        'titlePoster': '',
+        'startYear': '',
+        'endYear': '',
+        'genres': f"Average Rating: {json_data['rating']['avRating']}, Number of Votes: {json_data['rating']['numVotes']}"
+    })
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+This function will generate a CSV file with each row representing either the main title information, an alternate title (title akas), a principal cast/crew member, or rating information. Each row will have the same structure as specified in the fieldnames. You might need to adjust the field names or structure based on your specific requirements and the exact structure of the JSON data returned by your route handler.
+User
+Can an app route call another app route?
+
+ChatGPT
+In Flask, one route can indirectly call another route by making an HTTP request to the URL associated with the target route. However, it's generally not recommended to directly call one route from another within the same Flask application because it bypasses the HTTP protocol and Flask's routing mechanism, leading to potential complications and loss of clarity in the code.
+
+Instead, if you have common functionality that needs to be shared between routes, it's better to refactor that functionality into separate functions and call those functions from the relevant routes. This promotes code reusability, maintainability, and separation of concerns.
+
+For example, you can define a function that performs a specific task and call that function from multiple routes:
+
+python
+Copy code
+from flask import Flask
+
+app = Flask(__name__)
+
+def common_functionality():
+    # Common functionality here
+    return "Common functionality executed"
+
+@app.route('/route1')
+def route1():
+    result = common_functionality()
+    return result
+
+@app.route('/route2')
+def route2():
+    result = common_functionality()
+    return result
+
+if __name__ == '__main__':
+    app.run(debug=True)
+This way, both route1 and route2 can utilize the common_functionality without directly calling each other.
+
+If you have a need for route-like behavior within your application, consider extracting that functionality into a separate function and calling it directly. If necessary, you can also create a route that acts as an API endpoint and is called by other routes or external applications.
+User
+Replying to:
+Based on the structure of the JSON object returned by the `/title/<int:titleID>` route handler, the `convert_to_csv` function should iterate over the data and flatten it into a tabular format suitable for CSV. Here's how you can implement it:
+How should my html file change when returning a csv? This is is an html file that calls searchTitle:
+
+approute:
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if title_list:
+                return jsonify(title_list), 200
+            else:
+                return jsonify({"error": "Movies not found"}), 204
+
+    return jsonify({"error": "Not Available"}), 404
+
+
+Html:
+
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+                
+                const url = new URL('/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+                
+                const resultsContainer = document.getElementById('resultsContainer');
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data, resultsContainer);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+        });
+        
+    </script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
+</body>
+
+</html>
+
+ChatGPT
+To modify your HTML file to handle CSV responses, you can add a new button or link that triggers a download of the CSV file. Here's how you can modify your HTML file:
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <!-- Button to trigger CSV download -->
+    <button id="downloadCSV">Download CSV</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+                
+                const url = new URL('/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+                
+                const resultsContainer = document.getElementById('resultsContainer');
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data, resultsContainer);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+
+            // Function to trigger CSV download
+            document.getElementById('downloadCSV').addEventListener('click', function () {
+                fetch('/convert_to_csv')
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(new Blob([blob]));
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'titles.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
+</body>
+
+</html>
+This adds a new button labeled "Download CSV" to your HTML file. When clicked, it triggers a request to the /convert_to_csv endpoint, which should return the CSV data. The JavaScript code then handles the download of the CSV file.
+User
+What are the changes you made?
+
+ChatGPT
+Here are the changes I made to your HTML file:
+
+Added a new button with the id downloadCSV to trigger the CSV download.
+Added a JavaScript event listener for the click event on the downloadCSV button.
+Inside the event listener, I made a fetch request to the /convert_to_csv endpoint to retrieve the CSV data.
+Once the CSV data is retrieved, I created a blob object and used it to generate a download link for the CSV file.
+The download link is then appended to the document body and programmatically clicked to trigger the download.
+Finally, the temporary URL created for the download link is revoked to clean up resources.
+These changes enable users to download the search results as a CSV file by clicking the "Download CSV" button on your web page.
+User
+convert_to_csv is a function though not an app route. Should I change it and make it an app route?
+
+ChatGPT
+If convert_to_csv is currently implemented as a function and not an app route, you have a couple of options:
+
+Convert it to an app route: This would involve creating a new route in your Flask application dedicated to generating and serving CSV data. You can then make an HTTP request to this route from your front-end JavaScript code to retrieve the CSV data when the user clicks the "Download CSV" button.
+Keep it as a function: If you prefer to keep convert_to_csv as a function and not expose it as a separate route, you can still make use of it to generate the CSV data. In this case, you would need to call the convert_to_csv function from within an existing route that handles the download request triggered by clicking the "Download CSV" button.
+Either approach can work depending on your application architecture and requirements. If you expect to reuse the CSV conversion functionality in other parts of your application or if you want to keep your code modular, converting it to an app route might be a good idea. However, if the CSV conversion logic is tightly coupled with a specific part of your application and you don't anticipate needing it elsewhere, keeping it as a function could be simpler.
+User
+So I think the app route called by clicking the downloadcsv button is /searchTitle.
+However I should add a csv argument to and searchTitle should call the convert_to_csv function if the arguement added is format=csv, else if format=json it should return json:
+
+@app.route('/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if title_list:
+                return jsonify(title_list), 200
+            else:
+                return jsonify({"error": "Movies not found"}), 204
+
+    return jsonify({"error": "Not Available"}), 404
+
+
+ChatGPT
+Your approach to use a query parameter to specify the desired format (CSV or JSON) is a reasonable approach. You can modify your /searchTitle route to check for a format query parameter and return either CSV or JSON data accordingly. Below is an updated version of your route that includes this functionality:
+
+python
+Copy code
+from flask import request, jsonify, Response
+
+@app.route('/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
+        output_format = request.args.get('format', 'json')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if output_format == 'csv':
+                csv_data = convert_to_csv(title_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if title_list:
+                    return jsonify(title_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
+            else:
+                return jsonify({"error": "Invalid format specified"}), 400
+
+    return jsonify({"error": "Not Available"}), 404
+In this updated version, the route checks for the format query parameter and defaults to JSON format if it's not provided. If format=csv, it calls the convert_to_csv function to generate the CSV data and returns it with the appropriate mimetype. Otherwise, it returns JSON data as before. Additionally, it handles the case where an invalid format is specified with a 400 Bad Request response.
+User
+I also need to change this html file. If the downloadcsv button is clicked the i should call the searchTitle url with the csv argument.
+
+ChatGPT
+To modify the HTML file to include a download CSV button that calls the /searchTitle route with the format=csv argument when clicked, you can add a button element within the form. Below is the updated HTML code:
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart
+User
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <!-- Button to trigger CSV download -->
+    <button id="downloadCSV">Download CSV</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+                
+                const url = new URL('/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+                
+                const resultsContainer = document.getElementById('resultsContainer');
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data, resultsContainer);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+
+            // Function to trigger CSV download
+            document.getElementById('downloadCSV').addEventListener('click', function () {
+                fetch('/searchTitle/')
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(new Blob([blob]));
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'titles.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
+</body>
+
+</html>
+
+ChatGPT
+Here's the updated HTML code with the download CSV button added:
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <!-- Button to trigger CSV download -->
+    <button id="downloadCSV">Download CSV</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+                
+                const url = new URL('/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+                
+                const resultsContainer = document.getElementById('resultsContainer');
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data, resultsContainer);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+
+            // Function to trigger CSV download
+            document.getElementById('downloadCSV').addEventListener('click', function () {
+                const titlePart = searchInput.value.trim();
+                const csvURL = `/searchTitle?titlePart=${titlePart}&format=csv`;
+                window.location.href = csvURL;
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
+</body>
+
+</html>
+This code adds a button labeled "Download CSV" below the search bar. When clicked, it constructs a URL with the titlePart query parameter obtained from the search input field and the format=csv parameter indicating that the CSV format is requested. Then, it navigates to this URL, triggering the /searchTitle route with the appropriate parameters.
+User
+TypeError: list indices must be integers or slices, not str
+
+ChatGPT
+The error message "TypeError: list indices must be integers or slices, not str" typically occurs when you try to access a list using a string index, which is not allowed in Python. This error often happens when you mistakenly use a string where an integer should be used as an index for accessing elements in a list.
+
+To resolve this error, you need to identify where in your code you're trying to access a list with a string index and correct it to use an integer index or a slice if appropriate.
+
+Here are some steps you can take to debug and fix this issue:
+
+Identify the line causing the error: Look at the traceback provided with the error message to find the specific line of code where the error occurred.
+Check how you're accessing the list: Review the code around the line where the error occurred to see how you're accessing the list. Ensure that you're using integer indices where necessary.
+Verify the data structures: Double-check the data structures you're working with, such as lists and dictionaries, to make sure they contain the expected data types.
+Inspect variable values: Use print statements or a debugger to inspect the values of variables involved in the problematic code to understand why a string is being used as an index.
+Without seeing your specific code, it's challenging to provide a precise solution. If you can provide the relevant code snippet or more context, I can offer more targeted assistance.
+User
+It is probably caused in convert_to_csv function:
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+
+    # Write data rows
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': json_data['type'],
+        'originalTitle': json_data['originalTitle'],
+        'titlePoster': json_data['titlePoster'],
+        'startYear': json_data['startYear'],
+        'endYear': json_data['endYear'],
+        'genres': ','.join(json_data['genres']) if json_data['genres'] else ''
+    })
+
+    # Write titleAkas
+    for akas in json_data['titleAkas']:
+        writer.writerow({
+            'titleID': json_data['titleID'],
+            'type': '',
+            'originalTitle': akas['titleAkas'],
+            'titlePoster': '',
+            'startYear': '',
+            'endYear': '',
+            'genres': akas['regionAbbrev']
+        })
+
+    # Write principals
+    for principal in json_data['principals']:
+        writer.writerow({
+            'titleID': json_data['titleID'],
+            'type': '',
+            'originalTitle': principal['name'],
+            'titlePoster': '',
+            'startYear': '',
+            'endYear': '',
+            'genres': principal['category']
+        })
+
+    # Write rating
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': '',
+        'originalTitle': 'Rating',
+        'titlePoster': '',
+        'startYear': '',
+        'endYear': '',
+        'genres': f"Average Rating: {json_data['rating']['avRating']}, Number of Votes: {json_data['rating']['numVotes']}"
+    })
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+
+ChatGPT
+Thank you for providing the convert_to_csv function. The error you're encountering, "TypeError: list indices must be integers or slices, not str", suggests that you're trying to access a list with a string index somewhere in your json_data.
+
+Based on the structure of your convert_to_csv function, it seems that the issue might be occurring when iterating over json_data['titleAkas'] and json_data['principals']. These keys are expected to contain lists of dictionaries, and you're accessing dictionary values within these lists. Therefore, if any of the values stored within json_data['titleAkas'] or json_data['principals'] are not dictionaries, it could lead to this error.
+
+To debug this issue, you should check the structure of json_data to ensure that the keys titleAkas and principals contain lists of dictionaries as expected. You can print out json_data or use debugging techniques to inspect its structure and identify any unexpected values.
+
+Here's a revised version of your function with added error checking to help identify the problematic data:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+
+    # Write data rows
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': json_data['type'],
+        'originalTitle': json_data['originalTitle'],
+        'titlePoster': json_data['titlePoster'],
+        'startYear': json_data['startYear'],
+        'endYear': json_data['endYear'],
+        'genres': ','.join(json_data['genres']) if json_data['genres'] else ''
+    })
+
+    # Write titleAkas
+    title_akas = json_data.get('titleAkas', [])
+    if not isinstance(title_akas, list):
+        print("Error: titleAkas is not a list")
+    else:
+        for akas in title_akas:
+            if isinstance(akas, dict):
+                writer.writerow({
+                    'titleID': json_data['titleID'],
+                    'type': '',
+                    'originalTitle': akas.get('titleAkas', ''),
+                    'titlePoster': '',
+                    'startYear': '',
+                    'endYear': '',
+                    'genres': akas.get('regionAbbrev', '')
+                })
+            else:
+                print("Error: titleAkas item is not a dictionary")
+
+    # Write principals
+    principals = json_data.get('principals', [])
+    if not isinstance(principals, list):
+        print("Error: principals is not a list")
+    else:
+        for principal in principals:
+            if isinstance(principal, dict):
+                writer.writerow({
+                    'titleID': json_data['titleID'],
+                    'type': '',
+                    'originalTitle': principal.get('name', ''),
+                    'titlePoster': '',
+                    'startYear': '',
+                    'endYear': '',
+                    'genres': principal.get('category', '')
+                })
+            else:
+                print("Error: principal item is not a dictionary")
+
+    # Write rating
+    writer.writerow({
+        'titleID': json_data['titleID'],
+        'type': '',
+        'originalTitle': 'Rating',
+        'titlePoster': '',
+        'startYear': '',
+        'endYear': '',
+        'genres': f"Average Rating: {json_data['rating']['avRating']}, Number of Votes: {json_data['rating']['numVotes']}"
+    })
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+This updated version includes error checking to verify that titleAkas and principals are lists before iterating over them, and it checks each item within these lists to ensure they are dictionaries before accessing their values. Additionally, it prints error messages if any unexpected data types are encountered. This should help you identify the root cause of the issue.
+User
+            // Function to trigger CSV download
+            document.getElementById('downloadCSV').addEventListener('click', function () {
+                const titlePart = searchInput.value.trim();
+                const csvURL = `ntuaflix/searchTitle?titlePart=${titlePart}&format=csv`;
+                window.location.href = csvURL;
+            });
+        });
+
+I don't want to change window when downloading csv. I just want to call the approute`ntuaflix/searchTitle?titlePart=${titlePart}&format=csv'
+
+ChatGPT
+If you want to trigger the CSV download without changing the window location, you can achieve this by using JavaScript's Fetch API to make a request to the server and then handle the file download in the client-side code. Here's how you can modify your event listener to achieve this:
+
+javascript
+Copy code
+// Function to trigger CSV download
+document.getElementById('downloadCSV').addEventListener('click', function () {
+    const titlePart = searchInput.value.trim();
+    const url = `/searchTitle?titlePart=${titlePart}&format=csv`;
+    
+    fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            // Create a temporary URL for the blob
+            const blobURL = window.URL.createObjectURL(blob);
+            
+            // Create a link element
+            const a = document.createElement('a');
+            a.href = blobURL;
+            a.download = 'titles.csv';
+            
+            // Append the link to the body and trigger the click event
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up by removing the link and revoking the object URL
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobURL);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+});
+This code fetches the CSV file from the server using the /searchTitle route with the format=csv query parameter, just like you requested. Then, it converts the response to a blob object and creates a temporary URL for the blob using window.URL.createObjectURL(). After that, it creates a link element (<a>) with the appropriate download attributes, triggers a click event on the link, and then cleans up by removing the link element and revoking the temporary URL. This approach allows you to trigger the CSV download without changing the window location.
+User
+Is the url correct? This is my python api.py code:
+
+@app.route('/ntuaflix_api/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
+        output_format = request.args.get('format', 'json')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if output_format == 'csv':
+                csv_data = convert_to_csv(title_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if title_list:
+                    return jsonify(title_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
+            else:
+                return jsonify({"error": "Invalid format specified"}), 400
+
+    return jsonify({"error": "Not Available"}), 404
+
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+    for movie in json_data:
+        # Write data rows
+        writer.writerow({
+            'titleID': movie['titleID'],
+            'type': movie['type'],
+            'originalTitle': movie['originalTitle'],
+            'titlePoster': movie['titlePoster'],
+            'startYear': movie['startYear'],
+            'endYear': movie['endYear'],
+            'genres': ','.join(movie['genres']) if movie['genres'] else ''
+        })
+
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+
+ChatGPT
+My apologies for the oversight. If your searchTitle route is defined under /ntuaflix_api, then your URL for downloading the CSV should include that path. Here's the corrected JavaScript code for triggering the CSV download:
+
+javascript
+Copy code
+// Function to trigger CSV download
+document.getElementById('downloadCSV').addEventListener('click', function () {
+    const titlePart = searchInput.value.trim();
+    const url = `/ntuaflix_api/searchTitle?titlePart=${titlePart}&format=csv`;
+    
+    fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            // Create a temporary URL for the blob
+            const blobURL = window.URL.createObjectURL(blob);
+            
+            // Create a link element
+            const a = document.createElement('a');
+            a.href = blobURL;
+            a.download = 'titles.csv';
+            
+            // Append the link to the body and trigger the click event
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up by removing the link and revoking the object URL
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobURL);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+});
+This code will correctly trigger the download of the CSV file from the /ntuaflix_api/searchTitle endpoint with the appropriate query parameters.
+User
+Ok, now I want this button to appear, only after the "search" button has been clicked. 
+
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <!-- Button to trigger CSV download -->
+    <button id="downloadCSV">Download CSV</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+                
+                const url = new URL('/ntuaflix_api/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+                
+                const resultsContainer = document.getElementById('resultsContainer');
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data, resultsContainer);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+
+        // Function to trigger CSV download
+        document.getElementById('downloadCSV').addEventListener('click', function () {
+            const titlePart = searchInput.value.trim();
+            const url = `/ntuaflix_api/searchTitle?titlePart=${titlePart}&format=csv`;
+            
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    // Create a temporary URL for the blob
+                    const blobURL = window.URL.createObjectURL(blob);
+                    
+                    // Create a link element
+                    const a = document.createElement('a');
+                    a.href = blobURL;
+                    a.download = 'titles.csv';
+                    
+                    // Append the link to the body and trigger the click event
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Clean up by removing the link and revoking the object URL
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobURL);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+
+        });
+    </script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
+</body>
+
+</html>
+
+ChatGPT
+To make the "Download CSV" button appear only after the "Search" button has been clicked, you can initially hide the button using CSS and then show it once the search button is clicked. Here's how you can modify your HTML and JavaScript:
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'head.html' %}
+
+<body>
+    {% include 'navigation.html' %}
+
+    <div class="searchText">
+        <p>Search By Title</p>
+    </div>
+
+    <form action="{{ url_for('searchTitle') }}" method="GET">
+        <div class="searchBar">
+            <input type="text" placeholder="Search..." class="middle-search-input" name="titlePart">
+            <button type="submit" class="middle-search-button">Search</button>
+        </div>
+    </form>
+
+    <div id="resultsContainer" class="movieResults"></div>
+
+    <!-- Button to trigger CSV download (initially hidden) -->
+    <button id="downloadCSV" style="display: none;">Download CSV</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchButton = document.querySelector('.middle-search-button');
+            const searchInput = document.querySelector('.middle-search-input');
+            const downloadButton = document.getElementById('downloadCSV');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            searchButton.addEventListener('click', function () {
+                event.preventDefault();
+                const titlePart = searchInput.value.trim();
+                
+                const url = new URL('/ntuaflix_api/searchTitle', window.location.origin);
+                url.searchParams.append('titlePart', titlePart);
+                
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        displaySearchResults(data, resultsContainer);
+                        // Show the download button
+                        downloadButton.style.display = 'inline-block';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+
+            });
+
+            // Function to trigger CSV download
+            downloadButton.addEventListener('click', function () {
+                const titlePart = searchInput.value.trim();
+                const url = `/ntuaflix_api/searchTitle?titlePart=${titlePart}&format=csv`;
+                
+                fetch(url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        // Create a temporary URL for the blob
+                        const blobURL = window.URL.createObjectURL(blob);
+                        
+                        // Create a link element
+                        const a = document.createElement('a');
+                        a.href = blobURL;
+                        a.download = 'titles.csv';
+                        
+                        // Append the link to the body and trigger the click event
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Clean up by removing the link and revoking the object URL
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(blobURL);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+
+        });
+    </script>
+    <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
+</body>
+
+</html>
+With this modification, the "Download CSV" button will only appear after the "Search" button has been clicked and the search results are displayed.
+User
+Ok, now I want to move the "downloadcsv" button, next to the search button. This is the css file, in case you need it:
+*{
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+}
+
+body{
+    background: black;
+    color: #fff;
+    
+}
+
+
+.header{
+    width: 100%;
+    height: 100vh;
+    background-image: linear-gradient(rgba(0,0,0,0.7),rgba(0,0,0,0.7)), url(images/header-image.png);
+    background-size: cover;
+    background-position: center;
+    padding: 10px 8%;
+    position: relative;
+}
+
+.header2{
+    width: 100%;
+    height: 100vh;
+    padding: 10px 8%;
+    position: relative;
+    z-index: 1; /* Ensures that the content is above the pseudo-element */
+}
+
+.header2::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(0,0,0,0.7),rgba(0,0,0,0.7)), url(images/header-image.png);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5; /* Adjust the opacity as needed */
+    z-index: -1; /* Positions the pseudo-element behind the content */
+}
+
+nav{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.logo{
+    width: 150px;
+    cursor: pointer;   
+}
+
+.signin_index button{
+    border: 0;
+    outline: 0;
+    background: #db0001;
+    color: #fff;
+    padding: 7px 20px;
+    font-size: 12px;
+    border-radius: 4px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.header-content{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center;
+    margin-top: 100px;
+}
+
+.header-content h1{
+    font-size: 60px;
+    line-height: 70px;
+    font-weight: 600;
+    max-width: 650px;
+}
+
+.header-content h3{
+    font-weight: 400;
+    margin-bottom: 20px;
+}
+
+.email-signup{
+    background: #fff;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+.email-signup input{
+    flex: 1;
+    border: 0;
+    outline: 0;
+    margin-left: 20px;
+}
+
+.email-signup button{
+    background: #db0001;
+    border: 0;
+    outline: 0;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 15px 30px;
+}
+
+.footer{
+    padding: 50px 15% 10px;
+    border-top: 6px solid #333;
+    color: #777;
+}
+
+.footer h2{
+    font-size: 18px;
+    font-weight: 400;
+    margin-bottom: 30px;
+}
+
+.form-wrapper {
+    position: absolute;
+    padding: 40px;
+    border-radius: 4px;
+    left: 50%;
+    top: 50%;
+    width: 60%; 
+    max-width: 430px; 
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.75);
+    transform: translate(-50%, -50%); 
+    
+}
+
+.form-wrapper h2 {
+    color: #fff;
+    font-size: 2rem;
+}
+
+.form-wrapper form {
+    margin: 25px 0 65px;
+}
+
+form .form-control {
+    position: relative;
+    height: 50px;
+    margin-bottom: 16px;
+}
+
+.form-control input {
+    height: 100%;
+    width: 100%;
+    background: #333;
+    outline: none;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    border-radius: 4px;
+    padding: 0 20px;
+}
+
+.form-control input:focus,
+.form-control input:valid {
+    padding: 16px 20px 0px;
+    background: #444;
+}
+
+.form-control label {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    color: #8c8c8c;
+    pointer-events: none;
+    font-size: 1rem;
+    transform: translateY(-50%);
+    transition: all 0.1s ease;
+}
+
+.form-control input:focus ~ label,
+.form-control input:valid ~ label {
+    font-size: 0.75rem;
+    transform: translateY(-130%);
+}
+
+.Sign button {
+    width: 100%;
+    padding: 16px 0;
+    font-size: 1rem;
+    border: none;
+    outline: none;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+    border-radius: 4px;
+    background: #e50914;
+    margin: 25px 0 10px;
+    transition: 0.1s ease;
+}
+
+form button:hover {
+    background: #c40812;
+}
+
+form .form-help{
+    display: flex;
+    justify-content: space-between;
+}
+form .form-help :where(label,a){
+    font-size: 0.9rem;
+}
+.form-wrapper :where(label, p, small, a){
+    color: #b3b3b3;
+}
+.form-wrapper p a{
+    color: #fff;
+}
+.form-wrapper small{
+    display:  block;
+    margin-top: 15px;
+}
+
+.form-wrapper a{
+    text-decoration: none;
+}
+.form-wrapper a:hover{
+    text-decoration: underline;
+}
+
+.row__poster{
+    width: 100%;
+    object-fit: contain;
+    max-height: 100px;
+    margin-right: 10px;
+    transition: transform 450ms;
+}
+
+._row__posters{
+    display: flex;
+    overflow-y: hidden;
+    overflow-x: scroll;
+    padding: 20px;
+
+}
+.row__poster:hover{
+    transform: scale(1.08);
+
+}
+._row__posters::-webkit-scrollbar{
+    display: none;
+}
+
+.row__posterLarge{
+    max-height: 250px;
+}
+
+.row__posterLarge:hover{
+    transform: scale(1.09);
+}
+
+.row{
+    color: white;
+    margin-left:  20px;
+}
+
+.banner{
+    background-image: url('images/poor.png');
+    background-size: cover;
+    background-position: center center;
+    color: white;
+    object-fit: contain ;
+    height: 500px;
+}
+
+.banner_contents{
+    margin-left: 30px;
+    padding-top: 140px;
+    height: 190px;
+}
+.banner_title{
+    font-size: 3rem;
+    font-weight:  800;
+    padding-bottom: 0.3rem;
+}
+
+.banner_description{
+    width: 45rem;
+    line-height: 1.3;
+    padding-top: 1rem;
+    font-size: 0.8rem;
+    max-width: 360px;
+    height: 180px;
+}
+
+.banner_button{
+    cursor: pointer;
+    color: white;
+    outline: none;
+    border: none;
+    font-weight: 700;
+    border-radius: 0.2vw;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-color: rgba(51, 51, 51, 0.5) ;
+}
+.banner_button:hover{
+    color: #000;
+    background-color: #e6e6e6;
+    transition: all 0.2s;
+}
+.banner_fadeBottom{
+    margin-top: 145px;
+    height: 10.5rem;
+    background-image: linear-gradient(180deg, transparent, rgba(37,37,37,0.61), #111);
+}
+.nav2{
+    position: fixed;
+    top: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    z-index: 1;
+    transition-timing-function: ease-in;
+    transition: all 0.5s;
+}
+
+.nav2_black{
+    background-color: #111;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.nav2_avatar {
+    width: 30px;
+    object-fit: contain;
+    margin-right: 20px; /* Add margin to create space between avatar and dropdown */
+}
+
+.dropdown_content {
+    display: none;
+    position: absolute;
+    background-color: #111;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    right: 0;
+}
+
+.dropdown_content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown_content a:hover {
+    background-color: #555;
+}
+
+.dropdown:hover .dropdown_content {
+    display: block;
+}
+
+.nav2_logo_options {
+    display: flex;
+    align-items: center;
+}
+
+.nav2_option {
+    margin-left: 20px; /* Adjust the padding */
+    text-decoration: none;
+    color: white;
+    font-size: 14px; /* Adjust the font size */
+}
+
+.nav2_option:hover{
+    color: #e50914;
+    transition: all 0.2s;
+}
+
+
+.nav2_avatar_search {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-bottom: 20px;
+}
+
+.nav2_avatar_search:hover{
+    color: #e50914;
+    transition: all 0.2s;
+}
+
+.searchText {
+    text-align: center;
+    margin-top: 150px;
+}
+
+.searchText p {
+    font-size: 18px;
+    margin: 0;
+}
+
+.searchBar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.middle-search-input {
+    width: 300px;
+    height: 40px;
+    border: 2px solid red;
+    padding: 5px;
+    font-size: 16px;
+}
+
+.middle-search-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.middle-search-button:hover {
+    background-color: darkred;
+}
+
+#resultsContainer {
+    margin: 0 auto; /* This will center the container horizontally */
+    max-width: 50%; 
+    margin-top: 80px;
+}
+
+.searchResult {
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.row__poster {
+    width: 100px;
+    object-fit: contain;
+    max-height: 150px;
+    margin-right: 10px;
+}
+
+.movieInfo {
+    color: white;
+    text-align: center;
+}
+
+.likeButton {
+    font-weight: bold;
+    font-size: 25px;
+    cursor: pointer;
+    transition: color 0.3s;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.likeButton.empty::before {
+    content: '\2661'; /* Unicode character for an empty heart */
+    color: white; /* Set the color of an empty heart */
+}
+
+.likeButton.full::before {
+    content: '\2665'; /* Unicode character for a full heart */
+    color: red; /* Set the color of a full heart */
+}
+
+.addToListButton {
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s, background-color 0.3s, border 0.3s;
+    background: none;
+    border: 2px solid #666;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.addToListButton.empty {
+    color: #fff; /* Set the color of the plus icon when not added */
+    content: '+'; /* Plus icon when not added */
+}
+
+.addToListButton.added {
+    color: #e50914; /* Set the color of the checkmark when added */
+    border-color: #e50914; /* Set the border color when added */
+    content: '\2713'; /* Unicode character for a checkmark when added */
+}
+
+ChatGPT
+To move the "Download CSV" button next to the search button, you can adjust the layout using CSS flexbox. Here's how you can modify the CSS:
+
+css
+Copy code
+.searchBar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.middle-search-input {
+    width: 300px;
+    height: 40px;
+    border: 2px solid red;
+    padding: 5px;
+    font-size: 16px;
+    margin-right: 10px; /* Add margin to create space between search input and button */
+}
+
+.middle-search-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.middle-search-button:hover {
+    background-color: darkred;
+}
+
+#resultsContainer {
+    margin: 0 auto; /* This will center the container horizontally */
+    max-width: 50%;
+    margin-top: 80px;
+}
+
+/* Style for the "Download CSV" button */
+#downloadCSV {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#downloadCSV:hover {
+    background-color: darkred;
+}
+With these changes, the "Download CSV" button will now appear next to the search button, and both buttons will be centered within the .searchBar container. Adjust the margins and paddings as needed to achieve the desired spacing and appearance.
+User
+In my convert_to_csv() function can I make it so that, some columns have an umbrella title over them? For example:
+
+        writer.writerow({
+            'titleID': movie['titleID'],
+            'type': movie['type'],
+            'originalTitle': movie['originalTitle'],
+            'titlePoster': movie['titlePoster'],
+            'startYear': movie['startYear'],
+            'endYear': movie['endYear'],
+            'genres': ','.join(movie['genres']) if movie['genres'] else ''
+        })
+
+All these columns, I want to be under the umbrella column "title_basics".
+
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres', 'titleAkas', 'regionAbbrev', ]
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+    for movie in json_data:
+        # Write data rows
+        writer.writerow({
+            'titleID': movie['titleID'],
+            'type': movie['type'],
+            'originalTitle': movie['originalTitle'],
+            'titlePoster': movie['titlePoster'],
+            'startYear': movie['startYear'],
+            'endYear': movie['endYear'],
+            'genres': ','.join(movie['genres']) if movie['genres'] else ''
+        })
+
+
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+
+ChatGPT
+Yes, you can achieve this by modifying the fieldnames in your convert_to_csv() function to include an umbrella title for the columns you want to group together. Here's how you can do it:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['title_basics.titleID', 'title_basics.type', 'title_basics.originalTitle', 'title_basics.titlePoster', 'title_basics.startYear', 'title_basics.endYear', 'title_basics.genres']
+
+    # Create a CSV writer object
+    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+    
+    # Write the header row
+    writer.writeheader()
+    for movie in json_data:
+        # Write data rows
+        writer.writerow({
+            'title_basics.titleID': movie['titleID'],
+            'title_basics.type': movie['type'],
+            'title_basics.originalTitle': movie['originalTitle'],
+            'title_basics.titlePoster': movie['titlePoster'],
+            'title_basics.startYear': movie['startYear'],
+            'title_basics.endYear': movie['endYear'],
+            'title_basics.genres': ','.join(movie['genres']) if movie['genres'] else ''
+        })
+
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+In this modification:
+
+I prefixed the fieldnames with title_basics. to indicate that these columns are under the "title_basics" umbrella.
+When writing the data rows, I also prefixed the keys in the writer.writerow() function with title_basics. to match the fieldnames.
+This way, in the resulting CSV file, the columns titleID, type, originalTitle, titlePoster, startYear, endYear, and genres will be grouped under the umbrella title "title_basics". Adjust the fieldnames and keys accordingly if you have additional columns or want to change the grouping structure.
+User
+Will this create a first row called tittle_basics while the second row has the column names titleID, type, originalTitle, titlePoster, startYear, endYear, and genres, cause that is the result I am looking for.
+
+ChatGPT
+No, the modification I provided will not create a separate row for the "title_basics" umbrella title. Instead, it will group the specified columns under the "title_basics" umbrella in the header row itself. If you want the "title_basics" to appear as a separate row in the CSV file, you would need to write it explicitly as a separate row before the header row. Here's how you can modify the function to achieve that:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Define fieldnames for CSV headers
+    fieldnames = ['title_basics', 'titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Write the umbrella title row
+    writer.writerow(['title_basics'])
+
+    # Write the header row
+    writer.writerow(fieldnames[1:])
+    
+    # Write data rows
+    for movie in json_data:
+        writer.writerow([
+            movie['titleID'],
+            movie['type'],
+            movie['originalTitle'],
+            movie['titlePoster'],
+            movie['startYear'],
+            movie['endYear'],
+            ','.join(movie['genres']) if movie['genres'] else ''
+        ])
+
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+In this modification:
+
+I've used csv.writer instead of csv.DictWriter since we're not using dictionaries anymore.
+I first write a row with the umbrella title "title_basics".
+Then, I write the header row containing the column names.
+Finally, I write the data rows.
+User
+What if I also have another umbrella title that contains other columns with different names? 
+
+ChatGPT
+If you want to include another umbrella title with different columns in your CSV file, you can follow a similar approach. Here's how you can modify the function to include multiple umbrella titles with their respective columns:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleID', 'titleAkas', 'regionAbbrev']  # Example fields for title_akas
+    
+    # Write the first umbrella title row and its header row
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    
+    # Write data rows for the first umbrella title
+    for movie in json_data:
+        writer.writerow([
+            movie['titleID'],
+            movie['type'],
+            movie['originalTitle'],
+            movie['titlePoster'],
+            movie['startYear'],
+            movie['endYear'],
+            ','.join(movie['genres']) if movie['genres'] else ''
+        ])
+
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the second umbrella title row and its header row
+    writer.writerow(['title_akas'])
+    writer.writerow(title_akas_fields)
+    
+    # Write data rows for the second umbrella title
+    for movie in json_data:
+        # Example: write data for title_akas
+        for akas_info in movie['titleAkas']:
+            writer.writerow([
+                movie['titleID'],
+                akas_info['titleAkas'],
+                akas_info['regionAbbrev']
+            ])
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+In this modification:
+
+I define separate lists of fieldnames for each umbrella title (title_basics_fields and title_akas_fields).
+I write the umbrella title rows and their header rows.
+For each umbrella title, I loop through the data and write the corresponding rows using the appropriate fieldnames.
+User
+Given that this is my searchtitle app route:
+
+@app.route('/ntuaflix_api/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json()   take the data from the body
+        titlePart = request.args.get('titlePart')
+        output_format = request.args.get('format', 'json')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if output_format == 'csv':
+                csv_data = convert_to_csv(title_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if title_list:
+                    return jsonify(title_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
+            else:
+                return jsonify({"error": "Invalid format specified"}), 400
+
+    return jsonify({"error": "Not Available"}), 404
+
+And this is my fetch_title_akas function:
+
+def fetch_title_akas(cursor, title_id):
+    # Fetch title_akas for a given title
+    query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+    cursor.execute(query_akas, (title_id,))
+    title_akas = cursor.fetchall()
+    if title_akas:
+        return [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+    else: 
+        return None
+
+How do I write my convert_to_csv function for it to be able to read the akas?
+
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleAkas', 'regionAbbrev']
+    
+    # Write the first umbrella title row and its header row
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    
+    # Write data rows for the first umbrella title
+    for movie in json_data:
+        writer.writerow([
+            movie['titleID'],
+            movie['type'],
+            movie['originalTitle'],
+            movie['titlePoster'],
+            movie['startYear'],
+            movie['endYear'],
+            ','.join(movie['genres']) if movie['genres'] else ''
+        ])
+
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the second umbrella title row and its header row
+    writer.writerow(['title_akas'])
+    writer.writerow(title_akas_fields)
+    
+    # Write data rows for the second umbrella title
+    for movie in json_data:
+        writer.writerow([
+            movie['titleAkas']['titleAkas'],
+            movie['titleAkas']['regionAbbrev'],])
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+
+ChatGPT
+To modify the convert_to_csv function to include title akas, you need to iterate through the list of title akas for each movie and write them to the CSV file. Here's how you can do it:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleAkas', 'regionAbbrev']
+    
+    # Write the header row for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    
+    # Write data rows for title basics
+    for movie in json_data:
+        writer.writerow([
+            movie['titleID'],
+            movie['type'],
+            movie['originalTitle'],
+            movie['titlePoster'],
+            movie['startYear'],
+            movie['endYear'],
+            ','.join(movie['genres']) if movie['genres'] else ''
+        ])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row for title akas
+    writer.writerow(['title_akas'])
+    writer.writerow(title_akas_fields)
+    
+    # Write data rows for title akas
+    for movie in json_data:
+        title_akas = movie.get('titleAkas', [])  # Get title akas for the current movie
+        for akas_info in title_akas:
+            writer.writerow([
+                akas_info['titleAkas'],
+                akas_info['regionAbbrev']
+            ])
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+In this modified function:
+
+I added a header row and data rows for title akas.
+I retrieved the title akas information from each movie in the json_data.
+I iterated through the list of title akas for each movie and wrote them to the CSV file.
+User
+Maybe add an if in case fetch_title_akas return none?
+
+ChatGPT
+Certainly! You can add a conditional check to handle the case when fetch_title_akas returns None. Here's the modified convert_to_csv function with the conditional check:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleAkas', 'regionAbbrev']
+    
+    # Write the header row for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    
+    # Write data rows for title basics
+    for movie in json_data:
+        writer.writerow([
+            movie['titleID'],
+            movie['type'],
+            movie['originalTitle'],
+            movie['titlePoster'],
+            movie['startYear'],
+            movie['endYear'],
+            ','.join(movie['genres']) if movie['genres'] else ''
+        ])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row for title akas
+    writer.writerow(['title_akas'])
+    writer.writerow(title_akas_fields)
+    
+    # Write data rows for title akas
+    for movie in json_data:
+        title_akas = movie.get('titleAkas')  # Get title akas for the current movie
+        if title_akas:
+            for akas_info in title_akas:
+                writer.writerow([
+                    akas_info['titleAkas'],
+                    akas_info['regionAbbrev']
+                ])
+        else:
+            writer.writerow(['N/A', 'N/A'])  # Write placeholder values if no title akas are available
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+In this modified function:
+
+I added a conditional check using if title_akas to ensure that the code inside the loop is executed only if title akas are available for the movie.
+If title_akas is None, indicating that no title akas are available, I wrote placeholder values ('N/A') to the CSV file. You can adjust these placeholder values as needed.
+User
+This works but not in the way I want it. What this does is write title_basics on the first row and on the second row the title_basics fieldnames. After filling all fields for each movie (each row), there is a row left blank and then a row written with titleAkas, then the fieldnames then the movies again. However, I want this second titleAkas "table" not to be below the title_basics one but next to it. Keep in mind I still want specific columns to be under the umbrella title of title_basics and others to be under titleAkas.
+
+ChatGPT
+Got it, you want to structure the CSV file so that both "title_basics" and "title_akas" are side by side, rather than one below the other. To achieve this, you'll need to iterate through the movie data differently and ensure that the data for each umbrella title is grouped together. Here's how you can modify the convert_to_csv function to achieve this:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleID', 'titleAkas', 'regionAbbrev']
+    
+    # Write the header row for title basics
+    writer.writerow(['title_basics'] + title_basics_fields)
+    
+    # Write data rows for title basics
+    for movie in json_data:
+        writer.writerow([''] + [movie[field] for field in title_basics_fields])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row for title akas
+    writer.writerow(['title_akas'] + title_akas_fields)
+    
+    # Write data rows for title akas
+    for movie in json_data:
+        title_akas = movie.get('titleAkas')  # Get title akas for the current movie
+        if title_akas:
+            for akas_info in title_akas:
+                writer.writerow([''] + [movie['titleID'], akas_info['titleAkas'], akas_info['regionAbbrev']])
+        else:
+            writer.writerow([''] + ['N/A'] * len(title_akas_fields))  # Write placeholder values if no title akas are available
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+In this modified function:
+
+Each row is constructed by concatenating the umbrella title ('title_basics' or 'title_akas') with the corresponding field values for that umbrella title.
+For the title basics, we iterate through each movie and write the fields under the 'title_basics' umbrella title.
+For the title akas, we also iterate through each movie, then for each movie, we iterate through its title akas (if available) and write the fields under the 'title_akas' umbrella title.
+If no title akas are available for a movie, we write placeholder values ('N/A') for the title akas fields.
+This structure ensures that the title akas data appears next to the title basics data in the CSV file.
+User
+You know what, maybe what you did before was better with one below the other
+
+ChatGPT
+If you prefer the structure where "title_basics" and "title_akas" are listed one below the other, I can revert to that structure. Here's the modified convert_to_csv function:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_akas_fields = ['titleID', 'titleAkas', 'regionAbbrev']
+    
+    # Write the header row and data rows for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    for movie in json_data:
+        writer.writerow([movie[field] for field in title_basics_fields])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row and data rows for title akas
+    writer.writerow(['title_akas'])
+    writer.writerow(title_akas_fields)
+    for movie in json_data:
+        title_akas = movie.get('titleAkas')
+        if title_akas:
+            for akas_info in title_akas:
+                writer.writerow([movie['titleID'], akas_info['titleAkas'], akas_info['regionAbbrev']])
+        else:
+            writer.writerow(['N/A'] * len(title_akas_fields))  # Write placeholder values if no title akas are available
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+This version writes the "title_basics" data followed by a blank row and then the "title_akas" data, with each row corresponding to a single movie entry.
+User
+Given my app route  for searchtitle which i have sent before and my fetch_title_principals function can you make the same thing for that as you did for titleAkas?
+
+def fetch_title_principals(cursor, title_id):
+    # Fetch title_principals for a given title
+    query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+    cursor.execute(query_principals, (title_id,))
+    title_principals = cursor.fetchall()
+    if title_principals:
+        return [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+    else:
+        return None
+
+ChatGPT
+Sure, here's the modified convert_to_csv function to handle title_principals:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_principals_fields = ['titleID', 'nameID', 'name', 'category']
+    
+    # Write the header row and data rows for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    for movie in json_data:
+        writer.writerow([movie[field] for field in title_basics_fields])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row and data rows for title principals
+    writer.writerow(['title_principals'])
+    writer.writerow(title_principals_fields)
+    for movie in json_data:
+        title_principals = movie.get('principals')
+        if title_principals:
+            for principal_info in title_principals:
+                writer.writerow([movie['titleID'], principal_info['nameID'], principal_info['name'], principal_info['category']])
+        else:
+            writer.writerow(['N/A'] * len(title_principals_fields))  # Write placeholder values if no title principals are available
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+This function writes the "title_basics" data followed by a blank row and then the "title_principals" data, with each row corresponding to a single movie entry.
+User
+Lastly I want you to do the same for rating given my fetch_title_rating() function:
+
+def fetch_title_rating(cursor, title_id):
+    # Fetch title_rating for a given title
+    query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+    cursor.execute(query_rating, (title_id,))
+    title_rating = cursor.fetchone()
+    return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
+
+ChatGPT
+Certainly! Here's the updated convert_to_csv function to include handling for title_rating:
+
+python
+Copy code
+def convert_to_csv(json_data):
+    # Initialize a StringIO object to write CSV data
+    csv_buffer = StringIO()
+    
+    # Create a CSV writer object
+    writer = csv.writer(csv_buffer)
+    
+    # Define fieldnames for CSV headers
+    title_basics_fields = ['titleID', 'type', 'originalTitle', 'titlePoster', 'startYear', 'endYear', 'genres']
+    title_rating_fields = ['titleID', 'averageRating', 'numVotes']
+    
+    # Write the header row and data rows for title basics
+    writer.writerow(['title_basics'])
+    writer.writerow(title_basics_fields)
+    for movie in json_data:
+        writer.writerow([movie[field] for field in title_basics_fields])
+    
+    # Write a blank row to separate the umbrella titles
+    writer.writerow([])
+    
+    # Write the header row and data rows for title rating
+    writer.writerow(['title_rating'])
+    writer.writerow(title_rating_fields)
+    for movie in json_data:
+        title_rating = movie.get('rating')
+        if title_rating:
+            writer.writerow([movie['titleID'], title_rating['avRating'], title_rating['numVotes']])
+        else:
+            writer.writerow(['N/A'] * len(title_rating_fields))  # Write placeholder values if no title rating is available
+    
+    # Get the CSV data as a string
+    csv_data = csv_buffer.getvalue()
+    
+    # Close the StringIO buffer
+    csv_buffer.close()
+    
+    return csv_data
+This function now includes handling for both title_basics and title_rating, ensuring that each movie entry has its respective rating information if available. If the rating information is not available, it writes placeholder values ("N/A") for those fields.
