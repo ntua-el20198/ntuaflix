@@ -1,0 +1,1362 @@
+from flask import Flask, redirect, render_template, request, jsonify, json, session, url_for, Response
+import mysql.connector
+from numpy import double
+from passlib.hash import bcrypt  # Import the bcrypt hashing library
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+import os
+import secrets
+import csv
+from io import StringIO
+
+
+template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
+static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
+
+
+app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
+app.secret_key = secrets.token_hex(16)
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+CORS(app)
+
+# Database configuration
+db_config = {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "2255",  
+    "database": "ntuaflix",
+    "charset": "utf8mb4",
+    "collation": "utf8mb4_general_ci"
+}
+
+try:
+    db = mysql.connector.connect(**db_config)
+except mysql.connector.Error as err:
+    db = None
+    print("Database connection failed:", err)
+
+
+@app.route('/')
+def redirect_to_index():
+    return redirect('/ntuaflix_api/')
+
+@app.route('/ntuaflix_api/')
+def index():
+    return render_template('index.html')
+
+@app.route('/ntuaflix_api/homepage.html')
+def homepage():
+    top_rated_movies = topRated()  
+    return render_template('homepage.html', top_rated=top_rated_movies)
+
+@app.route('/ntuaflix_api/signin.html')
+def signin():
+    return render_template('signin.html')
+
+@app.route('/ntuaflix_api/signup.html')
+def signup():
+    return render_template('signup.html')
+
+@app.route('/ntuaflix_api/search_title.html')
+def search_title():
+    return render_template('search_title.html')
+
+@app.route('/ntuaflix_api/search_genre.html')
+def search_genre():
+    return render_template('search_genre.html')
+
+@app.route('/ntuaflix_api/info/<int:title_ID>')
+def info(title_ID):
+    return render_template('info.html', title_ID = title_ID)
+
+@app.route('/ntuaflix_api/search_name.html')
+def search_name():
+    return render_template('search_name.html')
+
+@app.route('/ntuaflix_api/my-list.html')
+def my_list():
+    return render_template('watching_later.html')
+
+@app.route('/ntuaflix_api/my-likes.html')
+def my_likes():
+    return render_template('likes.html')
+
+@app.route('/ntuaflix_api/my-history.html')
+def my_history():
+    return render_template('history.html')
+
+def check_database_connection():
+    try:
+        # Establish database connection
+        db = mysql.connector.connect(**db_config)
+
+        if db.is_connected():
+            return {"status": "OK", "dataconnection": db_config}
+
+    except mysql.connector.Error as err:
+        return {"status": "failed", "dataconnection": db_config, "error": str(err)}
+
+    finally:
+        # Close the database connection when done
+        if db.is_connected():
+            db.close()
+
+# Health check endpoint
+@app.route('/ntuaflix_api/admin/healthcheck', methods=['GET'])
+def health_check():
+    result = check_database_connection()
+    return jsonify(result)  
+
+@app.route('/ntuaflix_api/admin/resetall', methods=['POST'])
+def reset_all():
+    if request.method == 'POST':
+        try:
+            # Create a cursor to execute SQL queries
+            cursor = db.cursor()
+
+            # Disable foreign key checks
+            cursor.execute("SET foreign_key_checks = 0")
+
+            # Execute SQL queries to reset data in each table
+            tables_to_reset = [
+                "likes",
+                "knownForTitles",
+                "ListForWtachingLater",
+                "title_ratings",
+                "title_principals",
+                "title_akas",
+                "title_episode",
+                "writer",
+                "director",
+                "user_ratings",
+                "name_basics",
+                "users",
+                "title_basics"
+            ]
+
+            for table in tables_to_reset:
+                query = f"DELETE FROM {table}"
+                cursor.execute(query)
+
+            # Enable foreign key checks
+            cursor.execute("SET foreign_key_checks = 1")
+
+            # Commit the changes and close the database connection
+            db.commit()
+            cursor.close()
+            db.close()
+
+            return {"status": "OK"}
+
+        except Exception as e:
+            print("Status: failed, Reason:", str(e))
+            return {"status": "failed", "reason": str(e)}
+
+@app.route('/ntuaflix_api/admin/check')
+def admin_check():
+    # Retrieve is_admin from the session
+    is_admin = session.get('is_admin') 
+    print(is_admin)
+    # Render the template and pass is_admin to it
+    return render_template('admin_check.html', is_admin=is_admin)
+
+@app.route('/ntuaflix_api/signupform', methods=['POST'])
+def signupform():
+    if request.method == 'POST':
+        try:
+            # Extract form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+
+            print(username)
+            print(password)
+
+            # Check if passwords match
+            if password != confirm_password:
+                return jsonify({"error": "Passwords do not match"}), 400
+
+            # Hash the password (you should use a secure method for password hashing)
+
+            # Execute the query to insert data into the 'users' table
+            cursor = db.cursor()
+            query = "INSERT INTO users (Username, password, is_admin) VALUES (%s, %s, 0)"
+            cursor.execute(query, (username, password))
+            db.commit()
+
+            return redirect(url_for('signup_success'))
+
+        except Exception as e:
+            # Handle errors
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+
+    return jsonify({"error": "Invalid request"}), 400
+
+@app.route('/ntuaflix_api/signup_success')
+def signup_success():
+    return render_template('signin.html')
+
+@app.route('/ntuaflix_api/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        try:
+            # Extract username and password from form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+
+            if username is None or password is None:
+                return jsonify({"error": "Bad request"}), 400
+            else:
+                cursor = db.cursor()
+                # Execute a query to check if the username and password exist in the same row
+                query = "SELECT * FROM users WHERE Username = %s AND password = %s"
+                cursor.execute(query, (username, password))
+
+                # Fetch the result
+                result = cursor.fetchone()
+                user_id = result[0]
+                print(result)
+
+                if result:
+                    user_id, username, is_admin = result[0], result[1], result[3]
+                    # Store user ID in the session
+                    session['user_id'] = user_id
+                    session['is_admin'] = is_admin
+                    print("Session after login:", session)
+                    
+                    return jsonify({"user_id": user_id, "username": username, "is_admin": is_admin}), 200
+                else:
+                    return jsonify({"error": "Not authorized"}), 401
+
+        except Exception as e:
+            # Log the exception for debugging
+            print(str(e))
+            # Internal server error
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+
+@app.route('/ntuaflix_api/logout', methods=['POST'])
+def logout():
+    if request.method == 'POST':
+        try:
+            print("Session before logout:", session)
+            user_id = session.get('user_id')
+
+            if user_id is not None:
+                session.pop('user_id')
+                session.pop('is_admin')
+
+                print(f"User {user_id} logged out successfully")
+                print("Session after logout:", session)
+                
+                return jsonify({"message": f"User {user_id} logged out successfully"}), 200
+            else:
+                print("User not logged in")
+                return jsonify({"error": "Not logged in"}), 401
+        
+        except Exception as e:
+            print(str(e))
+            return jsonify({"error": "Internal server error"}), 500
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+@app.route('/ntuaflix_api/get_user_id', methods = ['GET'])
+def get_user_id():
+    user_id = session.get('user_id')
+
+    if user_id:
+        return jsonify(user_id), 200
+    else:
+        return jsonify({"error": "User not authenticated"}), 401
+    
+def fetch_title_akas(cursor, title_id):
+    # Fetch title_akas for a given title
+    query_akas = "SELECT title, region FROM title_akas WHERE titleID = %s"
+    cursor.execute(query_akas, (title_id,))
+    title_akas = cursor.fetchall()
+    if title_akas:
+        return [{'titleAkas': akas[0], 'regionAbbrev': akas[1]} for akas in title_akas]
+    else: 
+        return None
+
+def fetch_title_principals(cursor, title_id):
+    # Fetch title_principals for a given title
+    query_principals = "SELECT tp.name_basicsnconst, nb.Primaryname, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.tconst = %s"
+    cursor.execute(query_principals, (title_id,))
+    title_principals = cursor.fetchall()
+    if title_principals:
+        return [{'nameID': str(principal[0]), 'name': principal[1], 'category': principal[2]} for principal in title_principals]
+    else:
+        return None
+
+def fetch_title_rating(cursor, title_id):
+    # Fetch title_rating for a given title
+    query_rating = "SELECT averageRating, numVotes FROM title_ratings WHERE tconst = %s"
+    cursor.execute(query_rating, (title_id,))
+    title_rating = cursor.fetchone()
+    return {'avRating': str(title_rating[0]), 'numVotes': str(title_rating[1])} if title_rating else None
+
+@app.route('/ntuaflix_api/title/<int:titleID>', methods=['GET'])
+def title(titleID):
+    format_arg = request.args.get('format')
+
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE tconst = %s"
+        cursor.execute(query_basics, (titleID,))
+
+        title_data = cursor.fetchone()
+
+        if title_data:
+            try:
+                column_names = ["titleID", "type", "originalTitle", "titlePoster", "startYear", "endYear", "genres"]
+                title = dict(zip(column_names, title_data))
+                title['genres'] = title['genres'].split(',') if title['genres'] else []
+                title['startYear'] = str(title['startYear'])
+                title['titleID'] = str(title['titleID'])
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title['titleAkas'] = fetch_title_akas(cursor, title_data[0])
+                title['principals'] = fetch_title_principals(cursor, title_data[0])
+                title['rating'] = fetch_title_rating(cursor, title_data[0])
+
+                if format_arg == 'csv':
+                    csv_data = convert_to_csv_titleObject(title)
+                    return Response(csv_data, mimetype='text/csv') #DOESN'T WORK
+                else:
+                    return jsonify(title), 200
+
+            except Exception as e:
+                print("Error in query_akas execution:", str(e))
+                return jsonify({"error": "Internal server error"}), 500
+
+        else:
+            return jsonify({"error": "Title not found"}), 204
+
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+@app.route('/ntuaflix_api/searchTitle', methods=['GET'])
+def searchTitle():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        #data = request.get_json() take the data from the body
+        titlePart = request.args.get('titlePart')
+        output_format = request.args.get('format', 'json')
+
+        if titlePart:
+            query_basics = "SELECT tconst, titletype, originalTitle, img_url_asset, startYear, endYear, genres FROM title_basics WHERE originalTitle LIKE %s"
+            cursor.execute(query_basics, (f"%{titlePart}%",))
+            titles = cursor.fetchall()
+
+            title_list = []
+
+            for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas, title_principals, and title_rating for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+                
+                title_list.append(title_dict)
+
+            if output_format == 'csv':
+                csv_data = convert_to_csv_titleObject(title_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if title_list:
+                    return jsonify(title_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
+            else:
+                return jsonify({"error": "Invalid format specified"}), 400
+
+    return jsonify({"error": "Not Available"}), 404
+
+@app.route('/ntuaflix_api/bygenre', methods=['GET'])
+def bygenre():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        qgenre = request.args.get('qgenre')
+        minrating = float(request.args.get('minrating'))
+        yrFrom = request.args.get('yrFrom')
+        yrTo = request.args.get('yrTo')
+        output_format = request.args.get('format', 'json')
+
+        query = "SELECT t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres FROM title_basics t INNER JOIN title_ratings r ON t.tconst = r.tconst WHERE t.genres LIKE %s AND r.averageRating >= %s "
+        parameters = [f"%{qgenre}%",minrating]
+
+        if yrFrom and yrTo:
+            query += "AND t.startYear >= %s AND t.startYear <= %s"
+            parameters.append(int(yrFrom))
+            parameters.append(int(yrTo))
+
+        query += " GROUP BY t.tconst, t.titletype, t.originalTitle, t.img_url_asset, t.startYear, t.endYear, t.genres"
+
+        cursor.execute(query,parameters)
+        titles = cursor.fetchall()
+
+        title_list = []
+
+        for title_info in titles:
+                title_dict = {
+                    'titleID': str(title_info[0]),
+                    'type': title_info[1],
+                    'originalTitle': title_info[2],
+                    'titlePoster': title_info[3],
+                    'startYear': str(title_info[4]),
+                    'endYear': str(title_info[5]),
+                    'genres': title_info[6].split(',') if title_info[6] else []
+                }
+
+                # Fetch title_akas for each title
+                title_dict['titleAkas'] = fetch_title_akas(cursor, title_info[0])
+                title_dict['principals'] = fetch_title_principals(cursor, title_info[0])
+                title_dict['rating'] = fetch_title_rating(cursor, title_info[0])
+
+                title_list.append(title_dict)
+        
+        if output_format == 'csv':
+            csv_data = convert_to_csv_titleObject(title_list)
+            return Response(csv_data, mimetype='text/csv')
+        elif title_list:
+            return jsonify(title_list), 200
+        else:
+            return jsonify({"error": "Movies not found"}), 204
+
+    # Return an empty list if no titles are found or if titlePart is not provided
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+@app.route('/ntuaflix_api/name/<int:nameID>', methods=['GET'])
+def name(nameID):
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE nconst = %s"
+        cursor.execute(query_basics,(nameID,))
+
+        name_data = cursor.fetchone()
+
+        if name_data:
+            try:
+                column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
+                name = dict(zip(column_names, name_data))
+                
+                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
+                cursor.execute(query_principals, (nameID,))
+                name_principals = cursor.fetchall()
+
+                if name_principals:
+                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
+
+                return jsonify(name), 200
+            except Exception as e:
+                print("Error in query_akas execution:", str(e))
+                return jsonify({"error": "Internal server error"}), 500
+
+        else:
+            return jsonify({"error": "Title not found"}), 204
+    
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+@app.route('/ntuaflix_api/searchname', methods=['GET'])
+def searchnamename():
+    if request.method == 'GET':
+        cursor = db.cursor()
+
+        namePart = request.args.get('namePart')
+        output_format = request.args.get('format', 'json')
+
+        query_basics = "SELECT nconst, primaryName, img_url_asset, birthYear, deathYear, primaryProfession FROM name_basics WHERE primaryName LIKE %s"
+        cursor.execute(query_basics,(f"%{namePart}%",))
+
+        names = cursor.fetchall()
+        name_list = []
+
+        if names:
+            for name_data in names:
+                column_names = ["nameID", "name", "namePoster", "birthYr", "deathYr", "profession"]
+                name = dict(zip(column_names, name_data))
+                cursor.fetchall()
+                
+                query_principals = "SELECT tp.tconst, tp.category FROM title_principals tp INNER JOIN name_basics nb ON tp.name_basicsnconst = nb.nconst WHERE tp.name_basicsnconst = %s"
+                cursor.execute(query_principals, (name_data[0],))
+                name_principals = cursor.fetchall()
+                # Fetch results of query_principals before proceeding
+                cursor.fetchall()
+
+                if name_principals:
+                    name['nameTitles'] = [{"titleID": str(np[0]), "category": np[1]} for np in name_principals]
+                name_list.append(name)
+            
+            if output_format == 'csv':
+                csv_data = convert_to_csv_nameObject(name_list)
+                return Response(csv_data, mimetype='text/csv')
+
+            elif output_format == 'json':
+                if name_list:
+                    return jsonify(name_list), 200
+                else:
+                    return jsonify({"error": "Movies not found"}), 204
+            else:
+                return jsonify({"error": "Invalid format specified"}), 400
+        
+        else:
+            return jsonify({"error": "No name found"}), 204
+    else:
+        return jsonify({"error": "Not Available"}), 404
+    
+    return jsonify({"error" : "Internal server error"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, port=9876, ssl_context='adhoc', host='127.0.0.1')
+
+
+This app is running on localhost. How can I safely run this in https?
+
+ChatGPT
+To run your Flask app safely in HTTPS, you need to obtain an SSL certificate and configure your Flask app to use it. Here's a step-by-step guide to achieve this:
+
+Obtain an SSL Certificate:
+You can obtain an SSL certificate from a Certificate Authority (CA) like Let's Encrypt, or you can generate a self-signed certificate for testing purposes.
+For Let's Encrypt, you can use certbot to obtain a free SSL certificate.
+For generating a self-signed certificate, you can use tools like OpenSSL.
+Configure Flask App:
+Update your Flask app to use HTTPS by providing the paths to your SSL certificate and private key.
+python
+Copy code
+if __name__ == '__main__':
+    app.run(debug=True, port=9876, ssl_context=('path/to/your/certificate.pem', 'path/to/your/private_key.pem'))
+Replace 'path/to/your/certificate.pem' with the path to your SSL certificate file and 'path/to/your/private_key.pem' with the path to your private key file.
+Update the Host Parameter:
+When running your Flask app with HTTPS, make sure to set the host parameter to '0.0.0.0' instead of '127.0.0.1'. This allows your app to accept connections from all network interfaces.
+python
+Copy code
+if __name__ == '__main__':
+    app.run(debug=True, port=9876, ssl_context=('path/to/your/certificate.pem', 'path/to/your/private_key.pem'), host='0.0.0.0')
+Firewall Configuration:
+Ensure that your firewall allows incoming connections on port 9876.
+Testing:
+Once everything is set up, restart your Flask app and visit https://localhost:9876 in your web browser. You should see your app running with a secure connection.
+Remember to replace 'path/to/your/certificate.pem' and 'path/to/your/private_key.pem' with the actual paths to your SSL certificate and private key files. Additionally, if you're deploying this app in a production environment, it's recommended to obtain a valid SSL certificate from a trusted CA like Let's Encrypt.
+User
+How to get a certificate and private key?
+
+ChatGPT
+To obtain an SSL certificate and private key, you have a few options depending on your requirements:
+
+Using Let's Encrypt:
+Let's Encrypt is a free, automated, and open Certificate Authority that provides SSL certificates. You can use Certbot, Let's Encrypt's official client, to obtain and install SSL certificates easily.
+Install Certbot by following the instructions on the Certbot website.
+Once Certbot is installed, you can obtain a certificate for your domain by running a command like:
+css
+Copy code
+sudo certbot certonly --standalone -d yourdomain.com
+Certbot will guide you through the process and will generate the SSL certificate and private key for you.
+Using OpenSSL to Generate a Self-Signed Certificate:
+For testing purposes or if you don't want to use Let's Encrypt, you can generate a self-signed certificate using OpenSSL.
+First, make sure OpenSSL is installed on your system.
+Use the following command to generate a self-signed certificate and private key:
+csharp
+Copy code
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+This command will generate a 4096-bit RSA private key and a self-signed certificate valid for 365 days.
+You will be prompted to provide information such as country, state, organization, etc. You can enter whatever values you prefer.
+Using Cloud Providers:
+Many cloud providers offer services for managing SSL certificates, such as AWS Certificate Manager (ACM) on Amazon Web Services or Azure Key Vault on Microsoft Azure. These services often provide free SSL certificates and handle certificate renewal automatically.
+Choose the method that best suits your needs, whether it's obtaining a free certificate from Let's Encrypt for production use, generating a self-signed certificate for testing purposes, or using a cloud provider's SSL management service for convenience.
+User
+Replying to:
+Once Certbot is installed, you can obtain a certificate for your domain by running a command like:
+What is yourdomain.com?
+
+ChatGPT
+In the context of obtaining an SSL certificate using Certbot, "yourdomain.com" is a placeholder that represents your own domain name. When you run Certbot to obtain a certificate, you would replace "yourdomain.com" with the actual domain name for which you want to obtain the SSL certificate.
+
+For example, if your website's domain name is "example.com", you would run Certbot with the domain name like this:
+
+css
+Copy code
+sudo certbot certonly --standalone -d example.com
+This command tells Certbot to obtain a certificate for the domain "example.com". You can also specify multiple domain names (known as Subject Alternative Names or SANs) by adding additional -d flags followed by the domain names. For example:
+
+css
+Copy code
+sudo certbot certonly --standalone -d example.com -d www.example.com
+This command would obtain a certificate for both "example.com" and "www.example.com".
+
+Replace "example.com" with your actual domain name when using Certbot to obtain an SSL certificate for your website.
+User
+georgiosalexandrosgeorgantzas@192 cli-client % ./se2317 login
+Username: BlueFatWhale
+Password: 
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 537, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connection.py", line 466, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/http/client.py", line 1419, in getresponse
+    response.begin()
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/http/client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/http/client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [Errno 54] Connection reset by peer
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/adapters.py", line 486, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/util/retry.py", line 470, in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/util/util.py", line 38, in reraise
+    raise value.with_traceback(tb)
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 537, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connection.py", line 466, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/http/client.py", line 1419, in getresponse
+    response.begin()
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/http/client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/http/client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ProtocolError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/cli-client/./se2317", line 5, in <module>
+    cli()
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1157, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1078, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1688, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1434, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 783, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/cli-client/cli.py", line 62, in login
+    response = post(url, data=data, verify=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/adapters.py", line 501, in send
+    raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+georgiosalexandrosgeorgantzas@192 cli-client % 
+
+ChatGPT
+It seems that there was a connection issue while trying to log in using the CLI client. The error message indicates that the connection was reset by the peer.
+
+This could be due to various reasons such as network issues, server configuration problems, or firewall restrictions. Here are a few steps you can take to troubleshoot the issue:
+
+Check Network Connectivity: Ensure that your internet connection is stable and that there are no network issues on your end.
+Verify Server Status: Make sure that the server you are trying to connect to is up and running. You can try accessing the server through a web browser to see if it's accessible.
+Firewall Settings: Check if there are any firewall settings blocking the connection. If you're on a corporate network, there might be restrictions in place that prevent outbound connections.
+SSL Certificate: If the server is using HTTPS (SSL/TLS), ensure that the SSL certificate is valid and properly configured. Sometimes, SSL certificate issues can cause connection problems.
+Server Logs: Check the server logs for any errors or warnings that might indicate what went wrong. Look for any entries around the time when the connection was attempted.
+Retry: Sometimes, network issues can be transient. Try the login process again after a few minutes to see if the problem persists.
+If you continue to encounter issues, you may need to consult with the server administrator or the technical support team for further assistance in diagnosing and resolving the problem.
+User
+import json
+import click
+import os
+from requests import post
+import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# File paths for session information
+SESSION_FILE_PATH = 'session.json'
+
+@click.group()
+def cli():
+    pass
+
+def save_session(user_id, is_admin):
+    session_data = {'user_id': user_id, 'is_admin': is_admin}
+    with open(SESSION_FILE_PATH, 'w') as file:
+        json.dump(session_data, file)
+
+def load_session():
+    if os.path.exists(SESSION_FILE_PATH):
+        with open(SESSION_FILE_PATH, 'r') as file:
+            return json.load(file)
+    return None
+
+def clear_session():
+    # Clear the stored session information
+    if os.path.exists(SESSION_FILE_PATH):
+        os.remove(SESSION_FILE_PATH)
+
+
+def handle_response(response, format):
+    try:
+        if response.status_code == 200:
+            if format.lower() == 'json':
+                try:
+                    print(response.json())
+                    return response.json()
+                except json.decoder.JSONDecodeError as json_err:
+                    print(f"Error decoding JSON: {json_err}")
+            elif format.lower() == 'csv':
+                print(response.content.decode('utf-8'))
+                return response.content.decode('utf-8')
+            else:
+                print(f"Error: Invalid format specified: {format}")
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+# L O G I N    
+@cli.command()
+@click.option('--username', prompt='Username', help='The username for login', required=True)
+@click.option('--password', prompt=True, hide_input=True, help='The password for login', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def login(username, password, format):
+    url = 'https://127.0.0.1:9876/ntuaflix_api/login' # url from api
+    data = {'username': username, 'password': password, 'format': format}
+
+    response = post(url, data=data, verify=True)
+    response.raise_for_status()
+
+    user_data = response.json()
+    save_session(user_data.get('user_id'), user_data.get('is_admin'))
+    response.raise_for_status() 
+
+    handle_response(response, format)
+
+
+# L O G O U T
+@cli.command()
+@click.option('--format', help='The desired output format', default='json')
+def logout(format):
+    session_data = load_session()
+
+    if session_data:
+        url = f'https://127.0.0.1:9876/ntuaflix_api/logout'
+        data = {'format': format}
+
+        print(f"Sending logout request to {url} with data: {data}")
+
+        response = post(url, data=data, verify=True)
+
+        # Clear the stored session information after the request is made
+        clear_session()
+
+        try:
+            response.raise_for_status()
+            handle_response(response, format)
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error: {e}")
+    else:
+        print("Error: Not logged in")
+
+
+# T I T L E
+@cli.command()
+@click.option('--titleID', prompt='titleID', help='The titleID for searchTitle', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def title(titleid, format):
+    url = f'https://127.0.0.1:9876/ntuaflix_api/title/{titleid}' # url from api
+    params = {'format' : format}
+
+    response = requests.get(url, params=params, verify=True)
+    response.raise_for_status() # Raises HTTPError, if one occurred.
+
+    handle_response(response, format)
+
+# S E A R C H  B Y  T I T L E
+@cli.command()
+@click.option('--titlepart', prompt='titlepart', help='The titlepart for searchTitle', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def searchtitle(titlepart, format):
+    url = 'https://127.0.0.1:9876/ntuaflix_api/searchTitle'
+    params = {'titlePart': titlepart, 'format': format}
+
+    response = requests.get(url, params=params, verify=True)
+    response.raise_for_status() 
+
+    handle_response(response, format)
+
+# S E A R C H  B Y  G E N R E
+@cli.command()
+@click.option('--genre', prompt='genre', help='The genre of the movie', required=True)
+@click.option('--min', prompt='min', help='Minimum Rating of movie', required=True)
+@click.option('--start', type=int, help='Start year for filtering titles (optional)')
+@click.option('--end', type=int, help='End year for filtering titles (optional)')
+@click.option('--format', help='The desired output format', default='json')
+def bygenre(genre, min, start, end, format):
+    url = 'https://127.0.0.1:9876/ntuaflix_api/bygenre'
+    params = {'qgenre': genre, 'minrating': min, 'yrFrom': start, 'yrTo': end, 'format': format}
+
+    response = requests.get(url, params=params, verify=True)
+    response.raise_for_status() 
+
+    handle_response(response, format)
+
+# N A M E
+@cli.command()
+@click.option('--nameID', prompt='nameID', help='The titleID for searchTitle', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def name(nameid, format):
+    url = f'https://127.0.0.1:9876/ntuaflix_api/name/{nameid}'  # URL from API
+    params = {'format': format}
+
+    response = requests.get(url, params=params, verify=True)
+    response.raise_for_status() 
+
+    handle_response(response, format)
+
+# S E A R C H  N A M E
+@cli.command()
+@click.option('--namepart', prompt='namepart', help='The titlepart for searchPrincipals', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def searchname(namepart, format):
+    url = 'https://127.0.0.1:9876/ntuaflix_api/searchname' # url from api
+    params = {'namePart': namepart, 'format': format}
+
+    response = requests.get(url, params=params, verify=True)
+    response.raise_for_status() 
+
+    handle_response(response, format)
+
+# H E A L T H  C H E C K
+@cli.command()
+@click.option('--format', help='The desired output format', default='json')
+def healthcheck(format):
+    session_data = load_session()
+    if session_data.get('is_admin'):
+        url = 'https://127.0.0.1:9876/ntuaflix_api/admin/healthcheck'
+        data = {'format': format}
+        
+        response = requests.get(url, data=data, verify=True)
+        response.raise_for_status() 
+
+        handle_response(response, format)
+    else:
+        print('Only admin can check the database connection')
+
+# R E S E T  A L L
+@cli.command()
+@click.option('--format', help='The desired output format', default='json')
+def resetall(format):
+    session_data = load_session()
+    if session_data.get('is_admin'):
+        url = 'https://127.0.0.1:9876/ntuaflix_api/admin/resetall'
+        data = {'format': format}
+        
+        response = requests.post(url, data=data, verify=True)
+        response.raise_for_status() 
+
+        handle_response(response, format)
+    else:
+        print('Only admin can reset the database')
+        
+
+# T I T L E  B A S I C S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newtitles(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlebasics'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# N A M E  B A S I C S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newnames(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/namebasics'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+
+# T I T L E  P R I N C I P A L S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newprincipals(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):
+            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleprincipals'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# N E W  C R E W
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newcrew(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titlecrew'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# N E W  E P I S O D E
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newepisode(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleepisode'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+
+# T I T L E  A K A S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newakas(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):        
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleakas'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# T I T L E  R A T I N G S
+@cli.command()
+@click.option('--filename', type=click.Path(exists=True), prompt='file', help='The TSV file to upload', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def newratings(filename, format):
+    session_data = load_session()
+
+    if filename is not None:
+        if session_data and session_data.get('is_admin'):            
+            url = 'https://127.0.0.1:9876/ntuaflix_api/admin/upload/titleratings'  # Replace with your actual API URL
+            files = {'file': (filename, open(filename, 'rb'))}
+            headers = {'format': format}  # Pass format in headers
+
+            response = requests.post(url, files=files, headers=headers, verify=True)
+            handle_response(response, format)
+        else:
+            print('Only admin can upload files')
+    else:
+        print("Error: No file provided.")
+
+# A D D  U S E R
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--passw', prompt=True, hide_input=True, help='The password os user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def adduser(username, passw, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):          
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=True)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can modify other users')
+
+# S E E  U S E R
+@cli.command()
+@click.option('--username', prompt='Username', help='The username of user', required=True)
+@click.option('--format', help='The desired output format', default='json')
+def user(username, format):
+    session_data = load_session()
+
+    if session_data and session_data.get('is_admin'):
+        url = f'https://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
+        data = {'format': format}
+        response = requests.post(url, data=data, verify=True)
+        response.raise_for_status() 
+        handle_response(response, format)
+    else:
+        print('Only admin can see other users')
+        
+if __name__ == '__main__':
+    cli()
+
+georgiosalexandrosgeorgantzas@192 cli-client % ./se2317 login
+Username: BlueFatWhale
+Password: 
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 467, in _make_request
+    self._validate_conn(conn)
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 1099, in _validate_conn
+    conn.connect()
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connection.py", line 653, in connect
+    sock_and_verified = _ssl_wrap_socket_and_match_hostname(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connection.py", line 806, in _ssl_wrap_socket_and_match_hostname
+    ssl_sock = ssl_wrap_socket(
+               ^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/util/ssl_.py", line 465, in ssl_wrap_socket
+    ssl_sock = _ssl_wrap_socket_impl(sock, context, tls_in_tls, server_hostname)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/util/ssl_.py", line 509, in _ssl_wrap_socket_impl
+    return ssl_context.wrap_socket(sock, server_hostname=server_hostname)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/ssl.py", line 455, in wrap_socket
+    return self.sslsocket_class._create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/ssl.py", line 1046, in _create
+    self.do_handshake()
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/ssl.py", line 1321, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1000)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 491, in _make_request
+    raise new_e
+urllib3.exceptions.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1000)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/adapters.py", line 486, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/urllib3/util/retry.py", line 515, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='127.0.0.1', port=9876): Max retries exceeded with url: /ntuaflix_api/login (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1000)')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/cli-client/./se2317", line 5, in <module>
+    cli()
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1157, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1078, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1688, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 1434, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/click/core.py", line 783, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/cli-client/cli.py", line 62, in login
+    response = post(url, data=data, verify=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/georgiosalexandrosgeorgantzas/.pyenv/versions/3.12.1/lib/python3.12/site-packages/requests/adapters.py", line 517, in send
+    raise SSLError(e, request=request)
+requests.exceptions.SSLError: HTTPSConnectionPool(host='127.0.0.1', port=9876): Max retries exceeded with url: /ntuaflix_api/login (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1000)')))
+georgiosalexandrosgeorgantzas@192 cli-client % 
+
+ChatGPT
+It seems that you're encountering an SSL certificate verification error while making HTTPS requests to your local development server. This error typically occurs when the SSL certificate used by the server is not trusted by the client making the request.
+
+Here are a few steps you can take to resolve this issue:
+
+Disable SSL Verification (Not Recommended for Production): You can disable SSL verification in your requests by setting the verify parameter to False. However, this is not recommended for production use as it exposes you to potential security risks.
+python
+Copy code
+response = post(url, data=data, verify=False)
+Use a Trusted SSL Certificate: Obtain a trusted SSL certificate for your local development server. You can either purchase one from a trusted Certificate Authority (CA) or generate a self-signed certificate and manually add it to the trust store of the client making the requests.
+Add the Self-Signed Certificate to the Trust Store: If you're using a self-signed certificate for your local server, you can add it to the trust store of your client machine. This will vary depending on your operating system and the tools you're using.
+Use http Instead of https for Local Development: If security is not a concern for your local development environment, you can temporarily switch to using http instead of https for your API endpoints.
+Check Server Configuration: Ensure that your local server is configured correctly to serve the SSL certificate and that there are no issues with the certificate chain.
+Check Server Logs: Check the server logs for any errors related to SSL certificate configuration or serving.
+Once you've taken appropriate action based on the above steps, you should be able to make HTTPS requests to your local server without encountering SSL certificate verification errors. Remember to use caution when disabling SSL verification or using self-signed certificates, especially in production environments.
+User
+I have created certifactes using this:
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+
+Is this not enough?
+
+ChatGPT
+Creating self-signed certificates using OpenSSL as you described is indeed a common approach for local development purposes. However, if you're encountering SSL certificate verification errors, it's possible that the certificate you generated is not being recognized as trusted by the client making the request.
+
+Here are a few potential reasons why the certificate may not be trusted:
+
+Certificate Chain: When creating a self-signed certificate, it's essential to ensure that the certificate includes the full certificate chain, including any intermediate certificates. Some clients may require the full chain to be present in order to validate the certificate.
+Certificate Installation: Even if you've generated the certificate correctly, you need to ensure that it's installed and configured correctly on your local server. This includes specifying the correct paths to the certificate and key files in your server configuration.
+Client Trust Store: The client making the HTTPS request needs to trust the certificate presented by the server. If the client doesn't recognize the certificate as trusted, it will reject the connection. You may need to manually add the self-signed certificate to the trust store of the client machine.
+Expiration: Ensure that the certificate has not expired. In your command, you specified a validity period of 365 days (-days 365). If the certificate has expired, it will no longer be trusted.
+Common Name (CN) or Subject Alternative Names (SANs): Ensure that the Common Name (CN) or Subject Alternative Names (SANs) specified in the certificate match the hostname used to access the server. Mismatched names can cause SSL verification errors.
+Key and Certificate File Permissions: Ensure that the permissions on the key and certificate files are set correctly to prevent unauthorized access.
+Server Configuration: Double-check your server configuration to ensure that it's correctly configured to use the generated certificate and key files.
+By addressing these potential issues, you should be able to create and use self-signed certificates for local development without encountering SSL certificate verification errors. If you continue to experience issues, reviewing the server and client logs may provide additional insights into the problem.
+User
+The way I am running this cli.py file is, first run the api.py file which is the code  I sent you earlier in this conversation.
+Then I run
+./se2317 which is this file:
+
+#!/usr/bin/env python3
+from cli import cli
+
+if __name__ == '__main__':
+    cli()
+
+Is there a problem with these?
+
+ChatGPT
+Based on the information provided, running the cli.py file as you described should not inherently cause SSL certificate verification errors. However, the issue might arise from how the HTTPS requests are handled within your cli.py file.
+
+Here are a few steps you can take to troubleshoot the SSL certificate verification errors:
+
+Verify Certificate Paths: Double-check that the paths to the certificate and key files (cert.pem and key.pem) are correct and accessible within your api.py file. Ensure that the server is configured to use these files for SSL/TLS encryption.
+Verify HTTPS Requests: Ensure that the HTTPS requests made by your CLI client (cli.py) specify the correct URL, including the protocol (https://) and hostname (127.0.0.1 or localhost). Also, verify that the requests include the necessary SSL certificate verification settings.
+Disable Certificate Verification (Temporary): As a temporary troubleshooting step, you can try disabling SSL certificate verification in your cli.py file. While this is not recommended for production use, it can help identify whether the issue is related to certificate verification.
+In the requests.post() and requests.get() calls within your cli.py file, set the verify parameter to False. For example:
+python
+Copy code
+response = requests.post(url, data=data, verify=False)
+Be cautious when using this approach, as it disables SSL certificate verification and may expose your application to security risks.
+Check SSL Certificate Chain: Ensure that the self-signed certificate (cert.pem) includes the full certificate chain, including any intermediate certificates. Some clients require the full chain to validate the certificate successfully.
+Check Client Trust Store: If you're still encountering SSL certificate verification errors, ensure that the self-signed certificate (cert.pem) is added to the trust store of the client machine running the CLI client (cli.py). This step is necessary for the client to trust the server's certificate.
+By following these steps and carefully reviewing the SSL/TLS configuration in both your server (api.py) and client (cli.py) code, you should be able to diagnose and resolve the SSL certificate verification errors.
+User
+What is the Trust Store
+
+ChatGPT
+The trust store, in the context of SSL/TLS encryption, is a repository of trusted SSL certificates used by a client application to verify the authenticity of certificates presented by servers during SSL/TLS handshakes.
+
+When a client establishes an SSL/TLS connection with a server, it receives the server's SSL certificate. The client then verifies the certificate's authenticity by checking whether it was issued by a trusted certificate authority (CA) and whether it hasn't been tampered with. To perform this verification, the client consults its trust store, which contains a list of CA certificates that it trusts.
+
+The trust store typically includes root CA certificates and sometimes intermediate CA certificates. These certificates are used to establish chains of trust from the server's certificate back to a trusted root CA. If the server's certificate can be verified using this chain, the SSL/TLS handshake proceeds, and the connection is considered secure.
+
+In the context of Python's requests library, when making HTTPS requests, the library relies on the underlying system's trust store to validate server certificates. This trust store is often managed by the operating system or provided by the Python distribution.
+
+If you're encountering SSL certificate verification errors in your Python client application, it might be because the server's certificate is not trusted by the client's trust store. In such cases, you might need to add the server's self-signed certificate to the client's trust store to establish trust and resolve the verification errors.
+User
+How to put this on the trust store?
+
+ChatGPT
+Adding a self-signed certificate to the trust store varies depending on the operating system and the tools available. Here's a general guide on how to add a self-signed certificate to the trust store on some common operating systems:
+
+Windows:
+Open MMC (Microsoft Management Console):
+Press Win + R, type mmc, and hit Enter.
+Add the Certificates Snap-in:
+Go to File > Add/Remove Snap-in.
+Select Certificates and click Add.
+Choose Computer account and click Next.
+Select Local computer and click Finish.
+Click OK.
+Import the Certificate:
+Expand Certificates (Local Computer) > Trusted Root Certification Authorities.
+Right-click on Certificates and choose All Tasks > Import.
+Follow the import wizard to import your self-signed certificate.
+macOS:
+Open Keychain Access:
+Open Keychain Access from /Applications/Utilities/.
+Import the Certificate:
+Drag and drop your self-signed certificate file onto the Keychain Access window.
+Double-click on the imported certificate.
+Expand the Trust section and set When using this certificate to Always Trust.
+Linux (Ubuntu/Debian):
+Copy the Certificate File:
+Copy your self-signed certificate file (e.g., cert.pem) to /usr/local/share/ca-certificates/.
+Update the CA Certificate Store:
+Run sudo update-ca-certificates.
+Python (requests library):
+Alternatively, you can add the certificate programmatically in your Python code using the requests library:
+
+python
+Copy code
+import requests
+
+# Assuming 'cert.pem' is your self-signed certificate file
+response = requests.get('https://your-server.com', verify='/path/to/cert.pem')
+In the requests.get() call, the verify parameter is set to the path of your self-signed certificate. This tells requests to use your custom certificate for verification instead of the system's default trust store. Adjust the path accordingly based on the location of your certificate file.
+
+Choose the method that suits your needs and the operating system you're working on. After adding the self-signed certificate to the trust store, your Python client should trust the server's certificate during SSL/TLS handshakes.
+User
+Replying to:
+### macOS:
+
+1.  **Open Keychain Access**:
+    
+    *   Open `Keychain Access` from `/Applications/Utilities/`.
+2.  **Import the Certificate**:
+    
+    *   Drag and drop your self-signed certificate file onto the `Keychain Access` window.
+    *   Double-click on the imported certificate.
+    *   Expand the `Trust` section and set `When using this certificate` to `Always Trust`.
+Opening keychain access, there are on the sidebar these options:
+Default Keychains:
+login
+Local Items
+
+System Keychains:
+System
+System Roots
+
+ChatGPT
+In Keychain Access on macOS, you should see two sections in the sidebar: "Default Keychains" and "System Keychains".
+
+Default Keychains: This section contains keychains specific to your user account, such as the "login" keychain and "Local Items".
+System Keychains: This section contains keychains related to system-wide settings and certificates, such as the "System" keychain and "System Roots".
+Since you're adding a self-signed certificate to trust it system-wide, you should import it into the "System" keychain. Here's how:
+
+Drag and drop your self-signed certificate file onto the Keychain Access window.
+Double-click on the imported certificate.
+Expand the "Trust" section and set "When using this certificate" to "Always Trust".
+By doing this in the "System" keychain, you're ensuring that the certificate is trusted by all users on the system and by system services.
+User
+I have two files:
+cert.pem
+key.pem
+Where do I put these/
+
+ChatGPT
+To add your self-signed certificate (cert.pem) to the macOS Keychain and configure it as trusted, follow these steps:
+
+Open Keychain Access. You can find it by searching for "Keychain Access" in Spotlight or by navigating to /Applications/Utilities/Keychain Access.app.
+In Keychain Access, go to File > Import Items... and select your cert.pem file. This will import your certificate into the login keychain by default.
+Double-click on the imported certificate to open its details.
+Expand the "Trust" section.
+For the "When using this certificate" option, select "Always Trust".
+Close the certificate details window. You may need to enter your administrator password to save the changes.
+Now, your self-signed certificate should be added to the Keychain and trusted system-wide. However, remember that the private key (key.pem) should be kept secure and should not be added to the Keychain. The private key should only be used for server-side operations where the certificate is installed.
