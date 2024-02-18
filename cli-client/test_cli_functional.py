@@ -8,7 +8,7 @@ def test_login_functional():
         cli, ["login", "--username", "admin", "--password", "0"]
     )
     assert result.exit_code == 0
-    assert "{'is_admin': 1, 'user_id': 5, 'username': 'admin'}" in result.output
+    assert "{'is_admin': 1, 'user_id': 1, 'username': 'admin'}" in result.output
 
 def test_title_functional():
     runner = CliRunner()

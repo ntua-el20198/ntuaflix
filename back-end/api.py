@@ -123,7 +123,7 @@ def reset_all():
             tables_to_reset = [
                 "likes",
                 "knownForTitles",
-                "ListForWtachingLater",
+                "ListForWatchingLater",
                 "title_ratings",
                 "title_principals",
                 "title_akas",
@@ -324,7 +324,6 @@ def title(titleID):
                 title['titleID'] = str(title['titleID'])
 
                 # Fetch title_akas, title_principals, and title_rating for each title
-                title['titleAkas'] = fetch_title_akas(cursor, title_data[0])
                 title['principals'] = fetch_title_principals(cursor, title_data[0])
                 title['rating'] = fetch_title_rating(cursor, title_data[0])
 
@@ -569,7 +568,7 @@ def add_to_list(titleID):
         movie = cursor.fetchone()
         
         if movie:
-           return jsonify({"message": "Movie already in list"}), 201
+           return jsonify({"message": "Movie already in list"}), 200
         
         else:
             query_add = "INSERT INTO ListForWatchingLater(usersid, title_basicstconst ) VALUES(%s, %s)"
@@ -610,7 +609,7 @@ def remove_from_list(titleID):
                 return jsonify({"error": "Something went wrong"}), 204
         
         else:
-            return jsonify({"error" : "Not in list"}), 201
+            return jsonify({"error" : "Not in list"}), 200
     return jsonify({"error" : "Internal server error"}), 500
 
 @app.route('/ntuaflix_api/list_for_watching_later', methods=['GET'])
@@ -655,21 +654,21 @@ def list_for_watching_later():
 
                         movie_list.append(movie_dict)
 
+                if output_format == 'csv':
+                    csv_data = convert_to_csv_titleObject(movie_list)
+                    return Response(csv_data, mimetype='text/csv')
+
+                elif output_format == 'json':
+                    if movies:
+                        return jsonify(movie_list), 200
+                    else:
+                        return jsonify({"error": "Movies not found"}), 204
+                else:
+                    return jsonify({"error": "Invalid format specified"}), 400
+                
             except Exception as e:
                 print(f"An exception occurred: {e}")
                 return jsonify({"error": "Internal server error"}), 500
-
-            if output_format == 'csv':
-                csv_data = convert_to_csv_titleObject(movie_list)
-                return Response(csv_data, mimetype='text/csv')
-
-            elif output_format == 'json':
-                if movie_list:
-                    return jsonify(movie_list), 200
-                else:
-                    return jsonify({"error": "Movies not found"}), 204
-            else:
-                return jsonify({"error": "Invalid format specified"}), 400
         else:
             return jsonify({'list': []}), 200
     else:
@@ -690,7 +689,7 @@ def add_to_likes(titleID):
         movie = cursor.fetchone()
         
         if movie:
-           return jsonify({"message": "Movie already liked"}), 201
+           return jsonify({"message": "Movie already liked"}), 200
         
         else:
             query_add = "INSERT INTO Likes(usersid, title_basicstconst) VALUES(%s, %s)"
@@ -743,7 +742,7 @@ def check_watchlist(titleID):
         result = cursor.fetchone()
 
         # Check if fetchone() returned a result
-        in_watchlist_count = result[0] if result and result[0] is not None else 0
+        in_watchlist_count = result[1] if result and result[1] is not None else 0
         #print(in_watchlist_count)
 
         # Return a JSON response indicating whether the movie is in the watchlist or not
@@ -882,6 +881,7 @@ def check_myratingslist():
         
     return jsonify({"error" : "Internal server error"}), 500
 
+
 @app.route('/ntuaflix_api/check_rating/<int:titleID>', methods=['GET'])
 def check_rating(titleID):
     userID = session.get('user_id')
@@ -914,6 +914,14 @@ def rating(titleID):
             if not userID:
             # If user ID is not in the session, handle it accordingly
                 return jsonify({"error": "User not authenticated"}), 401
+            
+            cursor = db.cursor()
+            query_prev_rating = "SELECT rating FROM user_ratings WHERE usersid = %s AND title_basicstconst = %s"
+            cursor.execute(query_prev_rating, (userID, titleID))
+            prev_rating_row = cursor.fetchone()
+            cursor.close()
+            if prev_rating_row:
+                return jsonify({"message": "Movie already rated"}), 200
             if rating is None:
                 return jsonify({"message": "Bad request"}), 400
             else:
@@ -1182,6 +1190,9 @@ def upload_title_basics():
             cursor = db.cursor()
             try:
                 file = request.files['file']
+                max_file_size_kb = 1024
+                if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                    return jsonify({"error": "File size exceeds the allowed limit."}), 400
                 # Read the TSV file
                 content = file.read().decode('utf-8').splitlines()
 
@@ -1197,6 +1208,8 @@ def upload_title_basics():
                     runtimeMinutes = 'NULL' if runtimeMinutes == '\\N' else runtimeMinutes                
                     genres = 'NULL' if genres == '\\N' else genres
                     img_url_asset = 'NULL' if img_url_asset == '\\N' else img_url_asset  
+                    primaryTitle = primaryTitle.replace("'", "''")
+                    originalTitle = originalTitle.replace("'", "''")
 
                     tconst = int(tconst[2:])
                     query_insert = f"INSERT INTO title_basics (tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres, img_url_asset) VALUES ({tconst}, '{titleType}', '{primaryTitle}', '{originalTitle}', {isAdult}, {startYear}, {endYear}, {runtimeMinutes}, '{genres}', '{img_url_asset}')"
@@ -1206,130 +1219,171 @@ def upload_title_basics():
 
                 return jsonify({"message": "Data successfully uploaded."}), 200
             
+            except IntegrityError as e:
+            # Handle duplicate key error
+                db.rollback()
+                return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
-            
+
             finally:
                 cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
     
+from mysql.connector import IntegrityError  # Replace with the appropriate library
+
 @app.route('/ntuaflix_api/admin/upload/titleakas', methods=['POST'])
 def upload_title_akas():
     if request.method == 'POST':
-            cursor = db.cursor()
-            try:
-                file = request.files['file']
-                # Read the TSV file
-                content = file.read().decode('utf-8').splitlines()
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            max_file_size_kb = 1024
+            if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                return jsonify({"error": "File size exceeds the allowed limit."}), 400
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
 
-                # Skip the first line (header)
-                iter_content = iter(content)
-                next(iter_content)
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
+
+            for line in iter_content:
+                values = line.split('\t')
+                titleId, ordering, title, region, language, types, attributes, isOriginalTitle = values
                 
-                for line in iter_content:
-                    values = line.split('\t')
-                    titleId, ordering, title, region, language, types, attributes, isOriginalTitle = values
-                    
-                    region = 'NULL' if region == '\\N' else region
-                    language = 'NULL' if language == '\\N' else language                
-                    types = 'NULL' if types == '\\N' else types
-                    attributes = 'NULL' if attributes == '\\N' else attributes  
+                region = 'NULL' if region == '\\N' else region
+                language = 'NULL' if language == '\\N' else language
+                types = 'NULL' if types == '\\N' else types
+                attributes = 'NULL' if attributes == '\\N' else attributes
 
-                    titleId = int(titleId[2:])
-                    query_insert = f"INSERT INTO title_akas (titleId, ordering, title, region, language, types, attributes, isOriginalTitle) VALUES ({titleId}, '{ordering}', '{title}', '{region}', '{language}', '{types}', '{attributes}', {isOriginalTitle})"
-                    cursor.execute(query_insert)
+                titleId = int(titleId[2:])
+                title = title.replace("'", "''")
 
-                db.commit()
+                # Use parameterized query to avoid SQL injection
+                query_insert = """
+                    INSERT INTO title_akas (titleId, ordering, title, region, language, types, attributes, isOriginalTitle)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(query_insert, (titleId, ordering, title, region, language, types, attributes, isOriginalTitle))
 
-                return jsonify({"message": "Data successfully uploaded."}), 200
-            
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-            
-            finally:
-                cursor.close()
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+
+        except IntegrityError as e:
+            # Handle duplicate key error
+            db.rollback()
+            return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+        finally:
+            cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
-    
+
 @app.route('/ntuaflix_api/admin/upload/titlecrew', methods=['POST'])
 def upload_title_crew():
-        if request.method == 'POST':
-            cursor = db.cursor()
-            try:
-                file = request.files['file']
-                # Read the TSV file
-                content = file.read().decode('utf-8').splitlines()
-                # Skip the first line (header)
-                iter_content = iter(content)
-                next(iter_content)
-                for line in iter_content:
-                    values = line.split('\t')
-                    tconst, directors, writers = values
-                    
-                    directors = [nconst[2:] for nconst in (directors.split(',') if directors else [])]
-                    writers = [nconst[2:] for nconst in (writers.split(',') if writers else [])]
-                    tconst = int(tconst[2:])
-
-                    if directors:
-                        directors_query = """
-                            INSERT INTO director (name_basicsnconst, title_basicstconst)
-                            VALUES (%s, %s)
-                        """
-                        for nconst in directors:
-                            nconst = int(nconst) if nconst else None
-                            cursor.execute(directors_query, (nconst, tconst))
-
-                    if writers:
-                        writers_query = """
-                            INSERT INTO writer (name_basicsnconst, title_basicstconst)
-                            VALUES (%s, %s)
-                        """
-                        for nconst in writers:
-                            nconst = int(nconst) if nconst else None
-                            cursor.execute(writers_query, (nconst, tconst))
-
-                db.commit()
-
-                return jsonify({"message": "Data successfully uploaded."}), 200
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
+    if request.method == 'POST':
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            max_file_size_kb = 1024
+            if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                return jsonify({"error": "File size exceeds the allowed limit."}), 400
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
             
-            finally:
-                cursor.close()
-        else:
-            return jsonify({"error": "Not available"}), 404
+            directors_query = """
+                INSERT INTO director (name_basicsnconst, title_basicstconst)
+                VALUES (%s, %s)
+            """
+            
+            writers_query = """
+                INSERT INTO writer (name_basicsnconst, title_basicstconst)
+                VALUES (%s, %s)
+            """
+
+            for line in iter_content:
+                values = line.split('\t')
+                tconst, directors, writers = values
+
+                directors = [nconst[2:] for nconst in (directors.split(',') if directors else [])]
+                writers = [nconst[2:] for nconst in (writers.split(',') if writers else [])]
+                tconst = int(tconst[2:])
+
+                for nconst in directors:
+                    nconst = int(nconst) if nconst else None
+                    print(f"Attempting to insert director with nconst: {nconst} and tconst: {tconst}")
+                    cursor.execute(directors_query, (nconst, tconst))
+
+                for nconst in writers:
+                    nconst = int(nconst) if nconst else None
+                    print(f"Attempting to insert writer with nconst: {nconst} and tconst: {tconst}")
+                    cursor.execute(writers_query, (nconst, tconst))
+
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        except IntegrityError as e:
+            # Handle duplicate key error
+            db.rollback()
+            return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            cursor.close()
+    else:
+        return jsonify({"error": "Not available"}), 404
     
 @app.route('/ntuaflix_api/admin/upload/titleepisode', methods=['POST'])
 def upload_title_episode():
     if request.method == 'POST':
-            cursor = db.cursor()
-            try:
-                file = request.files['file']
-                # Read the TSV file
-                content = file.read().decode('utf-8').splitlines()
+        cursor = db.cursor()
+        try:
+            file = request.files['file']
+            max_file_size_kb = 1024
+            if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                return jsonify({"error": "File size exceeds the allowed limit."}), 400
 
-                # Skip the first line (header)
-                iter_content = iter(content)
-                next(iter_content)
-                
-                for line in iter_content:
-                    values = line.split('\t')
-                    tconst, parentTconst, seasonNumber, episodeNumber = values
+            # Read the TSV file
+            content = file.read().decode('utf-8').splitlines()
 
-                    tconst = int(tconst[2:])
-                    parentTconst = int(parentTconst[2:])
-                    query_insert = f"INSERT INTO title_episode (tconst, parentTconst, seasonNumber, episodeNumber) VALUES ({tconst}, {parentTconst}, {seasonNumber}, {episodeNumber})"
-                    cursor.execute(query_insert)
-
-                db.commit()
-
-                return jsonify({"message": "Data successfully uploaded."}), 200
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
+            # Skip the first line (header)
+            iter_content = iter(content)
+            next(iter_content)
             
-            finally:
-                cursor.close()
+            for line in iter_content:
+                values = line.split('\t')
+                tconst, parentTconst, seasonNumber, episodeNumber = values
+
+                tconst = int(tconst[2:])
+                parentTconst = int(parentTconst[2:])
+                seasonNumber = int(seasonNumber) if seasonNumber != '\\N' else None
+                episodeNumber = int(episodeNumber) if episodeNumber != '\\N' else None
+
+                query_insert = "INSERT INTO title_episode (tconst, parentTconst, seasonNumber, episodeNumber) VALUES (%s, %s, %s, %s)"
+                cursor.execute(query_insert, (tconst, parentTconst, seasonNumber, episodeNumber))
+            db.commit()
+
+            return jsonify({"message": "Data successfully uploaded."}), 200
+        except IntegrityError as e:
+            # Handle duplicate key error
+            db.rollback()
+            return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+        finally:
+            cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
 
@@ -1339,6 +1393,10 @@ def upload_name_basics():
         cursor = db.cursor()
         try:
             file = request.files['file']
+            max_file_size_kb = 1024
+            if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                return jsonify({"error": "File size exceeds the allowed limit."}), 400
+
             # Read the TSV file
             content = file.read().decode('utf-8').splitlines()
 
@@ -1351,6 +1409,8 @@ def upload_name_basics():
                 nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles, img_url_asset = values
                 nconst = int(nconst[2:])
                 knownForTitles = [tconst[2:] for tconst in knownForTitles.split(',')]
+                birthYear = int(birthYear) if birthYear != '\\N' else None
+                deathYear = int(deathYear) if deathYear != '\\N' else None
 
                 # Insert into name_basics using parameterized query
                 name_basics_query = """
@@ -1372,8 +1432,16 @@ def upload_name_basics():
             db.commit()
 
             return jsonify({"message": "Data successfully uploaded."}), 200
+        except IntegrityError as e:
+                # Handle duplicate key error
+            db.rollback()
+            return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+        finally:
+            cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
 
@@ -1383,6 +1451,10 @@ def upload_title_principals():
         cursor = db.cursor()
         try:
             file = request.files['file']
+            max_file_size_kb = 1024
+            if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                return jsonify({"error": "File size exceeds the allowed limit."}), 400
+
             # Read the TSV file
             content = file.read().decode('utf-8').splitlines()
 
@@ -1409,8 +1481,16 @@ def upload_title_principals():
             db.commit()
 
             return jsonify({"message": "Data successfully uploaded."}), 200
+        except IntegrityError as e:
+                # Handle duplicate key error
+            db.rollback()
+            return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+        finally:
+            cursor.close()
     else:
         return jsonify({"error": "Not available"}), 404
     
@@ -1421,6 +1501,9 @@ def upload_title_ratings():
             cursor = db.cursor()
             try:
                 file = request.files['file']
+                max_file_size_kb = 1024
+                if file and file.content_length and file.content_length > max_file_size_kb * 1024:
+                    return jsonify({"error": "File size exceeds the allowed limit."}), 400
                 # Read the TSV file
                 content = file.read().decode('utf-8').splitlines()
 
@@ -1439,9 +1522,15 @@ def upload_title_ratings():
                 db.commit()
 
                 return jsonify({"message": "Data successfully uploaded."}), 200
+            
+            except IntegrityError as e:
+                # Handle duplicate key error
+                db.rollback()
+                return jsonify({"error": f"Duplicate Key: {str(e)}"}), 500
+
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
-            
+
             finally:
                 cursor.close()
     else:

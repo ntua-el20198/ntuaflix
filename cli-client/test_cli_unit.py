@@ -69,7 +69,7 @@ def test_login_unit(mock_post):
     result = runner.invoke(cli, ["login", "--username", "admin", "--password", "0"])
     print(result.output)
     assert result.exit_code == 0
-    assert "{'is_admin': 1, 'user_id': 5, 'username': 'admin'}" in result.output
+    assert "{'is_admin': 1, 'user_id': 1, 'username': 'admin'}" in result.output
 
 def test_title_unit(mock_post):
     runner = CliRunner()
