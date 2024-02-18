@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/templates'
-static_path = r'/Users/georgiosalexandrosgeorgantzas/Documents/Python Codes/Ntuaflix/softeng23-17-1/front-end/static'
+template_folder_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/templates'
+static_path = r'/Users/mariasabani/Desktop/ntuaflix/softeng23-17/front-end/static'
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
 app.secret_key = secrets.token_hex(16)
@@ -924,7 +924,7 @@ def rating(titleID):
                 return jsonify({"message": "Bad request"}), 400
             else:
                 cursor = db.cursor()
-                query_user_rating = "INSERT INTO user_rating(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
+                query_user_rating = "INSERT INTO user_ratings(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
                 db.commit()
 
