@@ -345,9 +345,11 @@ form .form-help :where(label, a) {
     display: flex;
     justify-content: space-between;
     padding: 20px;
+    /* background-color: #000; */
     z-index: 1;
     transition-timing-function: ease-in;
     transition: all 0.5s;
+    /* background-color: #000; */
 }
 
 .nav2_black {
@@ -831,3 +833,10 @@ form .form-help :where(label, a) {
     color: #666; /* Medium grey for text */
 }
 
+.nav2_avatar {
+    cursor: pointer
+}
+
+.nav2.scrolled {
+    background-color: #000; /* Or any color you prefer */
+}

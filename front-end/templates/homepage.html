@@ -67,9 +67,8 @@
 
                     data.forEach(function (movie) {
                         // Create an image element and set its attributes
-                        var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster");
-
-
+                        var img = $("<img>").attr("src", movie.poster_url).attr("alt", "Movie Poster").css({"margin-right": "20px", "cursor": "pointer"}); 
+                        
                         img.on('click', function () {
                             console.log(`Clicked poster for movie: ${movie.originalTitle}`);
                             window.location.href = `/ntuaflix_api/info/${movie.ID}`;

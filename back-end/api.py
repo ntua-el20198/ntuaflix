@@ -10,8 +10,8 @@ import csv
 from io import StringIO
 
 
-template_folder_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/templates'
-static_path = r'/Users/vivia/Desktop/ntuaflix/softeng23-17/front-end/static'
+template_folder_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/templates'
+static_path = r'/Users/Kostis/Desktop/softeng23-17/front-end/static'
 
 
 app = Flask(__name__, template_folder=template_folder_path, static_folder=static_path)
@@ -734,7 +734,7 @@ def check_watchlist(titleID):
         # Check if fetchone() returned a result
         in_watchlist_count = result[0] if result and result[0] is not None else 0
         #print(in_watchlist_count)
-
+        
         # Return a JSON response indicating whether the movie is in the watchlist or not
         return jsonify({'inWatchlist': in_watchlist_count}), 200, {'Content-Type': 'application/json'}
 
@@ -1390,7 +1390,7 @@ def check_myratingslist():
         cursor = db.cursor()
 
         # Check if the movie with titleID is in the watchlist for the current user
-        query = "SELECT * FROM user_rating WHERE usersid = %s "
+        query = "SELECT * FROM user_ratings WHERE usersid = %s "
         cursor.execute(query, (userID, ))
 
         # Fetch the result

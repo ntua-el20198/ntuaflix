@@ -39,6 +39,19 @@
         });
 
     });
+
+    
+$(document).ready(function() {
+    $(window).scroll(function() {
+        // Check if page is scrolled more than 50 pixels
+        if ($(this).scrollTop() > 50) {
+            $('.nav2').addClass('scrolled');
+        } else {
+            $('.nav2').removeClass('scrolled');
+        }
+    });
+});
+
     </script>
    
 
