@@ -2,17 +2,18 @@
     "answers": {
         "phase": "testing",
         "action": "other testing",
-        "scope":  "test code driver",
+        "scope":  "cli",
         "action experience": "little",
-        "prog lang":  "python",
+        "prog lang": "python",
         "other prog lang": "<fill in>",
         "tool": "chat gpt 3.x",
+        "other tool": "<fill in>",
         "tool option": "free",
         "tool experience": "master",
         "time allocated (h)": "1",
         "time saved estimate (h)": "4", 
         "quality of ai help": "major modifications needed",
         "generic feeling": "great in the future",
-        "notes": "<fill in>"
+        "notes":  "<fill in>"
     }
 }
