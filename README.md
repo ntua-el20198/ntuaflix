@@ -9,6 +9,10 @@ This project was conducted for the course of Software Engineering at the 2023-20
 
 The goal of the project is to develop "Ntuaflix," a software application for navigating through movie and TV show data, extracting statistical information using various criteria, and creating and managing personal watchilists. This project includes identifying and specifying requirements, architecture and detailed design, implementation of selected features, testing, and documentation. The project aims to achieve these goals using appropriate tools and automation, ensuring that all deliverables are generated automatically without manual text writing. 
 
+**HTTPS**
+
+To ensure secure communication between the application and the web, NTUAFLIX employs HTTPS (Hypertext Transfer Protocol Secure) via an SSL (Secure Sockets Layer) certificate located at /back-end/cert.pem. Prior to running the /back-end/api.py file, it is necessary to have OpenSSL installed. When prompted for the PEM password, please enter "2255" (without quotes) and confirm it. This certificate enables encrypted data transmission, safeguarding sensitive information exchanged between the application and external servers.
+
 Admin: 
    ```json
       "Admin": {"username":"Admin","password":"Admin"}
