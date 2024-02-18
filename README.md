@@ -38,6 +38,8 @@ Admin:
 | database | MySQL, MariaDB|
 | CLI | Python
 
+link for API documentation:
+https://documenter.getpostman.com/view/30656019/2sA2r81ixn
 
 **This project was a collaborate effort of a team of 6 members:**
 
