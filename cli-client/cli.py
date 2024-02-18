@@ -59,7 +59,7 @@ def login(username, password, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/login' # url from api
     data = {'username': username, 'password': password, 'format': format}
 
-    response = post(url, data=data, verify=True)
+    response = post(url, data=data, verify=False)
     response.raise_for_status()
 
     user_data = response.json()
@@ -81,7 +81,7 @@ def logout(format):
 
         print(f"Sending logout request to {url} with data: {data}")
 
-        response = post(url, data=data, verify=True)
+        response = post(url, data=data, verify=False)
 
         # Clear the stored session information after the request is made
         clear_session()
@@ -103,7 +103,7 @@ def title(titleid, format):
     url = f'https://127.0.0.1:9876/ntuaflix_api/title/{titleid}' # url from api
     params = {'format' : format}
 
-    response = requests.get(url, params=params, verify=True)
+    response = requests.get(url, params=params, verify=False)
     response.raise_for_status() # Raises HTTPError, if one occurred.
 
     handle_response(response, format)
@@ -116,7 +116,7 @@ def searchtitle(titlepart, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/searchTitle'
     params = {'titlePart': titlepart, 'format': format}
 
-    response = requests.get(url, params=params, verify=True)
+    response = requests.get(url, params=params, verify=False)
     response.raise_for_status() 
 
     handle_response(response, format)
@@ -132,7 +132,7 @@ def bygenre(genre, min, start, end, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/bygenre'
     params = {'qgenre': genre, 'minrating': min, 'yrFrom': start, 'yrTo': end, 'format': format}
 
-    response = requests.get(url, params=params, verify=True)
+    response = requests.get(url, params=params, verify=False)
     response.raise_for_status() 
 
     handle_response(response, format)
@@ -145,7 +145,7 @@ def name(nameid, format):
     url = f'https://127.0.0.1:9876/ntuaflix_api/name/{nameid}'  # URL from API
     params = {'format': format}
 
-    response = requests.get(url, params=params, verify=True)
+    response = requests.get(url, params=params, verify=False)
     response.raise_for_status() 
 
     handle_response(response, format)
@@ -158,7 +158,7 @@ def searchname(namepart, format):
     url = 'https://127.0.0.1:9876/ntuaflix_api/searchname' # url from api
     params = {'namePart': namepart, 'format': format}
 
-    response = requests.get(url, params=params, verify=True)
+    response = requests.get(url, params=params, verify=False)
     response.raise_for_status() 
 
     handle_response(response, format)
@@ -172,7 +172,7 @@ def healthcheck(format):
         url = 'https://127.0.0.1:9876/ntuaflix_api/admin/healthcheck'
         data = {'format': format}
         
-        response = requests.get(url, data=data, verify=True)
+        response = requests.get(url, data=data, verify=False)
         response.raise_for_status() 
 
         handle_response(response, format)
@@ -188,7 +188,7 @@ def resetall(format):
         url = 'https://127.0.0.1:9876/ntuaflix_api/admin/resetall'
         data = {'format': format}
         
-        response = requests.post(url, data=data, verify=True)
+        response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
 
         handle_response(response, format)
@@ -210,7 +210,7 @@ def newtitles(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -231,7 +231,7 @@ def newnames(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -253,7 +253,7 @@ def newprincipals(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -273,7 +273,7 @@ def newcrew(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -293,7 +293,7 @@ def newepisode(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -314,7 +314,7 @@ def newakas(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -334,7 +334,7 @@ def newratings(filename, format):
             files = {'file': (filename, open(filename, 'rb'))}
             headers = {'format': format}  # Pass format in headers
 
-            response = requests.post(url, files=files, headers=headers, verify=True)
+            response = requests.post(url, files=files, headers=headers, verify=False)
             handle_response(response, format)
         else:
             print('Only admin can upload files')
@@ -352,7 +352,7 @@ def adduser(username, passw, format):
     if session_data and session_data.get('is_admin'):          
         url = f'https://127.0.0.1:9876/ntuaflix_api/admin/usermod/{username}/{passw}'  # Replace with your actual API URL
         data = {'format': format}
-        response = requests.post(url, data=data, verify=True)
+        response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
         handle_response(response, format)
     else:
@@ -368,7 +368,7 @@ def user(username, format):
     if session_data and session_data.get('is_admin'):
         url = f'https://127.0.0.1:9876/ntuaflix_api/admin/users/{username}'  # Replace with your actual API URL
         data = {'format': format}
-        response = requests.post(url, data=data, verify=True)
+        response = requests.post(url, data=data, verify=False)
         response.raise_for_status() 
         handle_response(response, format)
     else:
