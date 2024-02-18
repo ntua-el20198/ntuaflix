@@ -12,7 +12,7 @@ from io import StringIO
 templates = r'/softeng23-17/front-end/templates'
 static = r'/softeng23-17/front-end/static'
 
-base_path = r'/Users/mariasabani/Desktop/ntuaflix'
+base_path = r'/Users/vivia/Desktop/ntuaflix'
 
 template_folder_path = f'{base_path}{templates}'
 static_path = f'{base_path}{static}'
@@ -29,7 +29,7 @@ db_config = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "2255",  
+    "password": "",  
     "database": "ntuaflix",
     "charset": "utf8mb4",
     "collation": "utf8mb4_general_ci"

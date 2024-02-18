@@ -38,7 +38,6 @@ Admin:
 | database | MySQL, MariaDB|
 | CLI | Python
 
-Note: In oder to be able to run the backend, the base_path in api.py on line 15 has to be replaced with the path that the folder softeng23-17 is saved.
 
 **This project was a collaborate effort of a team of 6 members:**
 
