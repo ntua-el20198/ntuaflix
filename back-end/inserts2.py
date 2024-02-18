@@ -11,7 +11,7 @@ config = {
 }
 
 # Replace with the path to your TSV file
-tsv_file_path = '/Users/mariasabani/Desktop/Notes-Assignments/ΤΛ/truncated_data3/truncated_title.crew.tsv'
+tsv_file_path = '/path/to/truncated_title.crew.tsv'
 
 # Read data from TSV file into a DataFrame
 df = pd.read_csv(tsv_file_path, sep='\t')
