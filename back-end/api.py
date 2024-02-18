@@ -924,7 +924,7 @@ def rating(titleID):
                 return jsonify({"message": "Bad request"}), 400
             else:
                 cursor = db.cursor()
-                query_user_rating = "INSERT INTO user_ratings(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
+                query_user_rating = "INSERT INTO user_rating(usersid, title_basicstconst, rating, comment) VALUES(%s,%s,%s,%s)"
                 cursor.execute(query_user_rating,(userID,titleID,rating,comment))
                 db.commit()
 
