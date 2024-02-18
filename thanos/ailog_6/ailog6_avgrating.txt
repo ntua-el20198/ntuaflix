@@ -1,0 +1,60 @@
+the rating avg is a float number, so after some operations it has many digits after the dot
+this doesnt look good in the UI and i would like to round the number so has 2 digits after the dot (with dot i mean διαστολή ) 
+const ratingElement = document.createElement('h3');
+    ratingElement.textContent = `${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
+this is my code right now
+
+
+
+You can use the toFixed() method in JavaScript to round a number to a specified number of decimal places. Here's how you can use it to round the average rating to two decimal places:
+
+const avRating = movie.rating ? movie.rating.avRating.toFixed(2) : 'N/A';
+const numVotes = movie.rating ? movie.rating.numVotes : '0';
+
+const ratingElement = document.createElement('h3');
+ratingElement.textContent = `${avRating} (${numVotes} votes)`;
+
+In this code, toFixed(2) is used to round the avRating to two decimal places. If movie.rating is falsy (i.e., it doesn't exist or is null), 'N/A' is displayed instead. This will ensure that the average rating is displayed with two decimal places in the UI.
+
+
+
+i get this error :
+Uncaught (in promise) TypeError: movie.rating.avRating.toFixed is not a function
+    at displayMovieResults
+
+
+
+
+If you're encountering an error stating that toFixed() is not a function, it's likely because movie.rating.avRating is not a number.
+
+To ensure that avRating is treated as a number before using toFixed(), you can parse it as a float. Here's how you can do it:
+
+const avRating = movie.rating ? parseFloat(movie.rating.avRating).toFixed(2) : 'N/A';
+
+By parsing movie.rating.avRating as a float using parseFloat(), you ensure that it's treated as a number before applying the toFixed() method to round it to two decimal places. This should prevent the error you're encountering.
+
+
+
+can you write code that lets me see what type of variable abvRating is ?
+
+
+
+Certainly! You can use the typeof operator in JavaScript to determine the type of a variable. Here's how you can use it to log the type of avRating:
+console.log(typeof avRating);
+This will log the type of avRating to the console. You can place this line of code in your script to check the type of avRating and see if it's indeed a number or if there's a different type causing the issue.
+
+
+it says it is of undefined type why is that ?
+
+
+If avRating is showing as undefined, it suggests that movie.rating might be undefined or null. To avoid this error, you should check if movie.rating exists before trying to access its properties. Here's how you can modify the code to handle this case:
+
+
+let avRating = 'N/A';
+if (movie.rating && typeof movie.rating.avRating !== 'undefined') {
+    avRating = parseFloat(movie.rating.avRating).toFixed(2);
+}
+
+This code first checks if movie.rating exists and if movie.rating.avRating is not undefined before attempting to parse it as a float and round it to two decimal places. If either of these conditions is not met, avRating remains 'N/A'. This will prevent errors when movie.rating is undefined or when avRating is not defined within it.
+
+

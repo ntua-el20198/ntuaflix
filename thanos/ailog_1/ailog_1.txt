@@ -1,0 +1,26 @@
+for the course "software engeneering " in university i have to create an app that :
+Τα τμήματα της εφαρμογής που θα κατασκευάσετε έχουν ως εξής:
+1. Ένα υποσύστημα back-end, το οποίο θα υποστηρίζει λειτουργίες πλοήγησης, επιλογής,
+ανάλυσης, αποθήκευσης ταινιών κλπ. Οι λειτουργίες αυτές θα διατίθενται μέσω ενός REST
+API 
+what is a rest api ?
+
+A REST API (Representational State Transfer Application Programming Interface) is a set of rules and conventions for building and interacting with web services. It is an architectural style that uses a stateless communication model, typically over HTTP, for communication between clients and servers. RESTful APIs are designed to be scalable, stateless, and easily extensible.
+
+Key principles of REST:
+
+Resource-Based: In a REST API, resources are the key entities that the system exposes. These resources are identified by URIs (Uniform Resource Identifiers), and they can represent entities such as objects, services, or data.
+
+HTTP Methods: RESTful APIs use standard HTTP methods for operations on resources. The most common HTTP methods used in RESTful services are:
+
+GET: Retrieve a resource or a collection of resources.
+POST: Create a new resource.
+PUT: Update an existing resource or create a new resource if it does not exist.
+DELETE: Remove a resource.
+Statelessness: Each request from a client to a server must contain all the information needed to understand and fulfill that request. The server should not store any information about the client's state between requests. This makes the system scalable and easy to maintain.
+
+Representation: Resources can have different representations, such as JSON or XML, to convey their current state. Clients interact with these representations to perform actions on resources.
+
+Uniform Interface: A uniform and consistent interface simplifies the architecture and interactions between components. This includes a consistent naming convention for resources and the use of standard HTTP methods.
+
+In the context of the course project you mentioned, the REST API will be the backend subsystem of your application, providing a way for clients (such as a frontend application or other services) to perform operations like navigation, selection, analysis, and storage of movie-related information. The API defines how clients can communicate with the server to perform these actions using the principles of REST.

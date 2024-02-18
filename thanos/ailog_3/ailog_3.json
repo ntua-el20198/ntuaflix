@@ -1,0 +1,19 @@
+{
+    "answers": {
+        "phase": "architecture",
+        "action": "problem understanding",
+        "scope": "api",
+        "action experience": "big",
+        "prog lang": "n/a",
+        "other prog lang": "<fill in>",
+        "tool": "chat gpt 3.x",
+        "other tool": "<fill in>",
+        "tool option": "free",
+        "tool experience": "master",
+        "time allocated (h)": "0.2",
+        "time saved estimate (h)": "2", 
+        "quality of ai help": "ready-to-use",
+        "generic feeling": "great as-is",
+        "notes": "<answers the question : do cli and the frontend app play the same role? ,explains the connection between cli and api, and how the frontend is connected to the backend generally, provides neccessary understanding of the architecture of the system in order to later make the umls, the answer included code in javascript but it was not the goal of the question therefore it has not been explicity said in the prog lang section>"
+    }
+}
