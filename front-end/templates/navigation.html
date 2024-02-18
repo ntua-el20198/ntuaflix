@@ -7,38 +7,28 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     
     <script>
-         $(document).ready(function () {
-    $.ajax({
-        type: 'GET',
-        url: '/admin/get_is_admin',
-        success: function (response) {
-            if (response.is_admin === 1) {
-                $(".nav2_logo_options").append('<a href="{{ url_for("admin_check") }}" class="nav2_option">Admin\'s Check</a>');
-            }
-        },
-        error: function (error) {
-            console.error('Error getting is_admin:', error.responseText);
-        }
-    });
+        $(document).ready(function () {
             
-        function logout() {
-            $.ajax({
-                type: 'POST',
-                url: '{{ url_for("logout") }}',
-                success: function (response) {
-                    window.location.href = 'signin.html';
-                },
-                error: function (error) {
-                    console.error('Logout failed:', error.responseText);
-                }
-            });
-        }
+            function logout() {
+                $.ajax({
+                    type: 'POST',
+                    url: '{{ url_for("logout") }}',
+                    success: function (response) {
+                        window.location.href = 'signin.html';
+                    },
+                    error: function (error) {
+                        console.error('Logout failed:', error.responseText);
+                    }
+                });
+            }
 
-        $(document).on('click', '.nav2_option_logout', function () {
-            logout();
+            $(document).on('click', '.nav2_option_logout', function () {
+                logout();
+            });
+
         });
 
-    });
+   
 
     
 $(document).ready(function() {
@@ -65,7 +55,7 @@ $(document).ready(function() {
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
             </a>
             <a href="{{ url_for('my_list') }}" class="nav2_option">My List</a>
-            <a href="{{ url_for('signup_success') }}" class="nav2_option">Home</a>
+            <a href="homepage.html" class="nav2_option">Home</a>
             <a href="{{ url_for('search_title') }}" class="nav2_option">Search By Title</a>
             <a href="{{ url_for('search_genre') }}" class="nav2_option">Search By Genre</a>
             <a href="{{ url_for('search_name') }}" class="nav2_option">Search Principals</a>

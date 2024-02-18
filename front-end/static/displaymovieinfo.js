@@ -48,11 +48,11 @@ async function displayMovieResults(movie, movieContainer) {
 
     // ratingButtonContainer.insertBefore(starRating, ratingButtonContainer.firstChild);
     const ratingElement = document.createElement('h3');
-    ratingElement.textContent = `${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
-    //const avRating = movie.rating ? movie.rating.avRating.toFixed(3) : 'N/A';
-    //const numVotes = movie.rating ? movie.rating.numVotes : '0';
-    //ratingElement.textContent = `${avRating} (${numVotes} votes)`;
-
+    //ratingElement.textContent = `${movie.rating ? movie.rating.avRating : 'N/A'} (${movie.rating ? movie.rating.numVotes : '0'} votes)`;
+    const avRating = movie.rating ? parseFloat(movie.rating.avRating).toFixed(3) : 'N/A';
+    const numVotes = movie.rating ? movie.rating.numVotes : '0';
+    ratingElement.textContent = `${avRating} (${numVotes} votes)`;
+    
     // Create a container for the buttons
     const buttonsContainer = document.createElement('div');
     buttonsContainer.classList.add('buttonsContainer');
@@ -65,11 +65,85 @@ async function displayMovieResults(movie, movieContainer) {
         buttonsContainer.appendChild(likeButton);
 
         const yourRatingContainer = document.createElement('div');
-        yourRatingContainer.classList.add('yourRatingContainer')
-        const starRating = await createStarRating();
-        yourRatingContainer.appendChild(starRating)
-        const commentBox = await createCommentBox();
-        yourRatingContainer.appendChild(commentBox);
+        yourRatingContainer.classList.add('yourRatingContainer');
+        // Create star rating container
+        const starRatingContainer = document.createElement('div');
+        starRatingContainer.className = 'star-rating';
+        let selectedStars = 0;
+        for (let i = 10; i >= 1; i--) {
+            const starInput = document.createElement('input');
+            starInput.type = 'radio';
+            starInput.id = `star${i}`;
+            starInput.name = 'rating';
+            starInput.value = i;
+        
+            starInput.setAttribute('title', `${i} stars`);
+        
+            starInput.addEventListener('change', () => {
+                selectedStars = parseInt(starInput.value);
+                console.log('Selected stars:', selectedStars);
+            });
+        
+            const starLabel = document.createElement('label');
+            starLabel.htmlFor = `star${i}`;
+            starLabel.title = `${i} stars`;
+            starLabel.textContent = '★';
+        
+            starRatingContainer.appendChild(starInput);
+            starRatingContainer.appendChild(starLabel);
+        }
+        // Create comment box container
+        const commentBoxContainer = document.createElement('div');
+        commentBoxContainer.classList.add('comment-box');
+
+        const formElement = document.createElement('form');
+        formElement.id = 'commentForm';
+
+        const textareaElement = document.createElement('textarea');
+        textareaElement.id = 'commentInput';
+        textareaElement.placeholder = 'Add your comment here...';
+
+        const submitButton = document.createElement('button');
+        submitButton.type = 'submit';
+        submitButton.textContent = 'Submit';
+
+        submitButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            if (selectedStars === 0) {
+                alert('Please select your desired rating');
+                return;
+            }
+            const commentInput = textareaElement.value;
+        
+            // Check if the user has already submitted a rating
+            const response = await fetch(`/ntuaflix_api/check_rating/${movie.titleID}`);
+            const data = await response.json();
+        
+            if (data.rated) {
+                const confirmReplace = confirm('You have already reviewed this title. Do you want to replace your previous review?');
+                if (!confirmReplace) {
+                    return; // Stop if the user chooses not to replace
+                }
+                // User chooses to replace, call the replace_rating endpoint (to be implemented)
+                await replaceRatingAndComment(movie.titleID, selectedStars, commentInput);
+            } else {
+                // User has not submitted a rating yet, proceed with sending the rating and comment
+                console.log('selected stars are: ', selectedStars);
+                await sendRatingAndComment(movie.titleID, selectedStars, commentInput);
+            }
+        });
+
+        formElement.appendChild(textareaElement);
+        formElement.appendChild(submitButton);
+
+        commentBoxContainer.appendChild(formElement);
+
+        // Append star rating and comment box containers to yourRatingContainer
+        yourRatingContainer.appendChild(starRatingContainer);
+        yourRatingContainer.appendChild(commentBoxContainer);
+
+        // Append yourRatingContainer to the document or wherever you need it
+        document.body.appendChild(yourRatingContainer);
 
         ratingContainer.appendChild(ratingElement);
 
@@ -89,87 +163,6 @@ async function displayMovieResults(movie, movieContainer) {
     await movieContainer.appendChild(bigContainerElement);
 
     await displayReviews(movie.titleID, movieContainer);
-
-
-    console.log('listButton type:', typeof listButton, listButton);
-    console.log('likeButton type:', typeof likeButton, likeButton);
-
-    async function createStarRating() {
-        const starRatingContainer = document.createElement('div');
-        starRatingContainer.className = 'star-rating';
-
-        for (let i = 10; i >= 1; i--) {
-            const starInput = document.createElement('input');
-            starInput.type = 'radio';
-            starInput.id = `star${i}`;
-            starInput.name = 'rating';
-            starInput.value = i;
-
-            starInput.setAttribute('title', i);
-
-            const starLabel = document.createElement('label');
-            starLabel.htmlFor = `star${i}`;
-            starLabel.title = `${i} stars`;
-            starLabel.textContent = '★';
-
-            starRatingContainer.appendChild(starInput);
-            starRatingContainer.appendChild(starLabel);
-        }
-
-        return starRatingContainer;
-    }
-
-    async function createCommentBox() {
-        // Create the container for the comment box
-        const commentBoxContainer = document.createElement('div');
-        commentBoxContainer.classList.add('comment-box');
-        
-        // Create the form element
-        const formElement = document.createElement('form');
-        formElement.id = 'commentForm';
-        
-        // Create the textarea element
-        const textareaElement = document.createElement('textarea');
-        textareaElement.id = 'commentInput';
-        textareaElement.placeholder = 'Add your comment here...';
-        
-
-        // Create the submit button
-        const submitButton = document.createElement('button');
-        submitButton.type = 'submit';
-        submitButton.textContent = 'Submit';
-        
-        submitButton.addEventListener('click', async (event) => {
-        event.preventDefault(); // Prevent form submission
-        console.log('Submit pressed');
-        const commentInput = textareaElement.value;
-        console.log(commentInput);
-        await sendRatingAndComment(movie.titleID, 8, commentInput);
-        });
-
-        // Append textarea and submit button to the form
-        formElement.appendChild(textareaElement);
-        formElement.appendChild(submitButton);
-        
-        // Append the form to the comment box container
-        commentBoxContainer.appendChild(formElement);
-        
-        // Return the created comment box container
-        return commentBoxContainer;
-    }
-
-
-    let selectedRating = null; // Variable to store the selected rating value
-
-    // Add event listeners to star rating inputs
-    const starInputs = document.querySelectorAll('.star-rating input[type="radio"]');
-    starInputs.forEach(starInput => {
-        starInput.addEventListener('change', () => {
-            selectedRating = parseInt(starInput.value); // Update selectedRating when a star is selected
-        });
-    });
-
-    form: int(data.rating)
     
     async function sendRatingAndComment(movieId, ratingValue, comment) {
         const data = { rating: ratingValue, comment: comment };
@@ -185,7 +178,8 @@ async function displayMovieResults(movie, movieContainer) {
             if (response.ok) {
                 // Rating - comment submitted successfully
                 console.log('Rating/comment submitted successfully');
-                // Reload or update UI if needed
+                // Reload  UI if 
+                window.location.reload();
             } else {
                 // Error handling
                 console.error('Error submitting rating or comment:', response.statusText);
@@ -195,6 +189,30 @@ async function displayMovieResults(movie, movieContainer) {
             console.error('Network error:', error);
         }
     }
+
+    async function replaceRatingAndComment(titleID, rating, comment) {
+        try {
+            const response = await fetch(`/ntuaflix_api/replace_rating/${titleID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rating, comment })
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log(data.message); // Log success message
+                window.location.reload();
+            } else {
+                const errorData = await response.json();
+                console.error(errorData.error); // Log error message
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+        }
+    }
+    
 
     async function displayReviews(movieId, movieContainer) {
         const reviewsContainer = document.createElement('div');

@@ -20,7 +20,7 @@
             async function fetchMoviesRatings() {
                 try {
                     // Fetch movies from the /list_for_watching_later endpoint
-                    const response = await fetch('/ntuaflix_api/check_myratingslist?format=json');
+                    const response = await fetch('/ntuaflix_api/check_myratingslist');
                     const data_ratings = await response.json();
 
                     if (data_ratings && data_ratings.length > 0) {
@@ -69,7 +69,7 @@
         });
     </script>
     <script src="{{ url_for('static', filename='likesfunctions.js') }}"></script>
-    <script src="{{ url_for('static', filename='historyfunctions.js') }}"></script>
+    <script src="{{ url_for('static', filename='mylistfunctions.js') }}"></script>
     <script src="{{ url_for('static', filename='displayresults.js') }}"></script>
 </body>
 
